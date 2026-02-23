@@ -7,8 +7,18 @@ function sign(queryString: string, secret: string): string {
     return crypto.createHmac('sha256', secret).update(queryString).digest('hex');
 }
 
+/** Get Binance server time to avoid clock drift issues */
+async function getServerTime(): Promise<number> {
+    try {
+        const res = await axios.get(`${BASE_URL}/api/v3/time`);
+        return (res.data as any).serverTime;
+    } catch {
+        return Date.now();
+    }
+}
+
 export async function getBalance(apiKey: string, secret: string): Promise<Record<string, number>> {
-    const timestamp = Date.now();
+    const timestamp = await getServerTime();
     const queryString = `timestamp=${timestamp}`;
     const signature = sign(queryString, secret);
 

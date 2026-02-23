@@ -53,14 +53,26 @@ export async function getPrice(symbol: string): Promise<number> {
     return parseFloat((res.data as any).price);
 }
 
+/** Get MEXC server time to avoid clock drift issues */
+async function getServerTime(): Promise<number> {
+    try {
+        const res = await axios.get(`${BASE_URL}/api/v3/time`);
+        return (res.data as any).serverTime;
+    } catch {
+        return Date.now();
+    }
+}
+
 /** Get account balance (requires API key + secret) */
 export async function getBalance(apiKey: string, secret: string): Promise<Record<string, number>> {
-    const timestamp = Date.now();
-    const queryString = `timestamp=${timestamp}`;
+    const timestamp = await getServerTime();
+    const recvWindow = 60000;
+    // MEXC requires: all params except signature joined into query string, then signed
+    const queryString = `recvWindow=${recvWindow}&timestamp=${timestamp}`;
     const signature = sign(queryString, secret);
 
     const res = await axios.get(`${BASE_URL}/api/v3/account`, {
-        params: { timestamp, signature },
+        params: { recvWindow, timestamp, signature },
         headers: { 'X-MEXC-APIKEY': apiKey }
     });
 

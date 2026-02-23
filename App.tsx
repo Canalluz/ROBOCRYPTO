@@ -508,6 +508,112 @@ const TRANSLATIONS = {
     conn_error: "Erro: Chave API e Secret são obrigatórios."
   }
 };
+// Login Screen Component
+const LoginScreen = ({
+  email, setEmail,
+  password, setPassword,
+  error,
+  isLoading,
+  onLogin,
+  language
+}: any) => {
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-cyan-500/30 flex items-center justify-center relative overflow-hidden p-6">
+
+      {/* Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="text-center mb-10 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 shadow-[0_0_30px_rgba(6,182,212,0.15)] mb-6 relative group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <BrainCircuit className="w-10 h-10 text-cyan-400 relative z-10" />
+          </div>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-tight">
+            Robô Crypto
+          </h1>
+          <p className="text-slate-500 mt-2 text-sm uppercase tracking-widest font-medium">
+            {language === 'pt' ? 'Terminal Institucional' : 'Institutional Terminal'}
+          </p>
+        </div>
+
+        <form onSubmit={onLogin} className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-400 text-sm animate-in shake">
+              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+              <p>{error}</p>
+            </div>
+          )}
+
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">
+                {language === 'pt' ? 'E-mail de Acesso' : 'Access Email'}
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-slate-500" />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
+                  placeholder="carlos@adm.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">
+                {language === 'pt' ? 'Senha' : 'Password'}
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-500" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full mt-8 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+          >
+            {isLoading ? (
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                {language === 'pt' ? 'Acessar Terminal' : 'Access Terminal'}
+                <ArrowRightLeft className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center flex items-center justify-center gap-2 text-slate-500 text-xs uppercase tracking-wider">
+          <ShieldCheck className="w-4 h-4 text-emerald-500/70" />
+          <span>{language === 'pt' ? 'Conexão Criptografada (AES-256)' : 'Encrypted Connection (AES-256)'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const App: React.FC = () => {
   const [data, setData] = useState<SystemData>(() => {
@@ -616,6 +722,43 @@ const App: React.FC = () => {
   }, []);
 
 
+  // --- AUTHENTICATION STATE ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Check saved session on load
+  useEffect(() => {
+    const session = localStorage.getItem('tradepro_auth');
+    if (session === 'carlos_adm_session_v1') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setIsLoggingIn(true);
+
+    // Hardcoded credentials as requested
+    setTimeout(() => {
+      if (loginEmail === 'carlos@adm.com' && loginPassword === 'Sapato30') {
+        localStorage.setItem('tradepro_auth', 'carlos_adm_session_v1');
+        setIsAuthenticated(true);
+      } else {
+        setLoginError(language === 'pt' ? 'Email ou senha incorretos. Acesso negado.' : 'Incorrect email or password. Access denied.');
+      }
+      setIsLoggingIn(false);
+    }, 800);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tradepro_auth');
+    setIsAuthenticated(false);
+  };
+
   const [exchanges, setExchanges] = useState<ExchangeConfig[]>(() => {
     const saved = localStorage.getItem('tradepro_exchanges');
     if (saved) {
@@ -627,22 +770,26 @@ const App: React.FC = () => {
           return parsed.map((ex: any) => {
             const cleanKey = isFakeKey(ex.apiKey) ? '' : (ex.apiKey || '');
             const cleanSecret = isFakeKey(ex.apiSecret) ? '' : (ex.apiSecret || '');
-            // Force migration for Binance Institutional to show real balance from user screenshot
-            if (ex.id === 'binance') {
+
+            // Aggressive cleanup: if no real API key, force disconnect and zero balance
+            if (!cleanKey || cleanKey.length < 5) {
               return {
                 ...ex,
-                apiKey: cleanKey,
-                apiSecret: cleanSecret,
-                status: 'CONNECTED',
-                balance: 238.51,
-                lastSync: 'Synced from Exchange'
+                apiKey: '',
+                apiSecret: '',
+                status: 'DISCONNECTED',
+                balance: 0,
+                lastSync: 'N/A'
               };
             }
+
+            // We ONLY trust LIVE fetches. We unconditionally set balance to 0 on initial app load.
+            // This prevents the $239 bug for anyone who has old cached dummy data.
             return {
               ...ex,
               apiKey: cleanKey,
               apiSecret: cleanSecret,
-              balance: typeof ex.balance === 'number' ? ex.balance : 0
+              balance: 0
             };
           });
         }
@@ -651,9 +798,9 @@ const App: React.FC = () => {
       }
     }
     return [
-      { id: 'binance', name: 'Binance Institutional', status: 'CONNECTED', lastSync: 'Synced from Exchange', balance: 238.51, apiKey: '', apiSecret: '' },
+      { id: 'binance', name: 'Binance Institutional', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
       { id: 'mexc', name: 'MEXC Global', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
-      { id: 'kraken', name: 'Kraken Pro', status: 'CONNECTED', lastSync: '15 min ago', balance: 0, apiKey: '', apiSecret: '' }
+      { id: 'kraken', name: 'Kraken Pro', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' }
     ];
   });
 
@@ -671,6 +818,38 @@ const App: React.FC = () => {
   const [lastAttemptTimestamp, setLastAttemptTimestamp] = useState<number>(0);
 
   const runAnalysis = useCallback(async (force = false) => {
+    // Sync balances first
+    setExchanges(prevExchanges => {
+      const updated = [...prevExchanges];
+      for (const ex of updated) {
+        if (ex.status === 'CONNECTED' && (ex.id === 'mexc' || ex.id === 'binance') && ex.apiKey && ex.apiSecret) {
+          fetch(`/api/balance/${ex.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiKey: ex.apiKey, secret: ex.apiSecret })
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data && typeof data.balance === 'number') {
+                setExchanges(current => {
+                  const draft = [...current];
+                  const idx = draft.findIndex(e => e.id === ex.id);
+                  if (idx !== -1 && draft[idx].balance !== data.balance) {
+                    draft[idx] = { ...draft[idx], balance: data.balance, lastSync: new Date().toLocaleTimeString() };
+                  }
+                  return draft;
+                });
+              } else if (data && data.error) {
+                const msg = typeof data.error === 'string' ? data.error : (data.error.msg || JSON.stringify(data.error));
+                setError(`API Rejection (${ex.name}): ${msg}`);
+              }
+            })
+            .catch(err => console.error(`Balance sync error for ${ex.id}:`, err));
+        }
+      }
+      return updated;
+    });
+
     const config = data.neural_core;
 
     // Cache logic: 5 minutes TTL (300,000 ms)
@@ -724,29 +903,39 @@ const App: React.FC = () => {
       }
     } catch (err: any) {
       console.error("AI Analysis failed:", err);
-      // Show the real error message so user knows exactly what went wrong
       const rawMsg: string = err?.message || String(err);
+      const rawLow = rawMsg.toLowerCase();
+      const provider = data.neural_core.provider;
       let friendlyMsg: string;
-      if (rawMsg.toLowerCase().includes('api key') || rawMsg.toLowerCase().includes('401') || rawMsg.toLowerCase().includes('403')) {
+
+      // Check for invalid/missing key first (covers Gemini "API key not valid", OpenAI 401, etc.)
+      if (rawLow.includes('api key') || rawLow.includes('not valid') || rawLow.includes('invalid') || rawLow.includes('401') || rawLow.includes('403') || rawLow.includes('not configured')) {
+        if (provider === 'GEMINI') {
+          friendlyMsg = language === 'pt'
+            ? `Chave do Gemini inválida ou não configurada. Gere uma chave gratuita em aistudio.google.com e adicione em Configurações › IA Core.`
+            : `Gemini API Key is invalid or missing. Get a free key at aistudio.google.com and add it in Settings › AI Core.`;
+        } else {
+          friendlyMsg = language === 'pt'
+            ? `Chave de API inválida ou sem permissão. Verifique a chave em Configurações › IA Core.`
+            : `Invalid or unauthorized API Key. Check it in Settings › AI Core.`;
+        }
+      } else if (rawLow.includes('quota') || rawLow.includes('429') || rawLow.includes('rate limit')) {
         friendlyMsg = language === 'pt'
-          ? `Chave de API inválida ou sem permissão. Verifique a chave em Configurações > IA Core.`
-          : `Invalid or unauthorized API Key. Check it in Settings > AI Core.`;
-      } else if (rawMsg.toLowerCase().includes('quota') || rawMsg.toLowerCase().includes('429') || rawMsg.toLowerCase().includes('rate')) {
+          ? `Limite de requisições da IA atingido. Aguarde alguns minutos ou use o modo MOCK.`
+          : `AI rate limit reached. Wait a few minutes or switch to MOCK mode.`;
+      } else if ((rawLow.includes('balance') || rawLow.includes('insufficient')) && provider !== 'GEMINI') {
+        // Only show "recharge credits" for paid providers, never for Gemini
         friendlyMsg = language === 'pt'
-          ? `O serviço de IA está temporariamente limitado ou instável. Aguarde alguns minutos para nova análise automática ou tente o modo 'MOCK' para testes rápidos.`
-          : `AI service is temporarily limited or busy. Please wait a few minutes for auto-retry or try 'MOCK' provider for quick testing.`;
-      } else if (rawMsg.toLowerCase().includes('balance') || rawMsg.toLowerCase().includes('insufficient')) {
+          ? `A chave de API não tem créditos disponíveis. A API do ${provider} é paga (diferente do site gratuito). Troque para GEMINI (gratuito) ou MOCK em Configurações › IA Core.`
+          : `No API credits available. The ${provider} API is pay-per-use. Switch to GEMINI (free tier) or MOCK in Settings › AI Core.`;
+      } else if (rawLow.includes('network') || rawLow.includes('fetch') || rawLow.includes('failed to fetch')) {
         friendlyMsg = language === 'pt'
-          ? `Saldo insuficiente no provedor de IA. Recarregue seus créditos para continuar.`
-          : `Insufficient balance in AI provider. Please recharge your credits to continue.`;
-      } else if (rawMsg.toLowerCase().includes('network') || rawMsg.toLowerCase().includes('fetch') || rawMsg.toLowerCase().includes('failed')) {
-        friendlyMsg = language === 'pt'
-          ? `Falha de conexão com a API. Verifique sua internet e tente novamente.`
+          ? `Falha de conexão com a API de IA. Verifique sua internet e tente novamente.`
           : `Network error connecting to AI API. Check your internet connection.`;
       } else {
         friendlyMsg = language === 'pt'
-          ? `Erro da IA: ${rawMsg}`
-          : `AI Error: ${rawMsg}`;
+          ? `Erro de IA (${provider}): ${rawMsg}`
+          : `AI Error (${provider}): ${rawMsg}`;
       }
       setError(friendlyMsg);
     } finally {
@@ -764,6 +953,23 @@ const App: React.FC = () => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
+  // --- LOGIN SCREEN GUARD ---
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        email={loginEmail}
+        setEmail={setLoginEmail}
+        password={loginPassword}
+        setPassword={setLoginPassword}
+        error={loginError}
+        isLoading={isLoggingIn}
+        onLogin={handleLogin}
+        language={language}
+      />
+    );
+  }
+
+  // --- MAIN RENDER (AUTHENTICATED) ---
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-50">
       <aside className="w-64 border-r border-slate-800 bg-slate-900/50 hidden lg:flex flex-col sticky top-0 h-screen">
@@ -801,11 +1007,10 @@ const App: React.FC = () => {
         <nav className="flex-1 p-4 space-y-2 mt-2">
           <NavBtn active={currentView === 'charts'} onClick={() => setCurrentView('charts')} icon={<TrendingUp />} label={t('nav_charts')} />
           <NavBtn active={currentView === 'robots'} onClick={() => setCurrentView('robots')} icon={<Bot />} label={t('nav_robots')} />
-          <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
-
           <NavBtn active={currentView === 'monitoring'} onClick={() => setCurrentView('monitoring')} icon={<Activity />} label={t('nav_monitoring')} />
           <div className="pt-4 border-t border-slate-800/50">
             <NavBtn active={currentView === 'settings'} onClick={() => setCurrentView('settings')} icon={<SettingsIcon />} label={t('nav_settings')} />
+            <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
           </div>
         </nav>
 
@@ -859,13 +1064,13 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {currentView !== 'settings' && currentView !== 'charts' && currentView !== 'robots' && currentView !== 'monitoring' && currentView !== 'assets' && (
+            {currentView !== 'settings' && (
               <button onClick={() => runAnalysis(true)} disabled={isLoading} className="flex items-center gap-2 px-6 py-3 bg-slate-900 border border-slate-800 hover:border-cyan-500/30 text-slate-200 font-bold rounded-xl transition-all shadow-xl group">
                 <RefreshCw className={`w-5 h-5 group-hover:text-cyan-400 ${isLoading ? 'animate-spin text-cyan-500' : ''}`} />
                 {t('sync')}
               </button>
             )}
-            {currentView !== 'charts' && currentView !== 'robots' && currentView !== 'monitoring' && currentView !== 'assets' && (
+            {currentView !== 'settings' && (
               <div
                 onClick={() => setCurrentView('settings')}
                 className={`p-3 rounded-xl border cursor-pointer transition-all ${currentView === 'settings' ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-50 hover:border-slate-700'}`}
@@ -1928,11 +2133,13 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
         strategyId: newBot.strategyId,
         exchangeId: newBot.config.exchangeId,
         assets: newBot.config.assets,
-        leverage: newBot.config.leverage,
-        stopLossPct: newBot.config.stopLossPct,
-        takeProfitPct: newBot.config.takeProfitPct,
-        riskPerTrade: newBot.config.riskPerTrade,
-        paperTrade: true // always default to true
+        leverage: newBot.config.leverage ?? 1,
+        stopLossPct: newBot.config.stopLossPct ?? 1,
+        takeProfitPct: newBot.config.takeProfitPct ?? 1.5,
+        riskPerTrade: newBot.config.riskPerTrade ?? 2,
+        marketMode: (newBot.config as any).marketMode ?? 'SPOT',
+        paperTrade: true,
+        status: 'TEST'
       }, ex);
     }
   };
@@ -3767,3 +3974,4 @@ const BotMonitoringView: React.FC<{
     </div>
   );
 };
+

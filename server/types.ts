@@ -10,6 +10,7 @@ export interface BotConfig {
     riskPerTrade: number;
     paperTrade: boolean;
     status: 'ACTIVE' | 'PAUSED' | 'TEST';
+    marketMode?: 'SPOT' | 'FUTURES';
 }
 
 export interface TradeSignal {

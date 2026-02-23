@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import { deployBot, pauseBot, stopBot, registerWsBroadcaster } from './bot-engine.js';
 import { getUsdtBalance } from './exchanges/mexc.js';
+import { getUsdtBalance as getBinanceUsdtBalance } from './exchanges/binance.js';
 
 const app = express();
 app.use(cors());
@@ -60,12 +61,27 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/balance/mexc', async (req, res) => {
     try {
+        console.log('[MEXC] Balance request received. Body:', req.body);
         const { apiKey, secret } = req.body;
-        if (!apiKey || !secret) return res.status(400).json({ error: 'Missing credentials' });
+        if (!apiKey || !secret) return res.status(400).json({ error: 'Missing credentials', bodyReceived: req.body });
         const balance = await getUsdtBalance(apiKey, secret);
         res.json({ balance });
     } catch (e: any) {
-        res.status(500).json({ error: e.message || 'Failed to fetch balance' });
+        console.error('[MEXC] API Error:', e.response?.data || e.message);
+        res.status(500).json({ error: e.response?.data || e.message || 'Failed to fetch balance' });
+    }
+});
+
+app.post('/api/balance/binance', async (req, res) => {
+    try {
+        console.log('[BINANCE] Balance request received. Body:', req.body);
+        const { apiKey, secret } = req.body;
+        if (!apiKey || !secret) return res.status(400).json({ error: 'Missing credentials', bodyReceived: req.body });
+        const balance = await getBinanceUsdtBalance(apiKey, secret);
+        res.json({ balance });
+    } catch (e: any) {
+        console.error('[BINANCE] API Error:', e.response?.data || e.message);
+        res.status(500).json({ error: e.response?.data || e.message || 'Failed to fetch balance' });
     }
 });
 

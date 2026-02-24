@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useCallback, useRef, useReducer } from 'react';
 import { ethers } from 'ethers';
 // import { createChart } from 'lightweight-charts';
@@ -97,9 +97,9 @@ const TRANSLATIONS = {
     trading_core: "Trading Core",
     ai_mode: "AI MODE",
     nav_robots: "Trading Bots",
-    nav_assets: "Asset Factory",
-    nav_monitoring: "Bot Monitoring",
-    nav_settings: "Exchanges",
+    nav_assets: "Create Crypto",
+    nav_monitoring: "Data Analysis",
+    nav_settings: "Settings",
     ai_core: "Neural Core Config",
     ai_provider: "AI Service Provider",
     ai_model_sel: "Model Selection",
@@ -150,7 +150,8 @@ const TRANSLATIONS = {
     save: "Save",
     timeframe: "Execution Timeframe",
     auto_mode: "AUTO (AI Selection)",
-    nav_charts: "Advanced Charts",
+    nav_charts: "Chart",
+    nav_mode: "Mode",
     header_charts: "Institutional Analysis Terminal",
     mon_pnl: "Total P&L",
     mon_winrate: "Win Rate",
@@ -275,7 +276,7 @@ const TRANSLATIONS = {
     bot_naming_zz: "ZigZag Pro",
     bot_naming_matrix: "MatrixScalp",
     bot_naming_neural: "MatrixNeural",
-    dry_run: "Dry Run",
+    dry_run: "MODO TESTE",
     max_trades_daily: "Max Daily Trades",
     tp_pct: "Take Profit (%)",
     sl_pct: "Stop Loss (%)",
@@ -307,12 +308,13 @@ const TRANSLATIONS = {
   },
   pt: {
     terminal_name: "Robô Crypto",
+    inst_terminal: "Terminal Institucional",
     trading_core: "Núcleo de Trading",
     ai_mode: "MODO IA",
     nav_robots: "Robôs de Trading",
-    nav_assets: "Fábrica de Ativos",
-    nav_monitoring: "Monitoramento de Robôs",
-    nav_settings: "Corretoras",
+    nav_assets: "Criar Crypto",
+    nav_monitoring: "Análise de dados",
+    nav_settings: "Configurações",
     sys_health: "Saúde do Sistema",
     header_robots: "Hub de Trading Automatizado",
     header_monitoring: "Dashboard de Monitoramento Institucional",
@@ -434,7 +436,7 @@ const TRANSLATIONS = {
     exec_strat: "Estratégia de Execução",
     assets_filter: "Filtro de Ativos",
     curr_strat_id: "ID da Estratégia Atual",
-    save_params: "Salvar Parâmetros",
+    save_params: "Salvar ParÃ¢metros",
     decommission: "Desativar",
     desc_agg_tech: '"Entra em pullbacks agressivos na EMA 9/21 após confirmação de vela de impulso e alto volume relativo, apenas quando a tendência se alinha com EMA 200 de 15m."',
     desc_sec_tech: '"Executa entradas de alta probabilidade na confirmação de vela de 15m após um pullback controlado na EMA 20/50 em uma estrutura de alta confirmada de 4H/Diário."',
@@ -447,7 +449,7 @@ const TRANSLATIONS = {
     ai_int_desc: "Novos ativos são escaneados automaticamente pelo Núcleo de Inteligência no próximo ciclo de sincronização.",
     utility_blueprint: "Plano do Token",
     token_name: "Nome do Token",
-    symbol: "Símbolo",
+    symbol: "SÃ­mbolo",
     total_supply: "Suprimento Total",
     network_chain: "Rede / Blockchain",
     token_logo: "Logo do Token",
@@ -465,7 +467,7 @@ const TRANSLATIONS = {
     bot_naming_zz: "ZigZag Pro",
     bot_naming_matrix: "MatrixScalp",
     bot_naming_neural: "MatrixNeural",
-    dry_run: "Dry Run",
+    dry_run: "MODO TESTE",
     max_trades_daily: "Máx Trades Diários",
     tp_pct: "Realização de Lucro (%)",
     sl_pct: "Stop Loss (%)",
@@ -476,7 +478,7 @@ const TRANSLATIONS = {
     op_24h: "Funcionamento 24h",
     reset_default: "Resetar para padrão",
     ai_core: "Configuração Neural Core",
-    ai_provider: "Provedor de Serviço IA",
+    ai_provider: "Provedor de ServiÃ§o IA",
     ai_model_sel: "Seleção de Modelo",
     ai_api_key: "Secret API KEY",
     ai_temperature: "Criatividade (Temp)",
@@ -497,15 +499,15 @@ const TRANSLATIONS = {
     zz_depth: "Profundidade ZigZag",
     zz_dev: "Desvio ZigZag",
     zz_backstep: "Backstep ZigZag",
-    ma_fast: "MM Rápida",
+    ma_fast: "MM RÃ¡pida",
     ma_slow: "MM Lenta",
-    ma_trend: "MM Tendência",
-    rr_ratio: "Relação Risco/Retorno",
+    ma_trend: "MM TendÃªncia",
+    rr_ratio: "RelaÃ§Ã£o Risco/Retorno",
     cancel: "Cancelar",
     nav_risk: "Risco",
-    test_connection: "Testar Conexão",
-    conn_success: "Conexão verificada!",
-    conn_error: "Erro: Chave API e Secret são obrigatórios."
+    test_connection: "Testar ConexÃ£o",
+    conn_success: "ConexÃ£o verificada!",
+    conn_error: "Erro: Chave API e Secret sÃ£o obrigatÃ³rios."
   }
 };
 // Login Screen Component
@@ -534,7 +536,7 @@ const LoginScreen = ({
             <BrainCircuit className="w-10 h-10 text-cyan-400 relative z-10" />
           </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-tight">
-            Robô Crypto
+            RobÃ´ Crypto
           </h1>
           <p className="text-slate-500 mt-2 text-sm uppercase tracking-widest font-medium">
             {language === 'pt' ? 'Terminal Institucional' : 'Institutional Terminal'}
@@ -583,7 +585,7 @@ const LoginScreen = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   required
                 />
               </div>
@@ -608,7 +610,7 @@ const LoginScreen = ({
 
         <div className="mt-8 text-center flex items-center justify-center gap-2 text-slate-500 text-xs uppercase tracking-wider">
           <ShieldCheck className="w-4 h-4 text-emerald-500/70" />
-          <span>{language === 'pt' ? 'Conexão Criptografada (AES-256)' : 'Encrypted Connection (AES-256)'}</span>
+          <span>{language === 'pt' ? 'ConexÃ£o Criptografada (AES-256)' : 'Encrypted Connection (AES-256)'}</span>
         </div>
       </div>
     </div>
@@ -817,6 +819,58 @@ const App: React.FC = () => {
   const [lastAnalysisTimestamp, setLastAnalysisTimestamp] = useState<number>(0);
   const [lastAttemptTimestamp, setLastAttemptTimestamp] = useState<number>(0);
 
+  // ðŸ”§ FIX: Reusable balance fetcher â€” called on save AND on periodic sync
+  const fetchBalanceForExchange = useCallback((exId: string, apiKey: string, secret: string) => {
+    if (!apiKey || !secret || (exId !== 'mexc' && exId !== 'binance')) return;
+    fetch(`/api/balance/${exId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, secret })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.balance === 'number') {
+          setExchanges(current => {
+            const draft = [...current];
+            const idx = draft.findIndex(e => e.id === exId);
+            if (idx !== -1) {
+              draft[idx] = { ...draft[idx], balance: data.balance, lastSync: new Date().toLocaleTimeString() };
+            }
+            return draft;
+          });
+        } else if (data && data.error) {
+          const msg = typeof data.error === 'string' ? data.error : (data.error.msg || JSON.stringify(data.error));
+          console.warn(`[Balance] ${exId}: ${msg}`);
+        }
+      })
+      .catch(err => console.error(`[Balance] Fetch error for ${exId}:`, err));
+  }, []);
+
+  // ðŸ”§ FIX: Auto-sync balances every 60 seconds for connected exchanges
+  useEffect(() => {
+    const interval = setInterval(() => {
+      exchanges.forEach(ex => {
+        if (ex.status === 'CONNECTED' && ex.apiKey && ex.apiSecret) {
+          fetchBalanceForExchange(ex.id, ex.apiKey, ex.apiSecret);
+        }
+      });
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [exchanges, fetchBalanceForExchange]);
+
+  // ðŸ”§ FIX: Fetch balance immediately on app mount for already-connected exchanges
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      exchanges.forEach(ex => {
+        if (ex.status === 'CONNECTED' && ex.apiKey && ex.apiKey.length > 5 && ex.apiSecret) {
+          console.log(`[Balance] Mount fetch for ${ex.id}...`);
+          fetchBalanceForExchange(ex.id, ex.apiKey, ex.apiSecret);
+        }
+      });
+    }, 2000); // Small delay to let the server start
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const runAnalysis = useCallback(async (force = false) => {
     // Sync balances first
     setExchanges(prevExchanges => {
@@ -869,25 +923,25 @@ const App: React.FC = () => {
 
     if (config.provider === 'GEMINI' && (!config.geminiKey || config.geminiKey.trim() === '')) {
       setError(language === 'pt'
-        ? "Chave de API do Gemini não configurada. Acesse Configurações > IA Core para adicionar."
+        ? "Chave de API do Gemini nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
         : "Gemini API Key not configured. Go to Settings > AI Core to add it.");
       return;
     }
     if (config.provider === 'DEEPSEEK' && (!config.deepseekKey || config.deepseekKey.trim() === '')) {
       setError(language === 'pt'
-        ? "Chave de API do DeepSeek não configurada. Acesse Configurações > IA Core para adicionar."
+        ? "Chave de API do DeepSeek nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
         : "DeepSeek API Key not configured. Go to Settings > AI Core to add it.");
       return;
     }
     if (config.provider === 'OPENAI' && (!config.openaiKey || config.openaiKey.trim() === '')) {
       setError(language === 'pt'
-        ? "Chave de API do OpenAI não configurada. Acesse Configurações > IA Core para adicionar."
+        ? "Chave de API do OpenAI nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
         : "OpenAI API Key not configured. Go to Settings > AI Core to add it.");
       return;
     }
     if (config.provider === 'ANTHROPIC' && (!config.anthropicKey || config.anthropicKey.trim() === '')) {
       setError(language === 'pt'
-        ? "Chave de API do Anthropic não configurada. Acesse Configurações > IA Core para adicionar."
+        ? "Chave de API do Anthropic nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
         : "Anthropic API Key not configured. Go to Settings > AI Core to add it.");
       return;
     }
@@ -912,25 +966,25 @@ const App: React.FC = () => {
       if (rawLow.includes('api key') || rawLow.includes('not valid') || rawLow.includes('invalid') || rawLow.includes('401') || rawLow.includes('403') || rawLow.includes('not configured')) {
         if (provider === 'GEMINI') {
           friendlyMsg = language === 'pt'
-            ? `Chave do Gemini inválida ou não configurada. Gere uma chave gratuita em aistudio.google.com e adicione em Configurações › IA Core.`
-            : `Gemini API Key is invalid or missing. Get a free key at aistudio.google.com and add it in Settings › AI Core.`;
+            ? `Chave do Gemini invÃ¡lida ou nÃ£o configurada. Gere uma chave gratuita em aistudio.google.com e adicione em ConfiguraÃ§Ãµes â€º IA Core.`
+            : `Gemini API Key is invalid or missing. Get a free key at aistudio.google.com and add it in Settings â€º AI Core.`;
         } else {
           friendlyMsg = language === 'pt'
-            ? `Chave de API inválida ou sem permissão. Verifique a chave em Configurações › IA Core.`
-            : `Invalid or unauthorized API Key. Check it in Settings › AI Core.`;
+            ? `Chave de API invÃ¡lida ou sem permissÃ£o. Verifique a chave em ConfiguraÃ§Ãµes â€º IA Core.`
+            : `Invalid or unauthorized API Key. Check it in Settings â€º AI Core.`;
         }
       } else if (rawLow.includes('quota') || rawLow.includes('429') || rawLow.includes('rate limit')) {
         friendlyMsg = language === 'pt'
-          ? `Limite de requisições da IA atingido. Aguarde alguns minutos ou use o modo MOCK.`
+          ? `Limite de requisiÃ§Ãµes da IA atingido. Aguarde alguns minutos ou use o modo MOCK.`
           : `AI rate limit reached. Wait a few minutes or switch to MOCK mode.`;
       } else if ((rawLow.includes('balance') || rawLow.includes('insufficient')) && provider !== 'GEMINI') {
         // Only show "recharge credits" for paid providers, never for Gemini
         friendlyMsg = language === 'pt'
-          ? `A chave de API não tem créditos disponíveis. A API do ${provider} é paga (diferente do site gratuito). Troque para GEMINI (gratuito) ou MOCK em Configurações › IA Core.`
-          : `No API credits available. The ${provider} API is pay-per-use. Switch to GEMINI (free tier) or MOCK in Settings › AI Core.`;
+          ? `A chave de API nÃ£o tem crÃ©ditos disponÃ­veis. A API do ${provider} Ã© paga (diferente do site gratuito). Troque para GEMINI (gratuito) ou MOCK em ConfiguraÃ§Ãµes â€º IA Core.`
+          : `No API credits available. The ${provider} API is pay-per-use. Switch to GEMINI (free tier) or MOCK in Settings â€º AI Core.`;
       } else if (rawLow.includes('network') || rawLow.includes('fetch') || rawLow.includes('failed to fetch')) {
         friendlyMsg = language === 'pt'
-          ? `Falha de conexão com a API de IA. Verifique sua internet e tente novamente.`
+          ? `Falha de conexÃ£o com a API de IA. Verifique sua internet e tente novamente.`
           : `Network error connecting to AI API. Check your internet connection.`;
       } else {
         friendlyMsg = language === 'pt'
@@ -981,27 +1035,6 @@ const App: React.FC = () => {
             <h1 className="font-bold text-xl tracking-tight">{t('terminal_name')}</h1>
           </div>
           <p className="text-[10px] text-slate-500 mt-2 font-bold tracking-widest uppercase opacity-70">{t('inst_terminal')}</p>
-        </div>
-
-        {/* Global Trading Mode Switcher - Prominent in Sidebar */}
-        <div className="p-4 border-b border-slate-800 bg-slate-900/30">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 block">Trading Core</label>
-          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => { setTradingAuthority('AI'); setCurrentView('charts'); }}
-              className={`flex-1 flex flex-col items-center py-2 px-1 rounded-lg transition-all ${tradingAuthority === 'AI' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-400'}`}
-            >
-              <Bot className="w-4 h-4 mb-1" />
-              <span className="text-[9px] font-bold">{t('ai_mode')}</span>
-            </button>
-            <button
-              onClick={() => setTradingAuthority('HYBRID')}
-              className={`flex-1 flex flex-col items-center py-2 px-1 rounded-lg transition-all ${tradingAuthority === 'HYBRID' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:text-slate-400'}`}
-            >
-              <BrainCircuit className="w-4 h-4 mb-1" />
-              <span className="text-[9px] font-bold">HYBRID</span>
-            </button>
-          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 mt-2">
@@ -1116,7 +1149,7 @@ const App: React.FC = () => {
           onToggleBot={(id, newStatus) => setBots(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b))}
           onClearHistory={() => setTradeHistory([])}
         />}
-        {currentView === 'settings' && <SettingsView data={data} setData={setData} exchanges={exchanges} setExchanges={setExchanges} tradingAuthority={tradingAuthority} setTradingAuthority={setTradingAuthority} language={language} setLanguage={setLanguage} t={t} />}
+        {currentView === 'settings' && <SettingsView data={data} setData={setData} exchanges={exchanges} setExchanges={setExchanges} tradingAuthority={tradingAuthority} setTradingAuthority={setTradingAuthority} language={language} setLanguage={setLanguage} t={t} onFetchBalance={fetchBalanceForExchange} onTradeExecuted={(trade) => setTradeHistory(prev => [trade, ...prev])} />}
       </main>
     </div>
   );
@@ -1246,12 +1279,14 @@ const SettingsView: React.FC<{
   language: 'en' | 'pt';
   setLanguage: (l: 'en' | 'pt') => void;
   t: (key: any) => string;
-}> = ({ data, setData, exchanges, setExchanges, tradingAuthority, setTradingAuthority, language, setLanguage, t }) => {
+  onFetchBalance: (exId: string, apiKey: string, secret: string) => void;
+  onTradeExecuted: (trade: any) => void;
+}> = ({ data, setData, exchanges, setExchanges, tradingAuthority, setTradingAuthority, language, setLanguage, t, onFetchBalance, onTradeExecuted }) => {
   const [activeTab, setActiveTab] = useState<'exchanges' | 'ai' | 'execution'>('exchanges');
   const [isAddingExchange, setIsAddingExchange] = useState(false);
   const [newExchangeName, setNewExchangeName] = useState('');
 
-  // Local buffer for AI keys — only committed to global state on Save
+  // Local buffer for AI keys â€” only committed to global state on Save
   const [aiKeys, setAiKeys] = useState({
     geminiKey: data.neural_core.geminiKey || '',
     deepseekKey: data.neural_core.deepseekKey || '',
@@ -1303,7 +1338,7 @@ const SettingsView: React.FC<{
           <div className="p-3 bg-cyan-500/10 rounded-xl"><Globe className="w-6 h-6 text-cyan-400" /></div>
           <div>
             <h3 className="font-bold">{t('lang_sel')}</h3>
-            <p className="text-xs text-slate-500">{language === 'pt' ? 'Português selecionado' : 'English selected'}</p>
+            <p className="text-xs text-slate-500">{language === 'pt' ? 'PortuguÃªs selecionado' : 'English selected'}</p>
           </div>
         </div>
         <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -1335,9 +1370,12 @@ const SettingsView: React.FC<{
                 ));
               }}
               onUpdate={(key, secret) => {
+                // Mark as CONNECTED immediately
                 setExchanges(exchanges.map(e =>
                   e.id === ex.id ? { ...e, status: 'CONNECTED', apiKey: key, apiSecret: secret, lastSync: 'Just now' } : e
                 ));
+                // ðŸ”§ FIX: Fetch real balance right after saving credentials
+                onFetchBalance(ex.id, key, secret);
               }}
               t={t}
             />
@@ -1532,7 +1570,7 @@ const SettingsView: React.FC<{
                   </div>
                   <div>
                     <p className="uppercase tracking-wider">Modo Simulado Ativo</p>
-                    <p className="text-[10px] font-medium opacity-70">Nenhuma credencial é necessária para usar o Neural Core neste modo.</p>
+                    <p className="text-[10px] font-medium opacity-70">Nenhuma credencial Ã© necessÃ¡ria para usar o Neural Core neste modo.</p>
                   </div>
                 </div>
               )}
@@ -1605,31 +1643,148 @@ const SettingsView: React.FC<{
 
       {activeTab === 'execution' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-3xl space-y-8 shadow-2xl">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-500/10 rounded-2xl">
-              <Server className="w-8 h-8 text-purple-400" />
-            </div>
-            <div><h3 className="text-xl font-bold tracking-tight">Execution Hierarchy</h3><p className="text-sm text-slate-500 font-medium">{t('exec_authority')}</p></div>
-          </div>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('exec_authority')}</label>
-              <div className="flex bg-slate-950 border border-slate-800 p-1.5 rounded-2xl shadow-inner">
-                <button onClick={() => setTradingAuthority('AI')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs tracking-wide transition-all ${tradingAuthority === 'AI' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AI AUTONOMOUS</button>
-                <button onClick={() => setTradingAuthority('HYBRID')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs tracking-wide transition-all ${tradingAuthority === 'HYBRID' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>HYBRID DESK</button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-              <ToggleRow label="Auto-Fill AI Signals" active={true} />
-              <ToggleRow label="Direct MEXC Routing" active={true} />
-            </div>
-          </div>
-          <button className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-purple-900/30">
-            <Save className="w-5 h-5" /> Enforce Hierarchy
-          </button>
+          {/* â”â”â” Manual Trade Panel â”â”â” */}
+          <ManualTradePanel
+            exchanges={exchanges}
+            onTradeExecuted={onTradeExecuted}
+          />
         </div>
       )}
 
+
+
+    </div>
+  );
+};
+
+
+const ManualTradePanel: React.FC<{ exchanges: any[], onTradeExecuted?: (trade: any) => void }> = ({ exchanges, onTradeExecuted }) => {
+  const [mtSymbol, setMtSymbol] = useState('LOBOUSDT');
+  const [mtQty, setMtQty] = useState('10');
+  const [mtExchange, setMtExchange] = useState(() => exchanges.find(e => e.apiKey)?.id ?? exchanges[0]?.id ?? '');
+  const [mtResult, setMtResult] = useState<any>(null);
+  const [mtLoading, setMtLoading] = useState(false);
+  const [mtError, setMtError] = useState<string | null>(null);
+
+  const connectedEx = exchanges.find(e => e.id === mtExchange);
+
+  const executeTrade = async (side: 'BUY' | 'SELL') => {
+    setMtLoading(true);
+    setMtResult(null);
+    setMtError(null);
+    try {
+      const res = await fetch('/api/manual-trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: mtSymbol.toUpperCase().includes('USDT') ? mtSymbol.toUpperCase() : mtSymbol.toUpperCase() + 'USDT',
+          side,
+          quoteQty: Number(mtQty),
+          apiKey: connectedEx?.apiKey ?? '',
+          secret: connectedEx?.apiSecret ?? '',
+          paperTrade: false,
+          marketMode: 'SPOT'
+        })
+      });
+
+      // Read response text first to avoid "Unexpected end of JSON input"
+      const text = await res.text();
+      if (!text || text.trim() === '') {
+        throw new Error(`Servidor retornou resposta vazia (status ${res.status}). Verifique se o backend estÃ¡ a correr.`);
+      }
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Resposta invÃ¡lida do servidor: ${text.slice(0, 200)}`);
+      }
+
+      if (data.success) {
+        const orderData = { ...data.order, side };
+        setMtResult(orderData);
+        // Add to history
+        if (onTradeExecuted) {
+          onTradeExecuted({
+            id: orderData.orderId || Math.random().toString(36).substring(7),
+            botId: 'MANUAL',
+            asset: mtSymbol.toUpperCase().includes('USDT') ? mtSymbol.toUpperCase() : mtSymbol.toUpperCase() + 'USDT',
+            type: side,
+            amount: Number(orderData.qty) || Number(mtQty) / Number(orderData.price),
+            price: Number(orderData.price),
+            timestamp: Date.now(),
+            pnl: 0,
+            status: 'COMPLETED',
+            exchangeId: connectedEx?.id
+          });
+        }
+      } else {
+        setMtError(typeof data.error === 'string' ? data.error : (data.error?.msg ?? JSON.stringify(data.error)));
+      }
+    } catch (e: any) {
+      setMtError(e.message);
+    } finally {
+      setMtLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 pt-8 border-t border-slate-800 space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-cyan-500/10 rounded-xl">
+          <Zap className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h4 className="font-bold text-sm">Quick Manual Trade</h4>
+          <p className="text-[10px] text-slate-500">Teste compra/venda directa na corretora (Modo Real)</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Corretora</label>
+          <select value={mtExchange} onChange={e => setMtExchange(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-bold text-slate-200 outline-none">
+            {exchanges.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+            {exchanges.length === 0 && <option value="">Nenhuma configurada</option>}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Par (sÃ­mbolo)</label>
+          <input type="text" value={mtSymbol} onChange={e => setMtSymbol(e.target.value)} placeholder="ex: LOBOUSDT" className="w-full bg-slate-950 border border-cyan-500/30 rounded-lg p-2.5 text-xs font-bold text-cyan-400 outline-none focus:border-cyan-500 mono uppercase" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Valor (USDT)</label>
+          <input type="number" value={mtQty} onChange={e => setMtQty(e.target.value)} min="1" step="1" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-bold text-slate-200 outline-none" />
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={() => executeTrade('BUY')} disabled={mtLoading || (!connectedEx?.apiKey)} className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/30">
+          {mtLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+          COMPRAR {mtSymbol.replace('USDT', '').toUpperCase()}
+        </button>
+        <button onClick={() => executeTrade('SELL')} disabled={mtLoading || (!connectedEx?.apiKey)} className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-900/30">
+          {mtLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4 rotate-180" />}
+          VENDER {mtSymbol.replace('USDT', '').toUpperCase()}
+        </button>
+      </div>
+
+      {mtResult && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl animate-in fade-in duration-300 space-y-1">
+          <p className="text-xs font-black text-emerald-400 flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Ordem executada!</p>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="text-[10px] text-slate-400">ID: <span className="text-slate-200 font-bold mono">{mtResult.orderId}</span></div>
+            <div className="text-[10px] text-slate-400">Status: <span className="text-emerald-400 font-bold">{mtResult.status}</span></div>
+            <div className="text-[10px] text-slate-400">PreÃ§o: <span className="text-cyan-400 font-bold mono">${Number(mtResult.price).toFixed(6)}</span></div>
+            <div className="text-[10px] text-slate-400">Qty: <span className="text-slate-200 font-bold mono">{Number(mtResult.qty).toFixed(4)}</span></div>
+          </div>
+        </div>
+      )}
+
+      {mtError && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl animate-in fade-in duration-300">
+          <p className="text-xs font-bold text-rose-400 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Erro: {mtError}</p>
+        </div>
+      )}
     </div>
   );
 };
@@ -1675,8 +1830,8 @@ const ExchangeCard: React.FC<{ name: string; status: string; lastSync: string; b
 
   const maskedValue = (val: string) => {
     if (!val) return '';
-    if (val.length < 8) return '••••••••';
-    return val.substring(0, 4) + '••••' + val.substring(val.length - 4);
+    if (val.length < 8) return 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢';
+    return val.substring(0, 4) + 'â€¢â€¢â€¢â€¢' + val.substring(val.length - 4);
   };
 
   return (
@@ -1926,7 +2081,7 @@ const ExecutiveSummary: React.FC<{ analysis: AnalysisResponse | null; isLoading:
 
 // --- Deployment Wizard Technical Core ---
 type WizardState = {
-  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL';
+  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA';
   exchangeId: string;
   assets: string[];
   leverage: number;
@@ -1969,8 +2124,9 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
           action.payload === 'ZIGZAG_PRO' ? { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 } :
             action.payload === 'MATRIX_SCALP' ? { leverage: 10, stopLoss: 0.3, takeProfit: 1.0 } :
               action.payload === 'MATRIX_NEURAL' ? { leverage: 5, stopLoss: 0.5, takeProfit: 1.5 } :
-                { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
-      const aiProvider = action.payload === 'MATRIX_SCALP' ? 'DEEPSEEK' : 'GEMINI';
+                action.payload === 'ROBO_IA' ? { leverage: 5, stopLoss: 0.5, takeProfit: 2.0 } :
+                  { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
+      const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'ROBO_IA') ? 'DEEPSEEK' : 'GEMINI';
       return { ...state, strategy: action.payload, ...defaults, aiProvider };
     case 'SET_EXCHANGE':
       return { ...state, exchangeId: action.payload };
@@ -2036,22 +2192,22 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
   const strategyDefaults: Record<string, any> = {
     'AGGRESSIVE_SCALP': {
       leverage: 10, maxDailyLoss: 1, stopLossPct: 0.4, takeProfitPct: 0.8, maxTradesPerDay: 20, positionSizePct: 5.0,
-      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'GEMINI', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO',
+      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO',
       emaFast: 9, emaSlow: 21, emaTrend: 200, rsiLong: [30, 70], rsiShort: [30, 70], maxConsecutiveLosses: 3, tpPartial: 0.3, tpFinal: 0.8, stopLossRange: [0.2, 0.5], atrThreshold: 1.5
     },
     'CONSERVATIVE_TREND': {
       leverage: 3, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 3.0, maxTradesPerDay: 5, positionSizePct: 2.0,
-      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'GEMINI', marginMode: 'CROSS', marketMode: 'SPOT', timeframe: 'AUTO',
+      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'SPOT', timeframe: 'AUTO',
       emaTrend: 200, emaFast: 20, emaSlow: 50, rsiRange: [40, 60], maxConsecutiveLosses: 2, rrRatio: 3.0, tpPartial: 1.5, atrThreshold: [1.0, 2.0], useEmaTrend: true, useEmaRejection: true, useStructureFilter: true, useRsiCheck: true
     },
     'SIMPLE_MA': {
       leverage: 1, maxDailyLoss: 1, stopLossPct: 2.0, takeProfitPct: 5.0, maxTradesPerDay: 10, positionSizePct: 3.0,
-      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'GEMINI', marginMode: 'CROSS', marketMode: 'SPOT', timeframe: 'AUTO',
+      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'SPOT', timeframe: 'AUTO',
       fastMa: 20, slowMa: 50, trendMa: 200, volMultiplier: 1.5, rsiRange: [30, 70], rsiPeriod: 14, capitalPerTrade: 100, maxOpenTrades: 3, tpRatios: [0.5, 1.0], emergencyStopPct: 5.0, cooldownTrades: 5, maxConsecutiveLosses: 3
     },
     'ZIGZAG_PRO': {
       leverage: 1, maxDailyLoss: 1, stopLossPct: 2.0, takeProfitPct: 5.0, maxTradesPerDay: 10, positionSizePct: 3.0,
-      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'GEMINI', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO',
+      tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO',
       depth: 12, deviation: 5, backstep: 3, profitTarget: 5.0, stopLoss: 2.0
     },
     'MATRIX_SCALP': {
@@ -2061,7 +2217,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
     },
     'MATRIX_NEURAL': {
       leverage: 5, maxDailyLoss: 1, stopLossPct: 0.5, takeProfitPct: 1.5, maxTradesPerDay: 10, positionSizePct: 3.0,
-      minConfidence: 85, tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'GEMINI', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO'
+      minConfidence: 85, tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO'
     }
   };
 
@@ -2138,8 +2294,9 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
         takeProfitPct: newBot.config.takeProfitPct ?? 1.5,
         riskPerTrade: newBot.config.riskPerTrade ?? 2,
         marketMode: (newBot.config as any).marketMode ?? 'SPOT',
-        paperTrade: true,
-        status: 'TEST'
+        // ðŸ”§ FIX: use the actual bot status â€” 'TEST' = paper/dry-run, 'ACTIVE' = real orders
+        paperTrade: newBot.status === 'TEST',
+        status: newBot.status
       }, ex);
     }
   };
@@ -2226,7 +2383,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           stopLossPct: bot.config.stopLossPct,
                           takeProfitPct: bot.config.takeProfitPct,
                           riskPerTrade: bot.config.riskPerTrade,
-                          paperTrade: bot.status === 'TEST' || true
+                          // ðŸ”§ FIX: removed `|| true` that was keeping paper mode always on
+                          paperTrade: bot.status === 'TEST'
                         }, ex);
                       }
                     }
@@ -2302,13 +2460,15 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                     {wizard.strategy === 'AGGRESSIVE' ? `${t('deploy_wizard')}: ${t('agg_scalper')}` :
                       wizard.strategy === 'SECURE' ? `${t('deploy_wizard')}: ${t('secure_trend')}` :
                         wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: ${t('matrix_neural')}` :
-                          `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
+                          wizard.strategy === 'ROBO_IA' ? `${t('deploy_wizard')}: ROBO IA` :
+                            `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
                   </h3>
                   <p className="text-sm text-slate-500 tracking-wide">
                     {wizard.strategy === 'AGGRESSIVE' ? t('mexc_logic_desc') :
                       wizard.strategy === 'SECURE' ? t('secure_logic_desc') :
                         wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
-                          wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
+                          wizard.strategy === 'ROBO_IA' ? "Advanced AI-driven strategy with automated SL/TP and adaptive signals." :
+                            wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
                   </p>
                 </div>
               </div>
@@ -2360,6 +2520,13 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 >
                   <BrainCircuit className="w-8 h-8 relative z-10" />
                   <span className="font-black text-xs tracking-widest uppercase relative z-10">{t('matrix_neural')}</span>
+                </button>
+                <button
+                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ROBO_IA' })}
+                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ROBO_IA' ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-slate-900 text-purple-400 shadow-[0_0_30px_rgba(168,85,247,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
+                >
+                  <Cpu className="w-8 h-8 relative z-10" />
+                  <span className="font-black text-xs tracking-widest uppercase relative z-10">ROBO IA</span>
                 </button>
               </div>
 
@@ -2526,23 +2693,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 </div>
               )}
 
-              <section className="space-y-6">
-                <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-xs">
-                  <BrainCircuit className="w-4 h-4" /> Neural Core Engine
-                </div>
-                <div className="grid grid-cols-1 gap-4 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('ai_provider')}</label>
-                    <div className="flex flex-wrap gap-2">
-                      <ProviderBtn active={wizard.aiProvider === 'GEMINI'} onClick={() => dispatch({ type: 'SET_AI_PROVIDER', payload: 'GEMINI' })} label={t('prov_gemini')} />
-                      <ProviderBtn active={wizard.aiProvider === 'DEEPSEEK'} onClick={() => dispatch({ type: 'SET_AI_PROVIDER', payload: 'DEEPSEEK' })} label={t('prov_deepseek')} />
-                      <ProviderBtn active={wizard.aiProvider === 'OPENAI'} onClick={() => dispatch({ type: 'SET_AI_PROVIDER', payload: 'OPENAI' })} label={`${t('prov_openai')} (Soon)`} />
-                      <ProviderBtn active={wizard.aiProvider === 'ANTHROPIC'} onClick={() => dispatch({ type: 'SET_AI_PROVIDER', payload: 'ANTHROPIC' })} label={`${t('prov_anthropic')} (Soon)`} />
-                      <ProviderBtn active={wizard.aiProvider === 'MOCK'} onClick={() => dispatch({ type: 'SET_AI_PROVIDER', payload: 'MOCK' })} label={t('prov_mock')} />
-                    </div>
-                  </div>
-                </div>
-              </section>
+              {/* Neural Core section removed by user request (bots operate without AI) */}
+
 
               <section className="space-y-6">
                 <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-xs">
@@ -2679,6 +2831,26 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-rose-400 outline-none"
                         />
                       </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-amber-400 uppercase tracking-wide">
+                          âš ï¸ MÃ¡x. Perdas Consecutivas
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          step="1"
+                          value={(editingBot.config as any).maxConsecutiveLosses ?? 3}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            const updated = { ...editingBot, config: { ...editingBot.config, maxConsecutiveLosses: val } };
+                            setEditingBot(updated);
+                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                          }}
+                          className="w-full bg-slate-900 border border-amber-500/30 rounded-lg p-3 text-sm font-bold text-amber-400 outline-none focus:border-amber-500"
+                        />
+                        <p className="text-[9px] text-slate-500">RobÃ´ pausa automaticamente apÃ³s N perdas seguidas</p>
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-6">
@@ -2763,33 +2935,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                       </div>
                     </div>
 
-
-
-                    <div className="flex items-center gap-3 mb-2 text-cyan-400">
-                      <BrainCircuit className="w-5 h-5" />
-                      <h4 className="font-bold uppercase tracking-widest text-xs">Neural Core</h4>
-                    </div>
-                    <div className="bg-slate-950/30 p-4 rounded-xl border border-slate-800 space-y-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400">AI Provider</label>
-                        <select
-                          value={editingBot.config.aiProvider || 'GEMINI'}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const updated = { ...editingBot, config: { ...editingBot.config, aiProvider: val as any } };
-                            setEditingBot(updated);
-                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
-                          }}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-slate-200 outline-none focus:border-cyan-500/50"
-                        >
-                          <option value="GEMINI">{t('prov_gemini')}</option>
-                          <option value="DEEPSEEK">{t('prov_deepseek')}</option>
-                          <option value="OPENAI">{t('prov_openai')} (Coming Soon)</option>
-                          <option value="ANTHROPIC">{t('prov_anthropic')} (Coming Soon)</option>
-                          <option value="MOCK">{t('prov_mock')}</option>
-                        </select>
-                      </div>
-                    </div>
+                    {/* Neural Core Edit section removed by user request */}
 
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-4">
@@ -2914,7 +3060,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] font-bold text-slate-400">{t('timeframe')}</label>
                         <select
-                          value={editingBot.config.timeframe || 'AUTO'}
+                          value={editingBot.config.timeframe && editingBot.config.timeframe !== 'AUTO' ? editingBot.config.timeframe : '5m'}
                           onChange={(e) => {
                             const val = e.target.value;
                             const updated = { ...editingBot, config: { ...editingBot.config, timeframe: val } };
@@ -2923,7 +3069,6 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-slate-200 outline-none focus:border-cyan-500/50 appearance-none cursor-pointer"
                         >
-                          <option value="AUTO">{t('auto_mode')}</option>
                           <option value="5m">5m</option>
                           <option value="15m">15m</option>
                           <option value="1h">1h</option>
@@ -3145,7 +3290,14 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   </div>
                 </div>
               </div>
+
+              {/* Quick Manual Trade inside modal */}
+              <div className="px-8 pb-4">
+                <ManualTradePanel exchanges={exchanges} />
+              </div>
+
               <div className="p-8 bg-slate-900/50 backdrop-blur-md rounded-b-3xl border-t border-slate-800 shrink-0">
+
                 <div className="flex gap-6">
                   <button
                     onClick={() => { setEditingBot(null); }}
@@ -3708,7 +3860,7 @@ const BotMonitoringView: React.FC<{
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <MetricCard
-          label={t('total_equity') || 'Patrimônio Total'}
+          label={t('total_equity') || 'PatrimÃ´nio Total'}
           value={formatCurrency(currentEquity)}
           icon={<Wallet className="text-emerald-400" />}
           trend="Real-time"
@@ -3751,7 +3903,7 @@ const BotMonitoringView: React.FC<{
           className={`px-6 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all whitespace-nowrap flex items-center gap-2 ${selectedBotId === 'all' ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-900/20' : 'text-slate-500 hover:text-slate-300'}`}
         >
           <LayoutDashboard className="w-3.5 h-3.5" />
-          {t('all_robots') || 'Todos os Robôs'}
+          {t('all_robots') || 'Todos os RobÃ´s'}
         </button>
         {bots.map(bot => (
           <button

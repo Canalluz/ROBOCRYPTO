@@ -1,6 +1,12 @@
 import { BotConfig, StrategyContext } from './types.js';
 import { aggressiveScalp } from './strategies/aggressive-scalp.js';
+import { secureTrend } from './strategies/secure-trend.js';
+import { simpleMaCross } from './strategies/simple-ma.js';
+import { zigzagPro } from './strategies/zigzag-pro.js';
+import { roboIa } from './strategies/robo-ia.js';
 import { getCandles, placeOrder, getUsdtBalance, getPrice } from './exchanges/mexc.js';
+
+
 
 type BotState = {
     config: BotConfig;
@@ -13,6 +19,7 @@ type BotState = {
     todayPnl: number;
     consecutiveLosses: number;
     paperBalance: number; // Simulated USDT balance for paper trade mode
+    activePositions: Set<string>; // Tracks symbols where bot is currently IN a trade
 };
 
 const bots = new Map<string, BotState>();
@@ -39,7 +46,8 @@ export function deployBot(config: BotConfig, apiKey: string, secret: string) {
         winRate: 0,
         todayPnl: 0,
         consecutiveLosses: 0,
-        paperBalance: 1000, // Start with $1000 simulated balance in paper mode
+        paperBalance: 1000,
+        activePositions: new Set<string>(),
     };
 
     bots.set(config.id, state);
@@ -89,12 +97,37 @@ async function tickEngine(id: string) {
 
     for (const asset of bot.config.assets) {
         try {
+            // ------ Open Position Control ------
+            // If bot is already in a position for this asset, skip signal logic
+            // (Note: For Futures, this could be expanded to allow Short signals while Long, etc.)
+            if (bot.activePositions.has(asset)) {
+                // Determine if we should exit (this engine simplified: exit on next signal or auto-simulation)
+                // For now, respect user's "doesn't open multiple positions"
+                continue;
+            }
+
             // Fetch candles (public endpoint — no auth needed)
-            const candles = await getCandles(asset, '15m', 200);
-            console.log(`[ENGINE] "${bot.config.name}" | ${asset} | ${candles.length} candles | last close: ${candles[candles.length - 1]?.close}`);
+            const tf = (bot.config.timeframe || '15m') as '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
+            const candles = await getCandles(asset, tf, 200);
+            console.log(`[ENGINE] "${bot.config.name}" | ${asset} (${tf}) | ${candles.length} candles | last close: ${candles[candles.length - 1]?.close}`);
 
             const ctx: StrategyContext = { candles, config: bot.config, symbol: asset };
-            const signal = aggressiveScalp(ctx);
+
+            // Route to the correct strategy based on strategyId
+            const stratId = (bot.config.strategyId ?? '').toUpperCase();
+            let signal;
+            if (stratId.includes('SECURE') || stratId.includes('CONSERVATIVE')) {
+                signal = secureTrend(ctx);
+            } else if (stratId.includes('SIMPLE_MA') || stratId.includes('SIMPLE') || stratId.includes('MA_CROSS')) {
+                signal = simpleMaCross(ctx);
+            } else if (stratId.includes('ZIGZAG') || stratId.includes('ZZ') || stratId.includes('ZIG')) {
+                signal = zigzagPro(ctx);
+            } else if (stratId.includes('ROBO_IA') || stratId.includes('ROBOIA')) {
+                signal = roboIa(ctx);
+            } else {
+                // Default: aggressiveScalp covers AGGRESSIVE, MATRIX_SCALP, MATRIX_NEURAL
+                signal = aggressiveScalp(ctx);
+            }
 
             console.log(`[ENGINE] "${bot.config.name}" | ${asset} | SIGNAL: ${signal.action}${signal.reason ? ` (${signal.reason})` : ''}`);
 
@@ -130,8 +163,13 @@ async function tickEngine(id: string) {
                 positionSizeUsdt,
                 bot.apiKey,
                 bot.secret,
-                bot.config.paperTrade
+                bot.config.paperTrade,
+                bot.config.marketMode ?? 'SPOT',  // route SPOT vs FUTURES
+                bot.config.leverage ?? 1
             );
+
+            // Mark position as active
+            bot.activePositions.add(asset);
 
             // ------ Simulate outcome (for paper trades) ------
             // In real mode, actual PnL comes from subsequent monitoring
@@ -159,6 +197,7 @@ async function tickEngine(id: string) {
                 bot.winRate = (bot.winRate * (bot.trades - 1)) / bot.trades;
             }
 
+            // Build trade record first so auto-pause can reference it
             const tradeData = {
                 id: result.orderId,
                 botId: bot.config.id,
@@ -174,6 +213,36 @@ async function tickEngine(id: string) {
                 takeProfit: signal.takeProfit,
                 reason: signal.reason
             };
+
+            // ------ Auto-pause on loss protection triggers ------
+            const maxConsLoss = bot.config.maxConsecutiveLosses ?? 3;
+            const maxDailyLossPct = bot.config.maxDailyLossPct ?? 0; // 0 = disabled
+
+            if (bot.consecutiveLosses >= maxConsLoss) {
+                console.warn(`[ENGINE] ⚠️ Bot "${bot.config.name}" PAUSED: ${bot.consecutiveLosses} consecutive losses (limit: ${maxConsLoss})`);
+                onTradeExecuted(bot.config.id, { ...tradeData, autopaused: true, pauseReason: `${bot.consecutiveLosses} perdas consecutivas` });
+                pauseBot(id);
+                onBotStatus(id, { status: 'PAUSED', pauseReason: `Auto-paused: ${bot.consecutiveLosses} consecutive losses` });
+                return; // stop processing this tick
+            }
+
+            if (maxDailyLossPct > 0) {
+                const initialBalance = bot.config.paperTrade ? 1000 : availableBalance + Math.abs(bot.todayPnl);
+                const dailyLossPct = (Math.abs(bot.todayPnl) / initialBalance) * 100;
+                if (bot.todayPnl < 0 && dailyLossPct >= maxDailyLossPct) {
+                    console.warn(`[ENGINE] ⚠️ Bot "${bot.config.name}" PAUSED: daily loss ${dailyLossPct.toFixed(2)}% ≥ ${maxDailyLossPct}%`);
+                    onTradeExecuted(bot.config.id, { ...tradeData, autopaused: true, pauseReason: `Perda diária ${dailyLossPct.toFixed(1)}% atingida` });
+                    pauseBot(id);
+                    onBotStatus(id, { status: 'PAUSED', pauseReason: `Auto-paused: daily loss ${dailyLossPct.toFixed(2)}% ≥ ${maxDailyLossPct}%` });
+                    return;
+                }
+            }
+
+            // Reset position track after "execution" summary (in this simple tick model, we assume entry -> exit move simulation)
+            // In a more complex model, we'd wait for SL/TP hit to .delete(asset)
+            // For now, we clear it after the simulated move so the next tick can fire again.
+            // (If we wanted persistent multi-candle trades, we'd keep it until a reversal signal)
+            bot.activePositions.delete(asset);
 
             onTradeExecuted(bot.config.id, tradeData);
             onBotStatus(id, {

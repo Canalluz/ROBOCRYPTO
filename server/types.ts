@@ -11,6 +11,9 @@ export interface BotConfig {
     paperTrade: boolean;
     status: 'ACTIVE' | 'PAUSED' | 'TEST';
     marketMode?: 'SPOT' | 'FUTURES';
+    maxConsecutiveLosses?: number;  // pause bot after N consecutive losses
+    maxDailyLossPct?: number;       // pause bot if daily loss exceeds this %
+    timeframe?: string;             // manual timeframe selection (e.g. '1m', '5m', '15m')
 }
 
 export interface TradeSignal {

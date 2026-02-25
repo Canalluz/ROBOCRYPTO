@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cors from 'cors';
+import { WebSocketServer, WebSocket } from 'ws';
+import { createServer } from 'http';
 import { deployBot, pauseBot, stopBot, registerWsBroadcaster } from './bot-engine.js';
 import { getUsdtBalance, placeOrder } from './exchanges/mexc.js';
 import { getUsdtBalance as getBinanceUsdtBalance } from './exchanges/binance.js';
@@ -115,6 +120,17 @@ app.post('/api/manual-trade', async (req, res) => {
         console.error('[MANUAL] Trade error:', e.response?.data || e.message);
         res.status(500).json({ error: e.response?.data || e.message || 'Order failed' });
     }
+}
+});
+
+// For deploying to Render: Serve static frontend files
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, '../../dist');
+
+app.use(express.static(distPath));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;

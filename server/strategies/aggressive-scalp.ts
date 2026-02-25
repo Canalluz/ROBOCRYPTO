@@ -106,6 +106,34 @@ export const aggressiveScalp = ({ candles, symbol, config }: StrategyContext): T
         };
     }
 
+    // === SIGNAL 3: RSI Extreme + EMA Trend Confirmation ===
+    // Fires when RSI hits extreme levels while price is aligned with trend
+    // This fires more frequently and doesn't require a crossover event
+    const rsiOversold = rsi < 38 && inUptrend;         // RSI oversold in uptrend → BUY
+    const rsiOverbought = rsi > 62 && inDowntrend;     // RSI overbought in downtrend → SELL
+
+    if (rsiOversold) {
+        return {
+            symbol,
+            action: 'BUY',
+            price: currentPrice,
+            reason: `RSI oversold bounce | RSI: ${rsi.toFixed(1)} | Trend: UP`,
+            stopLoss: currentPrice * (1 - (config.stopLossPct ?? 1) / 100),
+            takeProfit: currentPrice * (1 + (config.takeProfitPct ?? 1.5) / 100)
+        };
+    }
+
+    if (rsiOverbought) {
+        return {
+            symbol,
+            action: 'SELL',
+            price: currentPrice,
+            reason: `RSI overbought | RSI: ${rsi.toFixed(1)} | Trend: DOWN`,
+            stopLoss: currentPrice * (1 + (config.stopLossPct ?? 1) / 100),
+            takeProfit: currentPrice * (1 - (config.takeProfitPct ?? 1.5) / 100)
+        };
+    }
+
     return {
         symbol,
         action: 'HOLD',

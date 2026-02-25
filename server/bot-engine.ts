@@ -4,6 +4,7 @@ import { secureTrend } from './strategies/secure-trend.js';
 import { simpleMaCross } from './strategies/simple-ma.js';
 import { zigzagPro } from './strategies/zigzag-pro.js';
 import { roboIa } from './strategies/robo-ia.js';
+import { AnatomiaFluxoStrategy, Sinal as FluxoSinal } from './strategies/anatomia-fluxo.js';
 import { getCandles, placeOrder, getUsdtBalance, getPrice } from './exchanges/mexc.js';
 
 
@@ -81,7 +82,7 @@ function startInterval(bot: BotState) {
     onBotStatus(bot.config.id, { status: bot.config.status });
 
     // Scalp bots tick every 15s, trend bots every 60s
-    const isScalp = bot.config.strategyId?.toUpperCase().includes('SCALP');
+    const isScalp = bot.config.strategyId?.toUpperCase().includes('SCALP') || bot.config.strategyId?.toUpperCase().includes('ANATOMIA_FLUXO');
     const tickMs = isScalp ? 15000 : 60000;
 
     bot.interval = setInterval(() => tickEngine(bot.config.id), tickMs);
@@ -106,27 +107,48 @@ async function tickEngine(id: string) {
                 continue;
             }
 
-            // Fetch candles (public endpoint — no auth needed)
-            const tf = (bot.config.timeframe || '15m') as '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
-            const candles = await getCandles(asset, tf, 200);
-            console.log(`[ENGINE] "${bot.config.name}" | ${asset} (${tf}) | ${candles.length} candles | last close: ${candles[candles.length - 1]?.close}`);
-
-            const ctx: StrategyContext = { candles, config: bot.config, symbol: asset };
-
-            // Route to the correct strategy based on strategyId
             const stratId = (bot.config.strategyId ?? '').toUpperCase();
             let signal;
-            if (stratId.includes('SECURE') || stratId.includes('CONSERVATIVE')) {
-                signal = secureTrend(ctx);
-            } else if (stratId.includes('SIMPLE_MA') || stratId.includes('SIMPLE') || stratId.includes('MA_CROSS')) {
-                signal = simpleMaCross(ctx);
-            } else if (stratId.includes('ZIGZAG') || stratId.includes('ZZ') || stratId.includes('ZIG')) {
-                signal = zigzagPro(ctx);
-            } else if (stratId.includes('ROBO_IA') || stratId.includes('ROBOIA')) {
-                signal = roboIa(ctx);
+
+            if (stratId.includes('ANATOMIA_FLUXO')) {
+                // Fetch multiple timeframes required by Anatomia do Fluxo
+                const configAF = bot.config as any;
+                const tfs = ['1d', '4h', '1h', '15m'] as const;
+                const strat = new AnatomiaFluxoStrategy(configAF);
+
+                for (const timeF of tfs) {
+                    const tfCandles = await getCandles(asset, timeF, 200);
+                    strat.alimentar_dados(asset, timeF, tfCandles);
+                }
+
+                const res = strat.gerar_sinal(asset);
+
+                if (res.sinal === FluxoSinal.COMPRA) {
+                    signal = { action: 'BUY', stopLoss: res.stop_loss, takeProfit: res.take_profit_1, reason: `Anatomia Fluxo (Score: ${res.score_compra})` };
+                } else if (res.sinal === FluxoSinal.VENDA) {
+                    signal = { action: 'SELL', stopLoss: res.stop_loss, takeProfit: res.take_profit_1, reason: `Anatomia Fluxo (Score: ${res.score_venda})` };
+                } else {
+                    signal = { action: 'HOLD', reason: `Anatomia Fluxo Neutro (C:${res.score_compra}/V:${res.score_venda})` };
+                }
+
+                console.log(`[AF] "${bot.config.name}" | ${asset} | COMPRA_SCORE: ${res.score_compra}/30 | VENDA_SCORE: ${res.score_venda}/30`);
             } else {
-                // Default: aggressiveScalp covers AGGRESSIVE, MATRIX_SCALP, MATRIX_NEURAL
-                signal = aggressiveScalp(ctx);
+                const tf = (bot.config.timeframe || '15m') as '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
+                const candles = await getCandles(asset, tf, 200);
+                console.log(`[ENGINE] "${bot.config.name}" | ${asset} (${tf}) | ${candles.length} candles | last close: ${candles[candles.length - 1]?.close}`);
+                const ctx: StrategyContext = { candles, config: bot.config, symbol: asset };
+
+                if (stratId.includes('SECURE') || stratId.includes('CONSERVATIVE')) {
+                    signal = secureTrend(ctx);
+                } else if (stratId.includes('SIMPLE_MA') || stratId.includes('SIMPLE') || stratId.includes('MA_CROSS')) {
+                    signal = simpleMaCross(ctx);
+                } else if (stratId.includes('ZIGZAG') || stratId.includes('ZZ') || stratId.includes('ZIG')) {
+                    signal = zigzagPro(ctx);
+                } else if (stratId.includes('ROBO_IA') || stratId.includes('ROBOIA')) {
+                    signal = roboIa(ctx);
+                } else {
+                    signal = aggressiveScalp(ctx);
+                }
             }
 
             console.log(`[ENGINE] "${bot.config.name}" | ${asset} | SIGNAL: ${signal.action}${signal.reason ? ` (${signal.reason})` : ''}`);

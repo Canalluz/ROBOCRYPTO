@@ -3,7 +3,7 @@ import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import { deployBot, pauseBot, stopBot, registerWsBroadcaster } from './bot-engine.js';
-import { getUsdtBalance } from './exchanges/mexc.js';
+import { getUsdtBalance, placeOrder } from './exchanges/mexc.js';
 import { getUsdtBalance as getBinanceUsdtBalance } from './exchanges/binance.js';
 
 const app = express();
@@ -82,6 +82,38 @@ app.post('/api/balance/binance', async (req, res) => {
     } catch (e: any) {
         console.error('[BINANCE] API Error:', e.response?.data || e.message);
         res.status(500).json({ error: e.response?.data || e.message || 'Failed to fetch balance' });
+    }
+});
+
+// Manual Trade endpoint — for testing buy/sell directly from the UI
+app.post('/api/manual-trade', async (req, res) => {
+    try {
+        const { symbol, side, quoteQty, apiKey, secret, paperTrade, marketMode } = req.body;
+        if (!symbol || !side || !quoteQty) {
+            return res.status(400).json({ error: 'Missing required fields: symbol, side, quoteQty' });
+        }
+        if (!paperTrade && (!apiKey || !secret)) {
+            return res.status(400).json({ error: 'API Key and Secret required for live orders' });
+        }
+
+        console.log(`[MANUAL] ${paperTrade ? '[PAPER]' : '[LIVE]'} ${side} ${symbol} ${quoteQty} USDT`);
+
+        const result = await placeOrder(
+            symbol,
+            side as 'BUY' | 'SELL',
+            Number(quoteQty),
+            apiKey || '',
+            secret || '',
+            !!paperTrade,
+            (marketMode as 'SPOT' | 'FUTURES') ?? 'SPOT',
+            1
+        );
+
+        console.log(`[MANUAL] Order result:`, result);
+        res.json({ success: true, order: result });
+    } catch (e: any) {
+        console.error('[MANUAL] Trade error:', e.response?.data || e.message);
+        res.status(500).json({ error: e.response?.data || e.message || 'Order failed' });
     }
 });
 

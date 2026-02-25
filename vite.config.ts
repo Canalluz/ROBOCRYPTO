@@ -9,16 +9,16 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
       proxy: {
-        // Proxy WebSocket: frontend connects to /ws → ws://localhost:3001
+        // Proxy WebSocket: frontend connects to /ws → ws://127.0.0.1:3001
         '/ws': {
-          target: 'ws://localhost:3001',
+          target: 'ws://127.0.0.1:3001',
           ws: true,
           changeOrigin: true,
           rewrite: (p: string) => p.replace(/^\/ws/, '')
         },
         // Proxy REST API calls
         '/api': {
-          target: 'http://localhost:3001',
+          target: 'http://127.0.0.1:3001',
           changeOrigin: true
         }
       }

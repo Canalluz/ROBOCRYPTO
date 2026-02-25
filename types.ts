@@ -421,6 +421,44 @@ export interface MatrixNeuralConfig {
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
 }
 
+export interface AnatomiaFluxoConfig {
+  exchangeId: string;
+  assets: string[];
+  leverage: number;
+  ema_curta: number;
+  ema_media: number;
+  ema_longa: number;
+  volume_profile_dias: number;
+  smi_periodo_acum: number;
+  smi_periodo_dist: number;
+  smi_threshold: number;
+  cvd_suavizacao: number;
+  bandas_desvio: number;
+  rsi_periodo: number;
+  rsi_sobrevendido: number;
+  rsi_sobrecomprado: number;
+  estocastico_k: number;
+  estocastico_d: number;
+  risco_por_operacao: number;
+  alavancagem_maxima: number;
+  trailing_stop_distancia: number;
+  max_ativos_simultaneos: number;
+  timeframes: {
+    '1d': string;
+    '4h': string;
+    '1h': string;
+    '15m': string;
+  };
+  takeProfitPct?: number;
+  stopLossPct?: number;
+  positionSizePct?: number;
+  tradingHours?: { start: string; end: string; use24h?: boolean };
+  aiProvider?: 'GEMINI' | 'DEEPSEEK' | 'OPENAI' | 'ANTHROPIC' | 'MOCK';
+  marginMode?: 'CROSS' | 'ISOLATED';
+  marketMode?: 'SPOT' | 'FUTURES';
+  timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+}
+
 export interface AutomationRule {
   id: string;
   asset: string;
@@ -437,9 +475,9 @@ export interface AutomationRule {
 export interface TradingBot {
   id: string;
   name: string;
-  strategyId: 'AGGRESSIVE_SCALP' | 'CONSERVATIVE_TREND' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL';
+  strategyId: 'AGGRESSIVE_SCALP' | 'CONSERVATIVE_TREND' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ANATOMIA_FLUXO';
   status: 'ACTIVE' | 'PAUSED' | 'STOPPED' | 'TEST';
-  config: AggressiveConfig | ConservativeConfig | SimpleMAConfig | ZigZagConfig | MatrixScalpConfig | MatrixNeuralConfig;
+  config: AggressiveConfig | ConservativeConfig | SimpleMAConfig | ZigZagConfig | MatrixScalpConfig | MatrixNeuralConfig | AnatomiaFluxoConfig;
   performance: {
     totalPnl: number;
     todayPnl: number;

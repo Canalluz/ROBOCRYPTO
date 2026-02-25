@@ -11,6 +11,9 @@ export class BotService {
                 ? `ws://${window.location.host}/ws`
                 : 'ws://localhost:3001';
 
+            // 🔧 FIX: Create the WebSocket instance (was missing — ws was always null)
+            this.ws = new WebSocket(wsUrl);
+
             this.ws.onopen = () => {
                 console.log('[Frontend] Connected to Bot Engine');
                 // Flush any queued messages

@@ -58,7 +58,8 @@ import {
   X,
   Play,
   Trash2,
-  Info
+  Info,
+  LogOut
 } from 'lucide-react';
 import { SystemData, AnalysisResponse, Recommendation, RiskAlert, PortfolioAnalysis, RebalancingTrade, RiskAnalysis, TradingBot, AggressiveConfig, ExchangeConfig, AutomationRule, Trade, EquityPoint, MatrixScalpConfig, MatrixNeuralConfig } from './types';
 import { INITIAL_DATA } from './constants';
@@ -663,8 +664,8 @@ const App: React.FC = () => {
               todayPnl: 0,
               winRate: 0,
               trades: 0,
-              profitFactor: 0,
-              maxDrawdown: 0
+              consecutiveLosses: 0,
+              avgTradeDuration: '0m'
             }
           }));
         }
@@ -723,6 +724,33 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Hydrate stateless backend with active/test bots restored from local storage
+  useEffect(() => {
+    bots.forEach(bot => {
+      if (bot.status === 'ACTIVE' || bot.status === 'TEST') {
+        const ex = exchanges.find(e => e.id === bot.config.exchangeId);
+        if (ex && ex.apiKey) {
+          console.log('[Frontend] Redeploying restored bot:', bot.name);
+          botService.deployBot({
+            id: bot.id,
+            name: bot.name,
+            strategyId: bot.strategyId,
+            exchangeId: bot.config.exchangeId,
+            assets: bot.config.assets,
+            leverage: bot.config.leverage,
+            stopLossPct: bot.config.stopLossPct,
+            takeProfitPct: bot.config.takeProfitPct,
+            riskPerTrade: bot.config.riskPerTrade,
+            marketMode: (bot.config as any).marketMode ?? 'SPOT',
+            paperTrade: bot.status === 'TEST',
+            status: bot.status
+          }, ex);
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // --- AUTHENTICATION STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -762,36 +790,34 @@ const App: React.FC = () => {
   };
 
   const [exchanges, setExchanges] = useState<ExchangeConfig[]>(() => {
+    const defaultExchanges: ExchangeConfig[] = [
+      { id: 'binance', name: 'Binance Institutional', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
+      { id: 'mexc', name: 'MEXC Global', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
+      { id: 'kraken', name: 'Kraken Pro', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' }
+    ];
+
     const saved = localStorage.getItem('tradepro_exchanges');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          // Helper: detect fake masked keys like '************4A2C' stored by old code
-          const isFakeKey = (k: any) => typeof k === 'string' && k.length > 0 && /^\*+/.test(k);
-          return parsed.map((ex: any) => {
-            const cleanKey = isFakeKey(ex.apiKey) ? '' : (ex.apiKey || '');
-            const cleanSecret = isFakeKey(ex.apiSecret) ? '' : (ex.apiSecret || '');
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return defaultExchanges.map(defEx => {
+            const found = parsed.find((p: any) => p.id === defEx.id);
+            if (!found) return defEx;
 
-            // Aggressive cleanup: if no real API key, force disconnect and zero balance
-            if (!cleanKey || cleanKey.length < 5) {
-              return {
-                ...ex,
-                apiKey: '',
-                apiSecret: '',
-                status: 'DISCONNECTED',
-                balance: 0,
-                lastSync: 'N/A'
-              };
-            }
+            // Helper: strictly detect only explicitly masked fake keys, avoid erasing valid keys
+            const isFakeKey = (k: any) => typeof k === 'string' && (k.includes('****') || k.includes('••••'));
+            const cleanKey = isFakeKey(found.apiKey) ? '' : (found.apiKey || '');
+            const cleanSecret = isFakeKey(found.apiSecret) ? '' : (found.apiSecret || '');
 
-            // We ONLY trust LIVE fetches. We unconditionally set balance to 0 on initial app load.
-            // This prevents the $239 bug for anyone who has old cached dummy data.
             return {
-              ...ex,
+              ...defEx,
+              ...found,
               apiKey: cleanKey,
               apiSecret: cleanSecret,
-              balance: 0
+              balance: 0, // Unconditionally set balance to 0 on initial load to force a fresh fetch
+              status: cleanKey ? found.status : 'DISCONNECTED',
+              lastSync: cleanKey ? found.lastSync : 'N/A'
             };
           });
         }
@@ -799,11 +825,7 @@ const App: React.FC = () => {
         console.error("Failed to load/migrate exchanges", e);
       }
     }
-    return [
-      { id: 'binance', name: 'Binance Institutional', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
-      { id: 'mexc', name: 'MEXC Global', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
-      { id: 'kraken', name: 'Kraken Pro', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' }
-    ];
+    return defaultExchanges;
   });
 
   // Persist exchanges on change
@@ -822,14 +844,24 @@ const App: React.FC = () => {
   // ðŸ”§ FIX: Reusable balance fetcher â€” called on save AND on periodic sync
   const fetchBalanceForExchange = useCallback((exId: string, apiKey: string, secret: string) => {
     if (!apiKey || !secret || (exId !== 'mexc' && exId !== 'binance')) return;
+
+    console.log(`[Balance] Initiating fetch for ${exId}...`);
+
     fetch(`/api/balance/${exId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ apiKey, secret })
     })
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (data && typeof data.balance === 'number') {
+          console.log(`[Balance] Success ${exId}:`, data.balance);
           setExchanges(current => {
             const draft = [...current];
             const idx = draft.findIndex(e => e.id === exId);
@@ -841,9 +873,27 @@ const App: React.FC = () => {
         } else if (data && data.error) {
           const msg = typeof data.error === 'string' ? data.error : (data.error.msg || JSON.stringify(data.error));
           console.warn(`[Balance] ${exId}: ${msg}`);
+          setExchanges(current => {
+            const draft = [...current];
+            const idx = draft.findIndex(e => e.id === exId);
+            if (idx !== -1) {
+              draft[idx] = { ...draft[idx], lastSync: 'Error: ' + msg.substring(0, 10) + '...' };
+            }
+            return draft;
+          });
         }
       })
-      .catch(err => console.error(`[Balance] Fetch error for ${exId}:`, err));
+      .catch(err => {
+        console.error(`[Balance] Fetch error for ${exId}:`, err);
+        setExchanges(current => {
+          const draft = [...current];
+          const idx = draft.findIndex(e => e.id === exId);
+          if (idx !== -1) {
+            draft[idx] = { ...draft[idx], lastSync: 'Fetch Failed' };
+          }
+          return draft;
+        });
+      });
   }, []);
 
   // ðŸ”§ FIX: Auto-sync balances every 60 seconds for connected exchanges
@@ -882,7 +932,10 @@ const App: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ apiKey: ex.apiKey, secret: ex.apiSecret })
           })
-            .then(res => res.json())
+            .then(async res => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              return res.json();
+            })
             .then(data => {
               if (data && typeof data.balance === 'number') {
                 setExchanges(current => {
@@ -898,7 +951,10 @@ const App: React.FC = () => {
                 setError(`API Rejection (${ex.name}): ${msg}`);
               }
             })
-            .catch(err => console.error(`Balance sync error for ${ex.id}:`, err));
+            .catch(err => {
+              console.error(`Balance sync error for ${ex.id}:`, err);
+              setError(`Failed to fetch balance from ${ex.name}. Backend might be offline.`);
+            });
         }
       }
       return updated;
@@ -922,27 +978,35 @@ const App: React.FC = () => {
     setLastAttemptTimestamp(now);
 
     if (config.provider === 'GEMINI' && (!config.geminiKey || config.geminiKey.trim() === '')) {
-      setError(language === 'pt'
-        ? "Chave de API do Gemini nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
-        : "Gemini API Key not configured. Go to Settings > AI Core to add it.");
+      if (force) {
+        setError(language === 'pt'
+          ? "Chave de API do Gemini não configurada. Acesse Configurações > IA Core para adicionar."
+          : "Gemini API Key not configured. Go to Settings > AI Core to add it.");
+      }
       return;
     }
     if (config.provider === 'DEEPSEEK' && (!config.deepseekKey || config.deepseekKey.trim() === '')) {
-      setError(language === 'pt'
-        ? "Chave de API do DeepSeek nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
-        : "DeepSeek API Key not configured. Go to Settings > AI Core to add it.");
+      if (force) {
+        setError(language === 'pt'
+          ? "Chave de API do DeepSeek não configurada. Acesse Configurações > IA Core para adicionar."
+          : "DeepSeek API Key not configured. Go to Settings > AI Core to add it.");
+      }
       return;
     }
     if (config.provider === 'OPENAI' && (!config.openaiKey || config.openaiKey.trim() === '')) {
-      setError(language === 'pt'
-        ? "Chave de API do OpenAI nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
-        : "OpenAI API Key not configured. Go to Settings > AI Core to add it.");
+      if (force) {
+        setError(language === 'pt'
+          ? "Chave de API do OpenAI não configurada. Acesse Configurações > IA Core para adicionar."
+          : "OpenAI API Key not configured. Go to Settings > AI Core to add it.");
+      }
       return;
     }
     if (config.provider === 'ANTHROPIC' && (!config.anthropicKey || config.anthropicKey.trim() === '')) {
-      setError(language === 'pt'
-        ? "Chave de API do Anthropic nÃ£o configurada. Acesse ConfiguraÃ§Ãµes > IA Core para adicionar."
-        : "Anthropic API Key not configured. Go to Settings > AI Core to add it.");
+      if (force) {
+        setError(language === 'pt'
+          ? "Chave de API do Anthropic não configurada. Acesse Configurações > IA Core para adicionar."
+          : "Anthropic API Key not configured. Go to Settings > AI Core to add it.");
+      }
       return;
     }
 
@@ -1044,6 +1108,7 @@ const App: React.FC = () => {
           <div className="pt-4 border-t border-slate-800/50">
             <NavBtn active={currentView === 'settings'} onClick={() => setCurrentView('settings')} icon={<SettingsIcon />} label={t('nav_settings')} />
             <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
+            <NavBtn active={false} onClick={() => { setIsAuthenticated(false); localStorage.removeItem('tradepro_auth'); }} icon={<LogOut className="text-rose-500" />} label={language === 'pt' ? 'Sair' : 'Logout'} />
           </div>
         </nav>
 
@@ -2081,7 +2146,7 @@ const ExecutiveSummary: React.FC<{ analysis: AnalysisResponse | null; isLoading:
 
 // --- Deployment Wizard Technical Core ---
 type WizardState = {
-  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA';
+  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA' | 'ANATOMIA_FLUXO';
   exchangeId: string;
   assets: string[];
   leverage: number;
@@ -2125,7 +2190,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
             action.payload === 'MATRIX_SCALP' ? { leverage: 10, stopLoss: 0.3, takeProfit: 1.0 } :
               action.payload === 'MATRIX_NEURAL' ? { leverage: 5, stopLoss: 0.5, takeProfit: 1.5 } :
                 action.payload === 'ROBO_IA' ? { leverage: 5, stopLoss: 0.5, takeProfit: 2.0 } :
-                  { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
+                  action.payload === 'ANATOMIA_FLUXO' ? { leverage: 5, stopLoss: 2.0, takeProfit: 4.0 } :
+                    { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'ROBO_IA') ? 'DEEPSEEK' : 'GEMINI';
       return { ...state, strategy: action.payload, ...defaults, aiProvider };
     case 'SET_EXCHANGE':
@@ -2218,6 +2284,13 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
     'MATRIX_NEURAL': {
       leverage: 5, maxDailyLoss: 1, stopLossPct: 0.5, takeProfitPct: 1.5, maxTradesPerDay: 10, positionSizePct: 3.0,
       minConfidence: 85, tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO'
+    },
+    'ANATOMIA_FLUXO': {
+      leverage: 5, ema_curta: 21, ema_media: 50, ema_longa: 200, volume_profile_dias: 180, smi_periodo_acum: 20,
+      smi_periodo_dist: 10, smi_threshold: 0.3, cvd_suavizacao: 14, bandas_desvio: 2, rsi_periodo: 14, rsi_sobrevendido: 30,
+      rsi_sobrecomprado: 70, estocastico_k: 14, estocastico_d: 3, risco_por_operacao: 2, alavancagem_maxima: 20,
+      trailing_stop_distancia: 1.5, max_ativos_simultaneos: 3, timeframes: { '1d': '1d', '4h': '4h', '1h': '1h', '15m': '15m' },
+      marketMode: 'FUTURES'
     }
   };
 
@@ -2238,7 +2311,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
           wizard.strategy === 'ZIGZAG_PRO' ? t('bot_naming_zz') :
             wizard.strategy === 'MATRIX_SCALP' ? t('bot_naming_matrix') :
               wizard.strategy === 'MATRIX_NEURAL' ? t('bot_naming_neural') :
-                t('bot_naming_ma')
+                wizard.strategy === 'ANATOMIA_FLUXO' ? 'Robô Anatomia Fluxo' :
+                  t('bot_naming_ma')
         } ${bots.length + 1}`,
       strategyId:
         wizard.strategy === 'AGGRESSIVE' ? 'AGGRESSIVE_SCALP' :
@@ -2246,7 +2320,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
             wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
               wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
                 wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
-                  'SIMPLE_MA',
+                  wizard.strategy === 'ANATOMIA_FLUXO' ? 'ANATOMIA_FLUXO' :
+                    'SIMPLE_MA',
       status: 'ACTIVE',
       lastActivity: new Date().toLocaleTimeString(),
       config: {
@@ -2256,7 +2331,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
             wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
               wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
                 wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
-                  'SIMPLE_MA'
+                  wizard.strategy === 'ANATOMIA_FLUXO' ? 'ANATOMIA_FLUXO' :
+                    'SIMPLE_MA'
         ],
         exchangeId: wizard.exchangeId,
         assets: wizard.assets.map(a => a + 'USDT'),
@@ -2287,16 +2363,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
         id: newBot.id,
         name: newBot.name,
         strategyId: newBot.strategyId,
-        exchangeId: newBot.config.exchangeId,
-        assets: newBot.config.assets,
-        leverage: newBot.config.leverage ?? 1,
-        stopLossPct: newBot.config.stopLossPct ?? 1,
-        takeProfitPct: newBot.config.takeProfitPct ?? 1.5,
-        riskPerTrade: newBot.config.riskPerTrade ?? 2,
-        marketMode: (newBot.config as any).marketMode ?? 'SPOT',
-        // ðŸ”§ FIX: use the actual bot status â€” 'TEST' = paper/dry-run, 'ACTIVE' = real orders
-        paperTrade: newBot.status === 'TEST',
-        status: newBot.status
+        status: newBot.status,
+        ...newBot.config
       }, ex);
     }
   };
@@ -2460,15 +2528,17 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                     {wizard.strategy === 'AGGRESSIVE' ? `${t('deploy_wizard')}: ${t('agg_scalper')}` :
                       wizard.strategy === 'SECURE' ? `${t('deploy_wizard')}: ${t('secure_trend')}` :
                         wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: ${t('matrix_neural')}` :
-                          wizard.strategy === 'ROBO_IA' ? `${t('deploy_wizard')}: ROBO IA` :
-                            `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
+                          wizard.strategy === 'ANATOMIA_FLUXO' ? `${t('deploy_wizard')}: Anatomia do Fluxo` :
+                            wizard.strategy === 'ROBO_IA' ? `${t('deploy_wizard')}: ROBO IA` :
+                              `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
                   </h3>
                   <p className="text-sm text-slate-500 tracking-wide">
                     {wizard.strategy === 'AGGRESSIVE' ? t('mexc_logic_desc') :
                       wizard.strategy === 'SECURE' ? t('secure_logic_desc') :
                         wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
                           wizard.strategy === 'ROBO_IA' ? "Advanced AI-driven strategy with automated SL/TP and adaptive signals." :
-                            wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
+                            wizard.strategy === 'ANATOMIA_FLUXO' ? "4-Painéis Python Script - Integração Institucional, Fluxo, Gatilhos e Macro." :
+                              wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
                   </p>
                 </div>
               </div>
@@ -2520,6 +2590,13 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 >
                   <BrainCircuit className="w-8 h-8 relative z-10" />
                   <span className="font-black text-xs tracking-widest uppercase relative z-10">{t('matrix_neural')}</span>
+                </button>
+                <button
+                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ANATOMIA_FLUXO' })}
+                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ANATOMIA_FLUXO' ? 'border-cyan-500 bg-gradient-to-br from-cyan-500/20 to-slate-900 text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
+                >
+                  <Activity className="w-8 h-8 relative z-10" />
+                  <span className="font-black text-xs tracking-widest uppercase relative z-10">Anatomia Fluxo</span>
                 </button>
                 <button
                   onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ROBO_IA' })}
@@ -2693,6 +2770,34 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 </div>
               )}
 
+              {wizard.strategy === 'ANATOMIA_FLUXO' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 bg-cyan-500/5 rounded-xl border border-cyan-500/20">
+                    <h4 className="font-bold text-cyan-400 mb-2 flex items-center gap-2"><Activity className="w-4 h-4" /> Anatomia do Fluxo</h4>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Análise 4-Painéis</label>
+                        <div className="flex flex-col gap-2">
+                          <ToggleRow label="Painel 1 (Macro)" active={true} />
+                          <ToggleRow label="Painel 2 (Institucional)" active={true} />
+                          <ToggleRow label="Painel 3 (Gatilhos)" active={true} />
+                          <ToggleRow label="Painel 4 (Micro)" active={true} />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Indicadores Base</label>
+                        <div className="flex flex-col gap-2">
+                          <SettingField label="SMI" value="20 / 10 / 0.3" />
+                          <SettingField label="CVD" value="14 Smooth" />
+                          <SettingField label="Bands" value="2.0 Deviations" />
+                          <SettingField label="Volume Profile" value="180 / 24 bins" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Neural Core section removed by user request (bots operate without AI) */}
 
 
@@ -2771,7 +2876,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   disabled={!wizard.isValid}
                   className={`w-full py-4 rounded-2xl font-black text-sm tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl ${!wizard.isValid ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white'}`}
                 >
-                  <Zap className="w-5 h-5" /> {wizard.strategy === 'AGGRESSIVE' ? t('instantiate_agg') : wizard.strategy === 'SECURE' ? t('instantiate_sec') : t('instantiate_ma')}
+                  <Zap className="w-5 h-5" /> {wizard.strategy === 'AGGRESSIVE' ? t('instantiate_agg') : wizard.strategy === 'SECURE' ? t('instantiate_sec') : wizard.strategy === 'ANATOMIA_FLUXO' ? 'DEPLOY ANATOMIA FLUXO' : t('instantiate_ma')}
                 </button>
               </div>
             </div>
@@ -2833,7 +2938,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-amber-400 uppercase tracking-wide">
-                          âš ï¸ MÃ¡x. Perdas Consecutivas
+                          ⚠️ Máx. Perdas Consecutivas
                         </label>
                         <input
                           type="number"
@@ -2849,7 +2954,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           }}
                           className="w-full bg-slate-900 border border-amber-500/30 rounded-lg p-3 text-sm font-bold text-amber-400 outline-none focus:border-amber-500"
                         />
-                        <p className="text-[9px] text-slate-500">RobÃ´ pausa automaticamente apÃ³s N perdas seguidas</p>
+                        <p className="text-[9px] text-slate-500">Robô pausa automaticamente após N perdas seguidas</p>
                       </div>
                     </div>
                   </div>

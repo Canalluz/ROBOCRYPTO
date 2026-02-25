@@ -6,10 +6,10 @@ export class BotService {
 
     connect() {
         try {
-            // Connect via Vite's dev proxy (/ws → ws://localhost:3001)
-            const wsUrl = window.location.hostname === 'localhost'
-                ? `ws://${window.location.host}/ws`
-                : 'ws://localhost:3001';
+            // Dynamic WS URL: works for both localhost:3000 (Vite proxy) and production (Render)
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            // In dev (localhost:3000), Vite proxies /ws to 3001. In prod, same host/port handles it.
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
 
             // 🔧 FIX: Create the WebSocket instance (was missing — ws was always null)
             this.ws = new WebSocket(wsUrl);

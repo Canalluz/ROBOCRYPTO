@@ -211,40 +211,44 @@ export class AnatomiaFluxoStrategy {
             let score_venda = 0;
             let max_score = 0;
 
-            // Painel 1
+            // Painel 1 (Vies Macro) - Weight: 3
             max_score += 3;
             if (p1.vies === 'COMPRA' || p1.vies === 'COMPRA_FORTE') score_compra += 3;
             else if (p1.vies === 'VENDA' || p1.vies === 'VENDA_FORTE') score_venda += 3;
 
-            // Painel 2
-            max_score += 3;
+            // Painel 2 (Fluxo Institucional) - Weight: 5
+            max_score += 5;
             if (p2.acumulacao) score_compra += 3;
             if (p2.distribuicao) score_venda += 3;
             if (p2.na_banda_inferior) score_compra += 1;
             if (p2.na_banda_superior) score_venda += 1;
-            max_score += 2;
 
-            // Painel 3
-            max_score += 2;
+            // Painel 3 (Gatilhos) - Weight: 6
+            max_score += 6;
             if (p3.sobrevendido) score_compra += 1;
             if (p3.sobrecomprado) score_venda += 1;
             if (p3.est_cruzou_cima) score_compra += 1;
             if (p3.est_cruzou_baixo) score_venda += 1;
             if (p3.divergencia_alta) score_compra += 2;
             if (p3.divergencia_baixa) score_venda += 2;
-            max_score += 4;
 
-            // Painel 4
-            max_score += 2;
+            // Painel 4 (Micro-Estrutura) - Weight: 5
+            max_score += 5;
             if (p4.exaustao_vendedores) score_compra += 2;
             if (p4.exaustao_compradores) score_venda += 2;
             if (Math.abs(p4.distancia_poc || 100) < 1) {
                 if (p4.preco < p4.poc) score_compra += 1;
                 else score_venda += 1;
             }
-            max_score += 3;
 
             const confianca = (Math.max(score_compra, score_venda) / max_score) * 100;
+
+            // LOGGING SCORES
+            console.log(`[AF-DEBUG] ${ativo} | SCORES -> COMPRA: ${score_compra}, VENDA: ${score_venda} | MAX: ${max_score} | CONF: ${confianca.toFixed(1)}%`);
+            if (p1.vies === 'ERRO' || p2.erro || p3.erro || p4.erro) {
+                console.warn(`[AF-DEBUG] ${ativo} | Errors: P1:${p1.vies} P2:${p2.erro || 'OK'} P3:${p3.erro || 'OK'} P4:${p4.erro || 'OK'}`);
+            }
+
             let sinal = Sinal.NADA;
             let stop = 0, tp1 = 0, tp2 = 0;
 

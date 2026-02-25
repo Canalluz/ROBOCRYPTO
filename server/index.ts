@@ -120,7 +120,6 @@ app.post('/api/manual-trade', async (req, res) => {
         console.error('[MANUAL] Trade error:', e.response?.data || e.message);
         res.status(500).json({ error: e.response?.data || e.message || 'Order failed' });
     }
-}
 });
 
 // For deploying to Render: Serve static frontend files

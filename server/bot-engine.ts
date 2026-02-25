@@ -4,6 +4,7 @@ import { secureTrend } from './strategies/secure-trend.js';
 import { simpleMaCross } from './strategies/simple-ma.js';
 import { zigzagPro } from './strategies/zigzag-pro.js';
 import { roboIa } from './strategies/robo-ia.js';
+import { roboEnsaio } from './strategies/robo-ensaio.js';
 import { AnatomiaFluxoStrategy, Sinal as FluxoSinal } from './strategies/anatomia-fluxo.js';
 import { getCandles, placeOrder, getUsdtBalance, getPrice } from './exchanges/mexc.js';
 
@@ -146,6 +147,8 @@ async function tickEngine(id: string) {
                     signal = zigzagPro(ctx);
                 } else if (stratId.includes('ROBO_IA') || stratId.includes('ROBOIA')) {
                     signal = roboIa(ctx);
+                } else if (stratId.includes('ENSAIO') || stratId.includes('TEST')) {
+                    signal = roboEnsaio(ctx);
                 } else {
                     signal = aggressiveScalp(ctx);
                 }
@@ -174,21 +177,57 @@ async function tickEngine(id: string) {
             const riskPct = bot.config.riskPerTrade ?? 2; // default 2%
             // In Spot mode, no leverage for position sizing (leverage=1)
             const leverage = bot.config.marketMode === 'SPOT' ? 1 : (bot.config.leverage ?? 1);
-            const positionSizeUsdt = availableBalance * (riskPct / 100) * leverage;
+            let positionSizeUsdt = availableBalance * (riskPct / 100) * leverage;
+
+            // MEXC generally requires a minimum $5 order for SPOT. Let's guarantee at least $6 if balance allows.
+            if (!bot.config.paperTrade && positionSizeUsdt < 6 && availableBalance >= 6) {
+                positionSizeUsdt = 6;
+            }
 
             console.log(`[ENGINE] "${bot.config.name}" | ${signal.action} ${asset} | size: $${positionSizeUsdt.toFixed(2)} | SL: ${signal.stopLoss?.toFixed(4)} | TP: ${signal.takeProfit?.toFixed(4)}`);
 
             // ------ Place order ------
-            const result = await placeOrder(
-                asset,
-                signal.action as 'BUY' | 'SELL',
-                positionSizeUsdt,
-                bot.apiKey,
-                bot.secret,
-                bot.config.paperTrade,
-                bot.config.marketMode ?? 'SPOT',  // route SPOT vs FUTURES
-                bot.config.leverage ?? 1
-            );
+            let result;
+            let orderFailed = false;
+            let failureReason = '';
+
+            try {
+                result = await placeOrder(
+                    asset,
+                    signal.action as 'BUY' | 'SELL',
+                    positionSizeUsdt,
+                    bot.apiKey,
+                    bot.secret,
+                    bot.config.paperTrade,
+                    bot.config.marketMode ?? 'SPOT',
+                    bot.config.leverage ?? 1
+                );
+            } catch (orderError: any) {
+                orderFailed = true;
+                failureReason = orderError.message || 'Unknown Exchange Error';
+                console.error(`[ENGINE] ⚠️ ORDER FAILED for "${bot.config.name}" | ${asset}: ${failureReason}`);
+            }
+
+            // If order failed, log it as a failed trade in history and skip the rest of the tick
+            if (orderFailed || !result) {
+                const failedTradeData = {
+                    id: 'fail-' + Date.now(),
+                    botId: bot.config.id,
+                    asset,
+                    type: signal.action,
+                    price: signal.price || 0, // Fallback since currentPrice isn't directly in this scope easily
+                    amount: '0.000000',
+                    result_usd: 0,
+                    profit: false,
+                    timestamp: new Date().toLocaleTimeString('pt-BR'),
+                    paper: bot.config.paperTrade,
+                    stopLoss: signal.stopLoss,
+                    takeProfit: signal.takeProfit,
+                    reason: `ERRO DE ORDEM: ${failureReason}`
+                };
+                onTradeExecuted(bot.config.id, failedTradeData);
+                continue; // Move to the next asset
+            }
 
             // Mark position as active
             bot.activePositions.add(asset);
@@ -219,14 +258,18 @@ async function tickEngine(id: string) {
                 bot.winRate = (bot.winRate * (bot.trades - 1)) / bot.trades;
             }
 
+            // MEXC sometimes returns price: 0 and qty: 0 synchronously on MARKET orders
+            const finalPrice = result.price > 0 ? result.price : (signal.price || 1);
+            const finalQty = result.qty > 0 ? result.qty : (positionSizeUsdt / finalPrice);
+
             // Build trade record first so auto-pause can reference it
             const tradeData = {
                 id: result.orderId,
                 botId: bot.config.id,
                 asset,
                 type: result.side,
-                price: result.price,
-                amount: result.qty.toFixed(6),
+                price: Number(finalPrice.toFixed(4)),
+                amount: finalQty.toFixed(6),
                 result_usd: Number(profitUsd.toFixed(2)),
                 profit: profitUsd > 0,
                 timestamp: new Date().toLocaleTimeString('pt-BR'),

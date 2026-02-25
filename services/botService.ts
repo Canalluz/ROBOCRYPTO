@@ -2,6 +2,7 @@ export class BotService {
     private ws: WebSocket | null = null;
     private onTradeCb?: (trade: any) => void;
     private onStatusCb?: (botId: string, status: any) => void;
+    private onConnectCb?: () => void;
     private pendingQueue: string[] = []; // Messages waiting for WS to open
 
     connect() {
@@ -20,6 +21,9 @@ export class BotService {
                 while (this.pendingQueue.length > 0) {
                     const msg = this.pendingQueue.shift();
                     if (msg) this.ws?.send(msg);
+                }
+                if (this.onConnectCb) {
+                    this.onConnectCb();
                 }
             };
 
@@ -64,6 +68,7 @@ export class BotService {
 
     onTrade(cb: (trade: any) => void) { this.onTradeCb = cb; }
     onStatus(cb: (botId: string, status: any) => void) { this.onStatusCb = cb; }
+    onConnect(cb: () => void) { this.onConnectCb = cb; }
 
     deployBot(bot: any, exchange: any) {
         this.send({ type: 'DEPLOY_BOT', payload: { bot, apiKey: exchange.apiKey, secret: exchange.apiSecret } });

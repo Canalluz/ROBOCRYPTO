@@ -586,7 +586,7 @@ const LoginScreen = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="••••••••"
                   required
                 />
               </div>
@@ -691,6 +691,10 @@ const App: React.FC = () => {
     localStorage.setItem('tradepro_trade_history', JSON.stringify(tradeHistory));
   }, [tradeHistory]);
 
+  const botsRef = useRef(bots);
+  useEffect(() => { botsRef.current = bots; }, [bots]);
+
+
   useEffect(() => {
     localStorage.setItem('tradepro_trade_history', JSON.stringify(tradeHistory));
   }, [tradeHistory]);
@@ -726,27 +730,30 @@ const App: React.FC = () => {
 
   // Hydrate stateless backend with active/test bots restored from local storage
   useEffect(() => {
-    bots.forEach(bot => {
-      if (bot.status === 'ACTIVE' || bot.status === 'TEST') {
-        const ex = exchanges.find(e => e.id === bot.config.exchangeId);
-        if (ex && ex.apiKey) {
-          console.log('[Frontend] Redeploying restored bot:', bot.name);
-          botService.deployBot({
-            id: bot.id,
-            name: bot.name,
-            strategyId: bot.strategyId,
-            exchangeId: bot.config.exchangeId,
-            assets: bot.config.assets,
-            leverage: bot.config.leverage,
-            stopLossPct: bot.config.stopLossPct,
-            takeProfitPct: bot.config.takeProfitPct,
-            riskPerTrade: bot.config.riskPerTrade,
-            marketMode: (bot.config as any).marketMode ?? 'SPOT',
-            paperTrade: bot.status === 'TEST',
-            status: bot.status
-          }, ex);
+    botService.onConnect(() => {
+      botsRef.current.forEach(bot => {
+        if (bot.status === 'ACTIVE' || bot.status === 'TEST') {
+          const ex = exchangesRef.current.find(e => e.id === bot.config.exchangeId);
+          const isFakeKey = (k) => typeof k === 'string' && (k.includes('****') || k.includes('••••') || k.includes('â€¢'));
+          if (ex && ex.apiKey && !isFakeKey(ex.apiKey)) {
+            console.log('[Frontend] Redeploying restored bot:', bot.name);
+            botService.deployBot({
+              id: bot.id,
+              name: bot.name,
+              strategyId: bot.strategyId,
+              exchangeId: bot.config.exchangeId,
+              assets: bot.config.assets,
+              leverage: bot.config.leverage,
+              stopLossPct: bot.config.stopLossPct,
+              takeProfitPct: bot.config.takeProfitPct,
+              riskPerTrade: bot.config.riskPerTrade,
+              marketMode: (bot.config || {}).marketMode ?? 'SPOT',
+              paperTrade: bot.status === 'TEST',
+              status: bot.status
+            }, ex);
+          }
         }
-      }
+      });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -806,7 +813,7 @@ const App: React.FC = () => {
             if (!found) return defEx;
 
             // Helper: strictly detect only explicitly masked fake keys, avoid erasing valid keys
-            const isFakeKey = (k: any) => typeof k === 'string' && (k.includes('****') || k.includes('••••'));
+            const isFakeKey = (k: any) => typeof k === 'string' && (k.includes('****') || k.includes('••••') || k.includes('â€¢'));
             const cleanKey = isFakeKey(found.apiKey) ? '' : (found.apiKey || '');
             const cleanSecret = isFakeKey(found.apiSecret) ? '' : (found.apiSecret || '');
 
@@ -832,6 +839,9 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('tradepro_exchanges', JSON.stringify(exchanges));
   }, [exchanges]);
+
+  const exchangesRef = useRef(exchanges);
+  useEffect(() => { exchangesRef.current = exchanges; }, [exchanges]);
 
   const [tradingAuthority, setTradingAuthority] = useState<'AI' | 'HYBRID'>('AI');
   const [isLoading, setIsLoading] = useState(false);
@@ -1895,8 +1905,8 @@ const ExchangeCard: React.FC<{ name: string; status: string; lastSync: string; b
 
   const maskedValue = (val: string) => {
     if (!val) return '';
-    if (val.length < 8) return 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢';
-    return val.substring(0, 4) + 'â€¢â€¢â€¢â€¢' + val.substring(val.length - 4);
+    if (val.length < 8) return '••••••••';
+    return val.substring(0, 4) + '••••' + val.substring(val.length - 4);
   };
 
   return (
@@ -2530,15 +2540,17 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: ${t('matrix_neural')}` :
                           wizard.strategy === 'ANATOMIA_FLUXO' ? `${t('deploy_wizard')}: Anatomia do Fluxo` :
                             wizard.strategy === 'ROBO_IA' ? `${t('deploy_wizard')}: ROBO IA` :
-                              `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
+                              wizard.strategy === 'ROBO_ENSAIO' ? `${t('deploy_wizard')}: ROBO ENSAIO` :
+                                `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
                   </h3>
                   <p className="text-sm text-slate-500 tracking-wide">
                     {wizard.strategy === 'AGGRESSIVE' ? t('mexc_logic_desc') :
                       wizard.strategy === 'SECURE' ? t('secure_logic_desc') :
                         wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
                           wizard.strategy === 'ROBO_IA' ? "Advanced AI-driven strategy with automated SL/TP and adaptive signals." :
-                            wizard.strategy === 'ANATOMIA_FLUXO' ? "4-Painéis Python Script - Integração Institucional, Fluxo, Gatilhos e Macro." :
-                              wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
+                            wizard.strategy === 'ROBO_ENSAIO' ? "Testes hiperagressivos de 15s para testar comunicação com a API." :
+                              wizard.strategy === 'ANATOMIA_FLUXO' ? "4-Painéis Python Script - Integração Institucional, Fluxo, Gatilhos e Macro." :
+                                wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
                   </p>
                 </div>
               </div>
@@ -2548,7 +2560,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
             </div>
 
             <div className="p-8 space-y-10">
-              <div className="flex gap-4 mb-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-2">
                 <button
                   onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'AGGRESSIVE' })}
                   className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'AGGRESSIVE' ? 'border-cyan-500 bg-gradient-to-br from-cyan-500/20 to-slate-900 text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
@@ -2605,8 +2617,28 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   <Cpu className="w-8 h-8 relative z-10" />
                   <span className="font-black text-xs tracking-widest uppercase relative z-10">ROBO IA</span>
                 </button>
+                <button
+                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ROBO_ENSAIO' })}
+                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ROBO_ENSAIO' ? 'border-white bg-gradient-to-br from-white/20 to-slate-900 text-white shadow-[0_0_30px_rgba(255,255,255,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
+                >
+                  <Zap className="w-8 h-8 relative z-10" />
+                  <span className="font-black text-xs tracking-widest uppercase relative z-10 text-center">ROBO ENSAIO<br /><span className="text-[9px]">(Teste Rápido)</span></span>
+                </button>
               </div>
 
+
+              {wizard.strategy === 'ROBO_ENSAIO' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/20">
+                    <h4 className="font-bold text-white mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> Configuração do ENSAIO</h4>
+                    <p className="text-xs text-slate-400 mb-4">Esse bot não usa Inteligência. Ele compra agora e vende nos próximos 15 segundos repetidamente até você pausar. Use APENAS com modo Simulação (Dry Run) ou valores mínimos na vida real (Live) para Diagnosticar Erros da MEXC.</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <SettingField label="Atuação" value="Loop Compra/Venda infinito" />
+                      <SettingField label={t('stop_loss')} value={`${wizard.stopLoss}% (Fixo)`} />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {wizard.strategy === 'AGGRESSIVE' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">

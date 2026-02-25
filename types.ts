@@ -475,7 +475,7 @@ export interface AutomationRule {
 export interface TradingBot {
   id: string;
   name: string;
-  strategyId: 'AGGRESSIVE_SCALP' | 'CONSERVATIVE_TREND' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ANATOMIA_FLUXO';
+  strategyId: 'AGGRESSIVE_SCALP' | 'CONSERVATIVE_TREND' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ANATOMIA_FLUXO' | 'ROBO_IA' | 'ROBO_ENSAIO';
   status: 'ACTIVE' | 'PAUSED' | 'STOPPED' | 'TEST';
   config: AggressiveConfig | ConservativeConfig | SimpleMAConfig | ZigZagConfig | MatrixScalpConfig | MatrixNeuralConfig | AnatomiaFluxoConfig;
   performance: {

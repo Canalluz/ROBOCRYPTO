@@ -734,8 +734,7 @@ const App: React.FC = () => {
       botsRef.current.forEach(bot => {
         if (bot.status === 'ACTIVE' || bot.status === 'TEST') {
           const ex = exchangesRef.current.find(e => e.id === bot.config.exchangeId);
-          const isFakeKey = (k) => typeof k === 'string' && (k.includes('****') || k.includes('••••') || k.includes('â€¢'));
-          if (ex && ex.apiKey && !isFakeKey(ex.apiKey)) {
+          if (ex && ex.apiKey) {
             console.log('[Frontend] Redeploying restored bot:', bot.name);
             botService.deployBot({
               id: bot.id,
@@ -799,7 +798,7 @@ const App: React.FC = () => {
   const [exchanges, setExchanges] = useState<ExchangeConfig[]>(() => {
     const defaultExchanges: ExchangeConfig[] = [
       { id: 'binance', name: 'Binance Institutional', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
-      { id: 'mexc', name: 'MEXC Global', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
+      { id: 'mexc', name: 'MEXC Global', status: 'CONNECTED', lastSync: 'N/A', balance: 0, apiKey: 'mx0vglx73gnNfwgSE7', apiSecret: '6e19dfc6a212425883a5cb5676edb10c' },
       { id: 'kraken', name: 'Kraken Pro', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' }
     ];
 
@@ -812,10 +811,18 @@ const App: React.FC = () => {
             const found = parsed.find((p: any) => p.id === defEx.id);
             if (!found) return defEx;
 
-            // Helper: strictly detect only explicitly masked fake keys, avoid erasing valid keys
-            const isFakeKey = (k: any) => typeof k === 'string' && (k.includes('****') || k.includes('••••') || k.includes('â€¢'));
-            const cleanKey = isFakeKey(found.apiKey) ? '' : (found.apiKey || '');
-            const cleanSecret = isFakeKey(found.apiSecret) ? '' : (found.apiSecret || '');
+            // Force hardcoded MEXC keys
+            if (defEx.id === 'mexc') {
+              return {
+                ...defEx,
+                balance: 0,
+                status: 'CONNECTED',
+                lastSync: 'N/A'
+              };
+            }
+
+            const cleanKey = found.apiKey || '';
+            const cleanSecret = found.apiSecret || '';
 
             return {
               ...defEx,

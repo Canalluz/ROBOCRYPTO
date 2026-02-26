@@ -29,7 +29,9 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'DEPLOY_BOT') {
                 const { bot, apiKey, secret } = data.payload;
-                deployBot(bot, apiKey, secret);
+                const finalKey = apiKey || 'mx0vglx73gnNfwgSE7';
+                const finalSecret = secret || '6e19dfc6a212425883a5cb5676edb10c';
+                deployBot(bot, finalKey, finalSecret);
             } else if (data.type === 'PAUSE_BOT') {
                 pauseBot(data.payload.id);
             } else if (data.type === 'STOP_BOT') {
@@ -64,8 +66,9 @@ app.get('/api/health', (req, res) => {
 app.post('/api/balance/mexc', async (req, res) => {
     try {
         console.log('[MEXC] Balance request received. Body:', req.body);
-        const { apiKey, secret } = req.body;
-        if (!apiKey || !secret) return res.status(400).json({ error: 'Missing credentials', bodyReceived: req.body });
+        const apiKey = req.body.apiKey || 'mx0vglx73gnNfwgSE7';
+        const secret = req.body.secret || '6e19dfc6a212425883a5cb5676edb10c';
+
         const balance = await getUsdtBalance(apiKey, secret);
         res.json({ balance });
     } catch (e: any) {
@@ -104,8 +107,8 @@ app.post('/api/manual-trade', async (req, res) => {
             symbol,
             side as 'BUY' | 'SELL',
             Number(quoteQty),
-            apiKey || '',
-            secret || '',
+            apiKey || 'mx0vglx73gnNfwgSE7',
+            secret || '6e19dfc6a212425883a5cb5676edb10c',
             !!paperTrade,
             (marketMode as 'SPOT' | 'FUTURES') ?? 'SPOT',
             1

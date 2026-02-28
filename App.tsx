@@ -3642,38 +3642,42 @@ const AssetFactoryView: React.FC<{
               </p>
 
               <a
-                href="https://buy.stripe.com/00w00kcnD06JawW8MU5c402"
+                href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setHasClickedPay(true)}
-                className="w-full py-4 mt-4 bg-[#635BFF] hover:bg-[#5851E5] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#635BFF]/30 flex justify-center items-center gap-3 group"
+                className={`w-full py-4 mt-4 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 group ${hasClickedPay ? 'bg-slate-800 text-slate-300 pointer-events-none border border-slate-700' : 'bg-[#635BFF] hover:bg-[#5851E5] text-white shadow-[#635BFF]/30'}`}
               >
-                <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="tracking-wide">{hasClickedPay ? "Pagar Novamente" : "Pagar via Stripe"}</span>
+                {hasClickedPay ? (
+                  <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" />
+                ) : (
+                  <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                )}
+                <span className="tracking-wide">
+                  {hasClickedPay ? "Aguardando Confirmação..." : "Pagar via Stripe"}
+                </span>
               </a>
 
               {hasClickedPay && (
                 <div className="w-full mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="w-full flex items-center gap-4 my-4 opacity-60">
                     <div className="flex-1 h-px bg-slate-800"></div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Após o pagamento</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Processando</span>
                     <div className="flex-1 h-px bg-slate-800"></div>
                   </div>
 
-                  <p className="text-xs text-slate-400 mb-3 px-2">
-                    Já realizou o pagamento? Prossiga com a criação para abrir a sua carteira e assinar o contrato na blockchain de forma segura.
+                  <p className="text-xs text-slate-400 mb-4 px-2">
+                    Não feche esta janela. O pagamento está sendo realizado na outra aba. Assim que aprovado pelo Stripe, a MetaMask abrirá automaticamente de forma segura.
                   </p>
 
-                  <button
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      deploySmartContract();
-                    }}
-                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex justify-center items-center gap-2 group"
+                  <a
+                    href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1"
                   >
-                    <Zap className="w-5 h-5 group-hover:animate-pulse text-emerald-100" />
-                    <span className="tracking-wide text-emerald-50">Confirmar Pagamento e Emitir Token</span>
-                  </button>
+                    A aba de pagamento fechou? <span className="underline decoration-dashed underline-offset-2">Clique aqui para abrir novamente</span>
+                  </a>
                 </div>
               )}
             </div>

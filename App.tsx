@@ -515,6 +515,42 @@ const TRANSLATIONS = {
 
 
 const App: React.FC = () => {
+  // Early return for payment success tab
+  const [isPaymentSuccessTab, setIsPaymentSuccessTab] = useState(() => {
+    return new URLSearchParams(window.location.search).get('payment_success') === 'true';
+  });
+
+  useEffect(() => {
+    if (isPaymentSuccessTab) {
+      localStorage.setItem('tradepro_stripe_success', Date.now().toString());
+      setTimeout(() => {
+        if (window.opener) window.close();
+      }, 500);
+    }
+  }, [isPaymentSuccessTab]);
+
+  if (isPaymentSuccessTab) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-3xl max-w-md w-full animate-in fade-in zoom-in-95 duration-500">
+          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Pagamento Confirmado!</h2>
+          <p className="text-slate-300 text-sm leading-relaxed mb-8">
+            O pagamento foi processado com sucesso pelo Stripe. <strong>Por favor, volte para a aba principal do sistema</strong> para completar a assinatura do contrato na sua carteira MetaMask.
+          </p>
+          <button
+            onClick={() => window.close()}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg"
+          >
+            Fechar Esta Aba
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [data, setData] = useState<SystemData>(() => {
     const saved = localStorage.getItem('tradepro_system_data');
     if (saved) {
@@ -3112,27 +3148,6 @@ const AssetFactoryView: React.FC<{
   const [gasFee, setGasFee] = useState("");
   const [walletError, setWalletError] = useState("");
 
-  // Handle returning from Stripe in a new tab
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment_success') === 'true') {
-      // Notify the original tab
-      localStorage.setItem('tradepro_stripe_success', Date.now().toString());
-      // Clean up the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Try to close this tab since the original tab will continue the operation
-      if (window.opener) {
-        window.close();
-      } else {
-        // Fallback: If it didn't open in a new tab, maybe try to close modal and deploy directly
-        // But since we rely on AssetFactoryView, we just set states
-        setShowPaymentModal(false);
-        setTimeout(() => deploySmartContract(), 1000); // Small delay to let React render
-      }
-    }
-  }, []);
-
   // Polling to detect payment success from the new tab
   useEffect(() => {
     const interval = setInterval(() => {
@@ -3649,7 +3664,6 @@ const AssetFactoryView: React.FC<{
               <a
                 href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
                 target="_blank"
-                rel="noopener noreferrer"
                 onClick={() => setHasClickedPay(true)}
                 className={`w-full py-4 mt-4 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 group ${hasClickedPay ? 'bg-slate-800 text-slate-300 pointer-events-none border border-slate-700' : 'bg-[#635BFF] hover:bg-[#5851E5] text-white shadow-[#635BFF]/30'}`}
               >
@@ -3678,7 +3692,6 @@ const AssetFactoryView: React.FC<{
                   <a
                     href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
                     target="_blank"
-                    rel="noopener noreferrer"
                     className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1"
                   >
                     A aba de pagamento fechou? <span className="underline decoration-dashed underline-offset-2">Clique aqui para abrir novamente</span>

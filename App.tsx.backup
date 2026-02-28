@@ -59,8 +59,7 @@ import {
   Play,
   Trash2,
   Info,
-  LogOut,
-  CreditCard
+  LogOut
 } from 'lucide-react';
 import { SystemData, AnalysisResponse, Recommendation, RiskAlert, PortfolioAnalysis, RebalancingTrade, RiskAnalysis, TradingBot, AggressiveConfig, ExchangeConfig, AutomationRule, Trade, EquityPoint, MatrixScalpConfig, MatrixNeuralConfig } from './types';
 import { INITIAL_DATA } from './constants';
@@ -94,12 +93,12 @@ const COLORS = ['#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#64748b'
 
 const TRANSLATIONS = {
   en: {
-    terminal_name: "Rob Crypto",
+    terminal_name: "RobÙ Crypto",
     inst_terminal: "Institutional Terminal",
     trading_core: "Trading Core",
     ai_mode: "AI MODE",
     nav_robots: "Trading Bots",
-    nav_assets: "Emisso de Ativos",
+    nav_assets: "Emiss„o de Ativos",
     nav_monitoring: "Data Analysis",
     nav_settings: "Settings",
     ai_core: "Neural Core Config",
@@ -309,146 +308,146 @@ const TRANSLATIONS = {
     conn_error: "Error: API Key and Secret are required."
   },
   pt: {
-    terminal_name: "Rob Crypto",
+    terminal_name: "RobÙ Crypto",
     inst_terminal: "Terminal Institucional",
-    trading_core: "Ncleo de Trading",
+    trading_core: "N˙cleo de Trading",
     ai_mode: "MODO IA",
-    nav_robots: "Robs de Trading",
-    nav_assets: "Emisso de Ativos",
-    nav_monitoring: "Anlise de dados",
-    nav_settings: "Configuraes",
-    sys_health: "Sade do Sistema",
+    nav_robots: "RobÙs de Trading",
+    nav_assets: "Emiss„o de Ativos",
+    nav_monitoring: "An·lise de dados",
+    nav_settings: "ConfiguraÁıes",
+    sys_health: "Sa˙de do Sistema",
     header_robots: "Hub de Trading Automatizado",
     header_monitoring: "Dashboard de Monitoramento Institucional",
-    header_assets: "Fbrica de Ativos e Lab de Contratos",
-    header_settings: "Gesto de Corretoras",
-    workspace: "Espao de Trabalho",
+    header_assets: "F·brica de Ativos e Lab de Contratos",
+    header_settings: "Gest„o de Corretoras",
+    workspace: "EspaÁo de Trabalho",
     live_nodes: "Nodes Ativos",
-    latency: "Latncia",
-    logic_enabled: "Lgica Ativa",
-    last_scan: "ltima Varredura",
-    sync: "Sincronizar Analticos",
+    latency: "LatÍncia",
+    logic_enabled: "LÛgica Ativa",
+    last_scan: "⁄ltima Varredura",
+    sync: "Sincronizar AnalÌticos",
     managed_aum: "AUM Gerenciado",
-    daily_pnl: "P&L Dirio",
-    fear_greed: "Medo & Ganncia",
-    asset_dist: "Distribuio de Ativos",
-    risk_safety: "Risco & Segurana",
-    total_equity: "Patrimnio Total",
+    daily_pnl: "P&L Di·rio",
+    fear_greed: "Medo & Gan‚ncia",
+    asset_dist: "DistribuiÁ„o de Ativos",
+    risk_safety: "Risco & SeguranÁa",
+    total_equity: "PatrimÙnio Total",
     portfolio_value: "Valor da Carteira",
     initial_balance: "Saldo na Corretora ($)",
     model_arch: "Arquitetura do Modelo",
-    auton_mode: "Modo Totalmente Autnomo",
+    auton_mode: "Modo Totalmente AutÙnomo",
     social_sent: "Alfa de Sentimento Social",
-    graph_pattern: "Reconhecimento de Padres Grficos",
-    deploy_intel: "Implantar Inteligncia",
-    exec_authority: "Autoridade de Execuo Principal",
-    safety_cons: "Restries de Segurana",
+    graph_pattern: "Reconhecimento de Padrıes Gr·ficos",
+    deploy_intel: "Implantar InteligÍncia",
+    exec_authority: "Autoridade de ExecuÁ„o Principal",
+    safety_cons: "RestriÁıes de SeguranÁa",
     lev_hardcap: "Limite de Alavancagem",
-    drawdown_term: "Terminao por Drawdown",
-    max_exposure: "Exposio Mxima (Fundo)",
+    drawdown_term: "TerminaÁ„o por Drawdown",
+    max_exposure: "ExposiÁ„o M·xima (Fundo)",
     asset_cap: "Limite por Ativo",
-    update_safety: "Atualizar Protocolos de Segurana",
+    update_safety: "Atualizar Protocolos de SeguranÁa",
     prov_openai: "OpenAI (GPT-4o)",
     prov_anthropic: "Anthropic (Claude 3.5)",
-    prov_mock: "MOCK (Experimental/Grtis)",
+    prov_mock: "MOCK (Experimental/Gr·tis)",
     lang_sel: "Idioma / Language",
-    tv_chart: "Grfico TradingView",
-    exec_desk: "Painel de Execuo",
+    tv_chart: "Gr·fico TradingView",
+    exec_desk: "Painel de ExecuÁ„o",
     api_key: "Chave API",
     api_secret: "Segredo API",
     save: "Salvar",
-    timeframe: "Tempo Grfico",
-    auto_mode: "AUTO (Seleo IA)",
-    nav_charts: "Grficos Avanados",
-    header_charts: "Terminal de Anlise Institucional",
+    timeframe: "Tempo Gr·fico",
+    auto_mode: "AUTO (SeleÁ„o IA)",
+    nav_charts: "Gr·ficos AvanÁados",
+    header_charts: "Terminal de An·lise Institucional",
     mon_pnl: "P&L Total",
     mon_winrate: "Taxa de Acerto",
-    mon_drawdown: "Drawdown Mx",
-    mon_active_bots: "Robs Ativos",
-    mon_equity: "Evoluo do Patrimnio",
-    mon_history: "Histrico de Trades",
-    all_robots: "Todos os Robs",
+    mon_drawdown: "Drawdown M·x",
+    mon_active_bots: "RobÙs Ativos",
+    mon_equity: "EvoluÁ„o do PatrimÙnio",
+    mon_history: "HistÛrico de Trades",
+    all_robots: "Todos os RobÙs",
     mon_status_op: "OPERANDO",
     mon_status_paused: "PAUSADO",
     mon_col_time: "Hora",
     mon_col_asset: "Ativo",
     mon_col_type: "Tipo",
-    mon_col_price: "Preo",
+    mon_col_price: "PreÁo",
     mon_col_amount: "Qtd",
     mon_col_result: "Resultado",
     pipeline_ready: "Pipeline pronto para",
     pairs: "pares.",
-    mexc_validated: "Bridge MEXC validada. Latncia: 42ms.",
-    watchdog_active: "Watchdog ativo: Monitorando cruzamento tcnico para",
+    mexc_validated: "Bridge MEXC validada. LatÍncia: 42ms.",
+    watchdog_active: "Watchdog ativo: Monitorando cruzamento tÈcnico para",
     compliance_enforcer: "Executor de Conformidade",
-    hard_limit: "Limite Rgido",
+    hard_limit: "Limite RÌgido",
     drawdown_cap: "Limite de Drawdown",
-    wizard_title: "Assistente de Implantao",
+    wizard_title: "Assistente de ImplantaÁ„o",
     agg_scalper: "Escalador Agressivo",
-    secure_trend: "Tendncia Segura Pro",
-    simple_ma_core: "Ncleo SimpleMA",
+    secure_trend: "TendÍncia Segura Pro",
+    simple_ma_core: "N˙cleo SimpleMA",
     zigzag_pro: "ZigZag Pro",
-    mexc_logic_desc: "Configure lgica de scalping de alta frequncia nvel institucional para MEXC.",
-    secure_logic_desc: "Implante um sistema disciplinado de seguimento de tendncia com baixa alavancagem para preservao de capital.",
-    simple_ma_desc: "Sistema clssico de cruzamento otimizado para ativos cripto da Binance com filtros de risco rigorosos.",
-    zigzag_desc: "Deteco avanada de pivs para entradas de reverso de alta probabilidade.",
+    mexc_logic_desc: "Configure lÛgica de scalping de alta frequÍncia nÌvel institucional para MEXC.",
+    secure_logic_desc: "Implante um sistema disciplinado de seguimento de tendÍncia com baixa alavancagem para preservaÁ„o de capital.",
+    simple_ma_desc: "Sistema cl·ssico de cruzamento otimizado para ativos cripto da Binance com filtros de risco rigorosos.",
+    zigzag_desc: "DetecÁ„o avanÁada de pivÙs para entradas de revers„o de alta probabilidade.",
     agg_scalp_label: "Scalp Agressivo",
-    secure_trend_label: "Tendncia Segura",
+    secure_trend_label: "TendÍncia Segura",
     ma_cross_label: "Cruzamento MA",
     scalp_engine_config: "Config. do Mecanismo de Scalping",
-    scalp_engine_desc: "Execuo de alta frequncia visando ineficincias de microestrutura.",
+    scalp_engine_desc: "ExecuÁ„o de alta frequÍncia visando ineficiÍncias de microestrutura.",
     leverage: "Alavancagem",
-    take_profit: "Realizao de Lucro",
+    take_profit: "RealizaÁ„o de Lucro",
     stop_loss: "Stop Loss",
-    max_drawdown: "Drawdown Mximo",
-    cons_config: "Configurao Conservadora",
-    entry_strat: "Estratgia de Entrada",
-    trend_filter: "Filtro de Tendncia",
+    max_drawdown: "Drawdown M·ximo",
+    cons_config: "ConfiguraÁ„o Conservadora",
+    entry_strat: "EstratÈgia de Entrada",
+    trend_filter: "Filtro de TendÍncia",
     risk_reward: "Risco Retorno",
-    trailing_stop: "Stop Mvel",
-    ma_cross_logic: "Lgica de Cruzamento MA",
-    ma_cross_desc: "Sistema clssico de seguimento de tendncia usando mdias mveis duplas.",
-    zz_pivots: "Reverses de Piv ZigZag",
-    zz_pivots_desc: "Opera pivs confirmados baseados em configuraes de Profundidade/Desvio.",
+    trailing_stop: "Stop MÛvel",
+    ma_cross_logic: "LÛgica de Cruzamento MA",
+    ma_cross_desc: "Sistema cl·ssico de seguimento de tendÍncia usando mÈdias mÛveis duplas.",
+    zz_pivots: "Reversıes de PivÙ ZigZag",
+    zz_pivots_desc: "Opera pivÙs confirmados baseados em configuraÁıes de Profundidade/Desvio.",
     market_filters: "Filtros de Mercado",
     ex_target: "Corretora Alvo",
     trading_pairs: "Pares de Trading",
-    entry_strat_logic: "Lgica da Estratgia de Entrada",
-    tech_summary: "Resumo Tcnico",
-    inv_risk_cons: "Restries de Risco Invariantes",
+    entry_strat_logic: "LÛgica da EstratÈgia de Entrada",
+    tech_summary: "Resumo TÈcnico",
+    inv_risk_cons: "RestriÁıes de Risco Invariantes",
     risk_order: "Risco / Ordem",
-    max_trades_day: "Mx Trades/Dia",
+    max_trades_day: "M·x Trades/Dia",
     drawdown_stop: "Stop de Drawdown",
-    max_position: "Posio Mxima",
-    risk_note: "Nota: Martingale, modelagem de grade e recuperao de perdas esto desativados pelo protocolo do ncleo.",
+    max_position: "PosiÁ„o M·xima",
+    risk_note: "Nota: Martingale, modelagem de grade e recuperaÁ„o de perdas est„o desativados pelo protocolo do n˙cleo.",
     instantiate_agg: "INSTANCIAR FROTA AGGRESSIVA",
     instantiate_sec: "INSTANCIAR FROTA SEGURA",
-    instantiate_ma: "Inserir ROB",
+    instantiate_ma: "Inserir ROB‘",
     instantiate_matrix: "INSTANCIAR MATRIX-SCALP PRO",
     instantiate_neural: "INSTANCIAR MATRIX-NEURAL X",
     matrix_scalp: "MatrixScalp Pro",
-    matrix_scalp_desc: "Scalping de preciso de alta frequncia com ajuste dinmico de volatilidade.",
+    matrix_scalp_desc: "Scalping de precis„o de alta frequÍncia com ajuste din‚mico de volatilidade.",
     matrix_neural: "MatrixNeural X",
-    matrix_neural_desc: "IA de nvel institucional usando Deep Learning e anlise de sentimento.",
+    matrix_neural_desc: "IA de nÌvel institucional usando Deep Learning e an·lise de sentimento.",
     abort: "ABORTAR",
-    deploy_wizard: "Assistente de Implantao",
+    deploy_wizard: "Assistente de ImplantaÁ„o",
     config_bot: "Configurar",
-    adj_params: "Ajuste os parmetros de execuo para esta entidade ativa.",
+    adj_params: "Ajuste os par‚metros de execuÁ„o para esta entidade ativa.",
     gen_risk: "Risco Geral",
-    exec_strat: "Estratgia de Execuo",
+    exec_strat: "EstratÈgia de ExecuÁ„o",
     assets_filter: "Filtro de Ativos",
-    curr_strat_id: "ID da Estratgia Atual",
+    curr_strat_id: "ID da EstratÈgia Atual",
     save_params: "Salvar Par√¢metros",
     decommission: "Desativar",
-    desc_agg_tech: '"Entra em pullbacks agressivos na EMA 9/21 aps confirmao de vela de impulso e alto volume relativo, apenas quando a tendncia se alinha com EMA 200 de 15m."',
-    desc_sec_tech: '"Executa entradas de alta probabilidade na confirmao de vela de 15m aps um pullback controlado na EMA 20/50 em uma estrutura de alta confirmada de 4H/Dirio."',
-    desc_ma_tech: '"Lgica de cruzamento algortmico de 1h com TP de mltiplos estgios e filtros de volume de alta convico para crescimento disciplinado de ativos."',
-    desc_matrix_tech: '"Emprega anlise de fluxo de ordens de nvel institucional e paradas dinmicas baseadas em ATR para explorar a microvolatilidade."',
-    desc_neural_tech: '"Utiliza conjuntos LSTM e Transformer para previso de tendncia, reforados por anlise de sentimento NLP em tempo real e deteco de desequilbrio de fluxo de ordens."',
+    desc_agg_tech: '"Entra em pullbacks agressivos na EMA 9/21 apÛs confirmaÁ„o de vela de impulso e alto volume relativo, apenas quando a tendÍncia se alinha com EMA 200 de 15m."',
+    desc_sec_tech: '"Executa entradas de alta probabilidade na confirmaÁ„o de vela de 15m apÛs um pullback controlado na EMA 20/50 em uma estrutura de alta confirmada de 4H/Di·rio."',
+    desc_ma_tech: '"LÛgica de cruzamento algorÌtmico de 1h com TP de m˙ltiplos est·gios e filtros de volume de alta convicÁ„o para crescimento disciplinado de ativos."',
+    desc_matrix_tech: '"Emprega an·lise de fluxo de ordens de nÌvel institucional e paradas din‚micas baseadas em ATR para explorar a microvolatilidade."',
+    desc_neural_tech: '"Utiliza conjuntos LSTM e Transformer para previs„o de tendÍncia, reforÁados por an·lise de sentimento NLP em tempo real e detecÁ„o de desequilÌbrio de fluxo de ordens."',
     instantiate: "Instanciar",
     currently_tracking: "Monitorando Atualmente",
-    ai_int_status: "Status de Integrao IA",
-    ai_int_desc: "Novos ativos so escaneados automaticamente pelo Ncleo de Inteligncia no prximo ciclo de sincronizao.",
+    ai_int_status: "Status de IntegraÁ„o IA",
+    ai_int_desc: "Novos ativos s„o escaneados automaticamente pelo N˙cleo de InteligÍncia no prÛximo ciclo de sincronizaÁ„o.",
     utility_blueprint: "Plano do Token",
     token_name: "Nome do Token",
     symbol: "S√≠mbolo",
@@ -459,10 +458,10 @@ const TRANSLATIONS = {
     proc_protocol: "Processando Protocolo...",
     deploy_smart_contract: "Implantar Contrato Inteligente",
     conn_wallet: "Carteira Conectada",
-    est_gas_fee: "Taxa de Gs Est.",
+    est_gas_fee: "Taxa de G·s Est.",
     contract_success: "Contrato Implantado com Sucesso",
     view_explorer: "Ver no Explorer",
-    copy_code: "Copiar Cdigo",
+    copy_code: "Copiar CÛdigo",
     bot_naming_agg: "Agressivo",
     bot_naming_sec: "Seguro",
     bot_naming_ma: "Cruzamento MA",
@@ -470,30 +469,30 @@ const TRANSLATIONS = {
     bot_naming_matrix: "MatrixScalp",
     bot_naming_neural: "MatrixNeural",
     dry_run: "MODO TESTE",
-    max_trades_daily: "Mx Trades Dirios",
-    tp_pct: "Realizao de Lucro (%)",
+    max_trades_daily: "M·x Trades Di·rios",
+    tp_pct: "RealizaÁ„o de Lucro (%)",
     sl_pct: "Stop Loss (%)",
-    pos_size_pct: "Tamanho da Posio (% do saldo)",
-    trading_hours: "Controle de Horrio",
-    start_time: "Incio",
+    pos_size_pct: "Tamanho da PosiÁ„o (% do saldo)",
+    trading_hours: "Controle de Hor·rio",
+    start_time: "InÌcio",
     end_time: "Fim",
     op_24h: "Funcionamento 24h",
-    reset_default: "Resetar para padro",
-    ai_core: "Configurao Neural Core",
+    reset_default: "Resetar para padr„o",
+    ai_core: "ConfiguraÁ„o Neural Core",
     ai_provider: "Provedor de Servi√ßo IA",
-    ai_model_sel: "Seleo de Modelo",
+    ai_model_sel: "SeleÁ„o de Modelo",
     ai_api_key: "Secret API KEY",
     ai_temperature: "Criatividade (Temp)",
-    ai_max_tokens: "Mximo de Tokens",
-    ai_conf_threshold: "Limite de Confiana",
-    save_changes: "Aplicar Configurao",
-    neural_core_desc: "Arquitetura de IA institucional para anlise avanada.",
+    ai_max_tokens: "M·ximo de Tokens",
+    ai_conf_threshold: "Limite de ConfianÁa",
+    save_changes: "Aplicar ConfiguraÁ„o",
+    neural_core_desc: "Arquitetura de IA institucional para an·lise avanÁada.",
     sec_api_key: "Secret API KEY",
     prov_deepseek: "DeepSeek AI",
     prov_gemini: "Google Gemini",
-    ema_fast: "EMA Rpida",
+    ema_fast: "EMA R·pida",
     ema_slow: "EMA Lenta",
-    ema_trend: "EMA de Tendncia",
+    ema_trend: "EMA de TendÍncia",
     rsi_range: "Intervalo RSI",
     tp_partial: "Lucro Parcial",
     tp_final: "Lucro Final",
@@ -858,7 +857,7 @@ const App: React.FC = () => {
     if (config.provider === 'GEMINI' && (!config.geminiKey || config.geminiKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do Gemini no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do Gemini n„o configurada. Acesse ConfiguraÁıes > IA Core para adicionar."
           : "Gemini API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -866,7 +865,7 @@ const App: React.FC = () => {
     if (config.provider === 'DEEPSEEK' && (!config.deepseekKey || config.deepseekKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do DeepSeek no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do DeepSeek n„o configurada. Acesse ConfiguraÁıes > IA Core para adicionar."
           : "DeepSeek API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -874,7 +873,7 @@ const App: React.FC = () => {
     if (config.provider === 'OPENAI' && (!config.openaiKey || config.openaiKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do OpenAI no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do OpenAI n„o configurada. Acesse ConfiguraÁıes > IA Core para adicionar."
           : "OpenAI API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -882,7 +881,7 @@ const App: React.FC = () => {
     if (config.provider === 'ANTHROPIC' && (!config.anthropicKey || config.anthropicKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do Anthropic no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do Anthropic n„o configurada. Acesse ConfiguraÁıes > IA Core para adicionar."
           : "Anthropic API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -954,16 +953,60 @@ const App: React.FC = () => {
   // --- MAIN RENDER (AUTHENTICATED) ---
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-50">
-      <main className="flex-1 p-8 overflow-y-auto">
-        <header className="flex flex-col gap-4 mb-10 mt-4">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-5xl lg:text-6xl font-extrabold tracking-tighter bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-500 bg-clip-text text-transparent pb-2 drop-shadow-lg hover:filter hover:brightness-125 transition-all duration-500">
-              D√™ Vida √† Sua Pr√≥xima Grande Ideia
-            </h2>
-            <p className="text-lg md:text-xl text-slate-400 font-medium max-w-3xl mt-2 leading-relaxed">
-              Crie sua pr√≥pria criptomoeda com rapidez, seguran√ßa e tecnologia de ponta. Desenvolva, configure e lance seu ativo digital nas principais redes descentralizadas em poucos minutos. Transforme sua ideia em um projeto real na Web3
-            </p>
+      <aside className="w-64 border-r border-slate-800 bg-slate-900/50 hidden lg:flex flex-col sticky top-0 h-screen">
+        <div className="p-6 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="bg-cyan-500 p-2 rounded-lg shadow-lg shadow-cyan-900/40">
+              <Zap className="w-5 h-5 text-slate-950" />
+            </div>
+            <h1 className="font-bold text-xl tracking-tight">{t('terminal_name')}</h1>
           </div>
+          <p className="text-[10px] text-slate-500 mt-2 font-bold tracking-widest uppercase opacity-70">{t('inst_terminal')}</p>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-2 mt-2">
+          <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
+        </nav>
+
+        <div className="p-4 border-t border-slate-800 space-y-4">
+          <div className="bg-slate-800/50 p-4 rounded-xl">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-slate-400">{t('sys_health')}</span>
+              <span className={`w-2 h-2 rounded-full ${error ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`}></span>
+            </div>
+            <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+              <div className={`h-full ${error ? 'bg-rose-500' : 'bg-cyan-500'} w-[98%]`}></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-8 overflow-y-auto">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-bold tracking-tight">
+                {currentView === 'robots' ? t('header_robots') :
+                  currentView === 'assets' ? t('header_assets') :
+                    currentView === 'monitoring' ? t('header_monitoring') :
+                      currentView === 'charts' ? t('header_charts') : t('header_settings')}
+              </h2>
+            </div>
+            <div className="flex items-center gap-3 text-slate-400">
+              <div className="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                <div className={`w-1.5 h-1.5 rounded-full ${tradingAuthority === 'AI' ? 'bg-cyan-500 animate-pulse' : 'bg-purple-500'}`} />
+                {tradingAuthority} {t('logic_enabled')}
+              </div>
+              <span className="text-xs opacity-50">|</span>
+              <div className="flex items-center gap-2 text-xs">
+                <Clock className="w-4 h-4" />
+                <span>{t('last_scan')}: {lastUpdated.toLocaleTimeString()}</span>
+              </div>
+
+            </div>
+          </div>
+
+
         </header>
 
         {error && currentView !== 'settings' && (
@@ -1055,7 +1098,7 @@ const SettingsView: React.FC<{
           <div className="p-3 bg-cyan-500/10 rounded-xl"><Globe className="w-6 h-6 text-cyan-400" /></div>
           <div>
             <h3 className="font-bold">{t('lang_sel')}</h3>
-            <p className="text-xs text-slate-500">{language === 'pt' ? 'Portugus selecionado' : 'English selected'}</p>
+            <p className="text-xs text-slate-500">{language === 'pt' ? 'PortuguÍs selecionado' : 'English selected'}</p>
           </div>
         </div>
         <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -1510,8 +1553,8 @@ const ExchangeCard: React.FC<{ name: string; status: string; lastSync: string; b
 
   const maskedValue = (val: string) => {
     if (!val) return '';
-    if (val.length < 8) return '';
-    return val.substring(0, 4) + '' + val.substring(val.length - 4);
+    if (val.length < 8) return 'ïïïïïïïï';
+    return val.substring(0, 4) + 'ïïïï' + val.substring(val.length - 4);
   };
 
   return (
@@ -1926,7 +1969,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
           wizard.strategy === 'ZIGZAG_PRO' ? t('bot_naming_zz') :
             wizard.strategy === 'MATRIX_SCALP' ? t('bot_naming_matrix') :
               wizard.strategy === 'MATRIX_NEURAL' ? t('bot_naming_neural') :
-                wizard.strategy === 'ANATOMIA_FLUXO' ? 'Rob Anatomia Fluxo' :
+                wizard.strategy === 'ANATOMIA_FLUXO' ? 'RobÙ Anatomia Fluxo' :
                   t('bot_naming_ma')
         } ${bots.length + 1}`,
       strategyId:
@@ -2153,8 +2196,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                       wizard.strategy === 'SECURE' ? t('secure_logic_desc') :
                         wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
                           wizard.strategy === 'ROBO_IA' ? "Advanced AI-driven strategy with automated SL/TP and adaptive signals." :
-                            wizard.strategy === 'ROBO_ENSAIO' ? "Testes hiperagressivos de 15s para testar comunicao com a API." :
-                              wizard.strategy === 'ANATOMIA_FLUXO' ? "4-Painis Python Script - Integrao Institucional, Fluxo, Gatilhos e Macro." :
+                            wizard.strategy === 'ROBO_ENSAIO' ? "Testes hiperagressivos de 15s para testar comunicaÁ„o com a API." :
+                              wizard.strategy === 'ANATOMIA_FLUXO' ? "4-PainÈis Python Script - IntegraÁ„o Institucional, Fluxo, Gatilhos e Macro." :
                                 wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
                   </p>
                 </div>
@@ -2227,7 +2270,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ROBO_ENSAIO' ? 'border-white bg-gradient-to-br from-white/20 to-slate-900 text-white shadow-[0_0_30px_rgba(255,255,255,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
                 >
                   <Zap className="w-8 h-8 relative z-10" />
-                  <span className="font-black text-xs tracking-widest uppercase relative z-10 text-center">ROBO ENSAIO<br /><span className="text-[9px]">(Teste Rpido)</span></span>
+                  <span className="font-black text-xs tracking-widest uppercase relative z-10 text-center">ROBO ENSAIO<br /><span className="text-[9px]">(Teste R·pido)</span></span>
                 </button>
               </div>
 
@@ -2235,10 +2278,10 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               {wizard.strategy === 'ROBO_ENSAIO' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                   <div className="p-4 bg-white/5 rounded-xl border border-white/20">
-                    <h4 className="font-bold text-white mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> Configurao do ENSAIO</h4>
-                    <p className="text-xs text-slate-400 mb-4">Esse bot no usa Inteligncia. Ele compra agora e vende nos prximos 15 segundos repetidamente at voc pausar. Use APENAS com modo Simulao (Dry Run) ou valores mnimos na vida real (Live) para Diagnosticar Erros da MEXC.</p>
+                    <h4 className="font-bold text-white mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> ConfiguraÁ„o do ENSAIO</h4>
+                    <p className="text-xs text-slate-400 mb-4">Esse bot n„o usa InteligÍncia. Ele compra agora e vende nos prÛximos 15 segundos repetidamente atÈ vocÍ pausar. Use APENAS com modo SimulaÁ„o (Dry Run) ou valores mÌnimos na vida real (Live) para Diagnosticar Erros da MEXC.</p>
                     <div className="grid grid-cols-2 gap-4">
-                      <SettingField label="Atuao" value="Loop Compra/Venda infinito" />
+                      <SettingField label="AtuaÁ„o" value="Loop Compra/Venda infinito" />
                       <SettingField label={t('stop_loss')} value={`${wizard.stopLoss}% (Fixo)`} />
                     </div>
                   </div>
@@ -2413,7 +2456,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                     <h4 className="font-bold text-cyan-400 mb-2 flex items-center gap-2"><Activity className="w-4 h-4" /> Anatomia do Fluxo</h4>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Anlise 4-Painis</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">An·lise 4-PainÈis</label>
                         <div className="flex flex-col gap-2">
                           <ToggleRow label="Painel 1 (Macro)" active={true} />
                           <ToggleRow label="Painel 2 (Institucional)" active={true} />
@@ -2575,7 +2618,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-amber-400 uppercase tracking-wide">
-                          ?? Mx. Perdas Consecutivas
+                          ?? M·x. Perdas Consecutivas
                         </label>
                         <input
                           type="number"
@@ -2591,7 +2634,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           }}
                           className="w-full bg-slate-900 border border-amber-500/30 rounded-lg p-3 text-sm font-bold text-amber-400 outline-none focus:border-amber-500"
                         />
-                        <p className="text-[9px] text-slate-500">Rob pausa automaticamente aps N perdas seguidas</p>
+                        <p className="text-[9px] text-slate-500">RobÙ pausa automaticamente apÛs N perdas seguidas</p>
                       </div>
                     </div>
                   </div>
@@ -3076,8 +3119,6 @@ const AssetFactoryView: React.FC<{
   const [activeTab, setActiveTab] = useState<'generator'>('generator');
   const [newTicker, setNewTicker] = useState('');
   const [tokenConfig, setTokenConfig] = useState({ name: 'My Utility Token', symbol: 'MUTL', supply: '100000000', chain: 'BSC', logo: '' });
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [hasClickedPay, setHasClickedPay] = useState(false);
 
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3085,21 +3126,7 @@ const AssetFactoryView: React.FC<{
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxDim = Math.max(img.width, img.height);
-          canvas.width = maxDim;
-          canvas.height = maxDim;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            const offsetX = (maxDim - img.width) / 2;
-            const offsetY = (maxDim - img.height) / 2;
-            ctx.drawImage(img, offsetX, offsetY, img.width, img.height);
-            setTokenConfig({ ...tokenConfig, logo: canvas.toDataURL('image/png') });
-          }
-        };
-        img.src = reader.result as string;
+        setTokenConfig({ ...tokenConfig, logo: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
@@ -3110,50 +3137,10 @@ const AssetFactoryView: React.FC<{
   const [deployedTokenAddress, setDeployedTokenAddress] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
   const [gasFee, setGasFee] = useState("");
-  const [walletError, setWalletError] = useState("");
-
-  // Handle returning from Stripe in a new tab
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment_success') === 'true') {
-      // Notify the original tab
-      localStorage.setItem('tradepro_stripe_success', Date.now().toString());
-      // Clean up the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Try to close this tab since the original tab will continue the operation
-      if (window.opener) {
-        window.close();
-      } else {
-        // Fallback: If it didn't open in a new tab, maybe try to close modal and deploy directly
-        // But since we rely on AssetFactoryView, we just set states
-        setShowPaymentModal(false);
-        setTimeout(() => deploySmartContract(), 1000); // Small delay to let React render
-      }
-    }
-  }, []);
-
-  // Polling to detect payment success from the new tab
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const successValue = localStorage.getItem('tradepro_stripe_success');
-      if (successValue) {
-        console.log("Payment detected via polling interval!");
-        setShowPaymentModal(false);
-        // Clean up
-        localStorage.removeItem('tradepro_stripe_success');
-        // Trigger deployment automatically
-        deploySmartContract();
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const connectMetamask = async () => {
-    setWalletError("");
     if (!(window as any).ethereum) {
-      setWalletError("N√£o foi poss√≠vel detectar uma carteira Web3. Por favor, instale a extens√£o da MetaMask para conectar sua conta e melhorar sua experi√™ncia.");
+      alert("Please install MetaMask!");
       return;
     }
     try {
@@ -3189,8 +3176,6 @@ const AssetFactoryView: React.FC<{
   };
 
   const deploySmartContract = async () => {
-    setWalletError("");
-    setDeployedTokenAddress("");
     if (tokenConfig.chain === 'BTC' || tokenConfig.chain === 'SOL') {
       setIsDeploying(true);
       setTimeout(() => {
@@ -3234,7 +3219,7 @@ const AssetFactoryView: React.FC<{
               "0x38";
 
       if (network.chainId !== targetChainId) {
-        setWalletError(`A√ß√£o Necess√°ria: Por favor, troque para a rede ${chainName} na sua carteira MetaMask.`);
+        alert(`Action Required: Please switch to ${chainName} in MetaMask.`);
         try {
           await (window as any).ethereum.request({
             method: "wallet_switchEthereumChain",
@@ -3305,11 +3290,11 @@ const AssetFactoryView: React.FC<{
         console.warn("Auto-add to wallet failed:", waErr);
       }
 
-      // Success state UI is handled by setDeployedTokenAddress(addr) above.
+      alert(`BRAVO! Institutional Asset Deployed Status: ${addr}`);
     } catch (err: any) {
       console.error("DEPLOYMENT CORE ERROR:", err);
-      const msg = err.reason || err.message || "Falha desconhecida";
-      setWalletError(`Falha na Implanta√ß√£o: ${msg}. Verifique seu saldo para taxas de g√°s e se a rede selecionada est√° correta.`);
+      const msg = err.reason || err.message || "Unknown cryptographic failure";
+      alert(`DEPLOYMENT FAILED: ${msg}\n\nPlease check your BNB balance and ensures MetaMask is on the BSC Mainnet.`);
     }
     setIsDeploying(false);
   };
@@ -3410,589 +3395,507 @@ const AssetFactoryView: React.FC<{
                 _mint(to, amount);
     }
 }`;
+    const generatedCode = getGeneratedCode();
+
+    return (
+      <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
+          <div className="flex border-b border-slate-800 gap-8 overflow-x-auto whitespace-nowrap scrollbar-hide flex-1">
+            <TabBtn label="Token Lab Generator" active={activeTab === 'generator'} onClick={() => setActiveTab('generator')} icon={<Cpu className="w-4 h-4" />} />
+          </div>
+        </div>
+
+        {activeTab === 'generator' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <PlusCircle className="text-purple-400" /> {t('utility_blueprint')}
+              </h3>
+
+              <div className="space-y-6 pt-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('token_name')}</label>
+                  <input
+                    type="text"
+                    value={tokenConfig.name}
+                    onChange={(e) => setTokenConfig({ ...tokenConfig, name: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('symbol')}</label>
+                  <input
+                    type="text"
+                    value={tokenConfig.symbol}
+                    onChange={(e) => setTokenConfig({ ...tokenConfig, symbol: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50 uppercase"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('total_supply')}</label>
+                  <input
+                    type="number"
+                    value={tokenConfig.supply}
+                    onChange={(e) => setTokenConfig({ ...tokenConfig, supply: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('network_chain')}</label>
+                  <select
+                    value={tokenConfig.chain}
+                    onChange={(e) => setTokenConfig({ ...tokenConfig, chain: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50 appearance-none cursor-pointer"
+                  >
+                    <option value="BSC">Binance Smart Chain (BSC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="SOL">Solana (SOL)</option>
+                    <option value="BTC">Bitcoin (BTC) - Taproot/BRC20</option>
+                    <option value="POLYGON">Polygon</option>
+                    <option value="AVAX">Avalanche</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('token_logo')}</label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                      {tokenConfig.logo ? (
+                        <img src={tokenConfig.logo} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        <PieChartIcon className="w-6 h-6 text-slate-700" />
+                      )}
+                    </div>
+                    <label className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all border border-slate-700 cursor-pointer text-center">
+                      {t('choose_image')}
+                      <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+                <div className="pt-4 flex flex-col gap-3">
+
+
+                  <button
+                    onClick={deploySmartContract}
+                    disabled={isDeploying}
+                    className={`w-full py-4 ${isDeploying ? 'bg-slate-800' :
+                      tokenConfig.chain === 'BTC' ? 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500' :
+                        tokenConfig.chain === 'SOL' ? 'bg-gradient-to-r from-teal-500 to-purple-600 hover:from-teal-400 hover:to-purple-500' :
+                          tokenConfig.chain === 'ETH' ? 'bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-500 hover:to-blue-600' :
+                            tokenConfig.chain === 'POLYGON' ? 'bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-600 hover:to-indigo-700' :
+                              tokenConfig.chain === 'AVAX' ? 'bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700' :
+                                'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500'
+                      } text-white font-bold rounded-2xl transition-all shadow-xl flex flex-col items-center justify-center gap-1 group`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isDeploying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 group-hover:animate-pulse" />}
+                      {isDeploying ? t('proc_protocol') :
+                        tokenConfig.chain === 'BTC' ? "Initiate Bitcoin Inscription" :
+                          tokenConfig.chain === 'SOL' ? "Initialize Solana Program" :
+                            tokenConfig.chain === 'POLYGON' ? "Deploy to Polygon" :
+                              tokenConfig.chain === 'AVAX' ? "Deploy to Avalanche" :
+                                t('deploy_smart_contract')}
+                    </div>
+                    {!isDeploying && (
+                      <span className="text-[10px] opacity-60 font-medium">
+                        {tokenConfig.chain === 'BTC' ? "BRC-20 Ordinals Protocol" :
+                          tokenConfig.chain === 'SOL' ? "Solana SPL Standard" :
+                            tokenConfig.chain === 'ETH' ? "Ethereum Mainnet (ERC-20)" :
+                              tokenConfig.chain === 'POLYGON' ? "Polygon (Matic/ERC-20)" :
+                                tokenConfig.chain === 'AVAX' ? "Avalanche C-Chain (ERC-20)" :
+                                  "Binance Smart Chain (BEP-20)"}
+                      </span>
+                    )}
+                  </button>
+
+                  {ethAccount && (
+                    <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-xl space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('conn_wallet')}</span>
+                        <span className="text-[10px] text-emerald-500 font-bold">ACTIVE</span>
+                      </div>
+                      <p className="text-[11px] font-mono text-slate-300 truncate">{ethAccount}</p>
+                      {gasFee && (
+                        <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
+                          <span className="text-[10px] text-slate-500 font-bold">{t('est_gas_fee')}</span>
+                          <span className="text-[10px] text-cyan-400 font-bold">{gasFee}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {deployedTokenAddress && (
+                    <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl animate-in fade-in zoom-in duration-300">
+                      <h4 className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">{t('contract_success')}</h4>
+                      <p className="text-[11px] font-mono text-slate-300 truncate mb-2">{deployedTokenAddress}</p>
+                      <button
+                        onClick={() => window.open(`https://bscscan.com/address/${deployedTokenAddress}`, '_blank')}
+                        className="text-[10px] text-emerald-500 hover:underline font-bold flex items-center gap-1"
+                      >
+                        <Globe className="w-3 h-3" /> {t('view_explorer')}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="bg-purple-500/5 border border-purple-500/20 p-4 rounded-xl">
+                    <p className="text-[10px] text-purple-400 font-medium">Standard: {tokenConfig.chain} Utility Protocol</p>
+                    <p className="text-[9px] text-slate-500 mt-1">Audit-ready code. Smart contract is verified through Neural Core factory.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-3xl p-1 overflow-hidden">
+              <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <div className="flex items-center gap-2">
+                  <FileText className={`w-4 h-4 ${tokenConfig.chain === 'BTC' ? 'text-orange-400' :
+                    tokenConfig.chain === 'SOL' ? 'text-teal-400' :
+                      tokenConfig.chain === 'ETH' ? 'text-indigo-400' :
+                        tokenConfig.chain === 'POLYGON' ? 'text-purple-400' :
+                          tokenConfig.chain === 'AVAX' ? 'text-red-400' :
+                            'text-purple-400'
+                    }`} />
+                  <span className="text-xs font-bold text-slate-300">
+                    {tokenConfig.chain === 'BTC' ? 'brc20-manifest.json' :
+                      tokenConfig.chain === 'SOL' ? 'lib.rs (Anchor)' :
+                        tokenConfig.chain === 'POLYGON' ? 'SimpleUtilityToken.sol (Polygon)' :
+                          tokenConfig.chain === 'AVAX' ? 'SimpleUtilityToken.sol (Avalanche)' :
+                            'SimpleUtilityToken.sol'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(generatedCode); alert('Code copied!'); }}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all border border-slate-700 flex items-center gap-2"
+                >
+                  <Save className="w-3 h-3" /> {t('copy_code')}
+                </button>
+              </div>
+              <pre className={`p-8 text-[11px] font-mono ${tokenConfig.chain === 'BTC' ? 'text-orange-500/80' :
+                tokenConfig.chain === 'SOL' ? 'text-teal-500/80' :
+                  tokenConfig.chain === 'ETH' ? 'text-indigo-500/80' :
+                    tokenConfig.chain === 'POLYGON' ? 'text-purple-500/80' :
+                      tokenConfig.chain === 'AVAX' ? 'text-red-500/80' :
+                        'text-cyan-500/80'
+                } overflow-auto max-h-[500px] scrollbar-thin`}>
+                {generatedCode}
+              </pre>
+            </div>
+          </div>
+        )
+        }
+
+
+        );
+  };
+}
+
+        export default App;
+
+        const BotMonitoringView: React.FC<{
+    t: (k: any) => string;
+    formatCurrency: (v: number) => string;
+        bots: TradingBot[];
+        trades: Trade[];
+        equityData: EquityPoint[];
+        cashAvailable: number;
+    onToggleBot?: (id: string, newStatus: 'ACTIVE' | 'PAUSED') => void;
+    onClearHistory?: () => void;
+  }> = ({t, formatCurrency, bots, trades, equityData, cashAvailable, onToggleBot, onClearHistory}) => {
+    const [selectedBotId, setSelectedBotId] = useState<string>('all');
+          const [timeframe, setTimeframe] = useState<'H' | 'D' | 'M'>('D');
+
+    const filteredBots = selectedBotId === 'all' ? bots : bots.filter(b => b.id === selectedBotId);
+    const filteredTrades = selectedBotId === 'all' ? trades : trades.filter(tr => tr.botId === selectedBotId);
+
+    const activeBotsCount = filteredBots.filter(b => b.status === 'ACTIVE').length;
+    const totalPnl = filteredBots.reduce((acc, b) => acc + b.performance.totalPnl, 0);
+    const totalTrades = filteredBots.reduce((acc, b) => acc + b.performance.trades, 0);
+    const avgWinRate = filteredBots.length > 0
+      ? filteredBots.reduce((acc, b) => acc + (b.performance.trades > 0 ? b.performance.winRate : 0), 0) / filteredBots.filter(b => b.performance.trades > 0).length || 0
+          : 0;
+
+          // Compute max drawdown dynamically from equity history
+          let maxDrawdown = 0;
+          let peak = equityData[0]?.value || 10000;
+          for (const point of equityData) {
+      if (point.value > peak) peak = point.value;
+          const dd = ((peak - point.value) / peak) * 100;
+      if (dd > maxDrawdown) maxDrawdown = dd;
+    }
+
+    // Calculate current total equity (balance + positions)
+    const currentEquity = (Number(cashAvailable) || 0) + filteredBots.reduce((acc, b) => acc + (Number(b.performance.totalPnl) || 0), 0);
+
+          return (
+          <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <MetricCard
+                label={t('total_equity') || 'Patrim√¥nio Total'}
+                value={formatCurrency(currentEquity)}
+                icon={<Wallet className="text-emerald-400" />}
+                trend="Real-time"
+                positive={true}
+              />
+              <MetricCard
+                label={t('mon_pnl')}
+                value={formatCurrency(totalPnl)}
+                icon={<Zap className="text-cyan-400" />}
+                trend={totalPnl > 0 ? `+${formatCurrency(totalPnl)} total` : totalPnl < 0 ? `-${formatCurrency(Math.abs(totalPnl))} total` : "No activity"}
+                positive={totalPnl >= 0}
+              />
+              <MetricCard
+                label={t('mon_winrate')}
+                value={`${avgWinRate.toFixed(1)}%`}
+                icon={<TrendingUp className="text-purple-400" />}
+                trend="Avg Scalp"
+                positive={avgWinRate > 50}
+              />
+              <MetricCard
+                label={t('mon_drawdown')}
+                value={`${maxDrawdown.toFixed(2)}%`}
+                icon={<Shield className="text-rose-400" />}
+                trend="Risk Limit: 5%"
+                positive={maxDrawdown < 3}
+              />
+              <MetricCard
+                label={t('mon_active_bots')}
+                value={activeBotsCount.toString()}
+                icon={<Cpu className="text-blue-400" />}
+                trend={`${totalTrades} Total Trades`}
+                positive={activeBotsCount > 0}
+              />
+            </div>
+
+            {/* Bot Selector */}
+            <div className="flex bg-slate-900/50 p-2 rounded-2xl border border-slate-800 overflow-x-auto scrollbar-hide gap-2">
+              <button
+                onClick={() => setSelectedBotId('all')}
+                className={`px-6 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all whitespace-nowrap flex items-center gap-2 ${selectedBotId === 'all' ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-900/20' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                {t('all_robots') || 'Todos os Rob√¥s'}
+              </button>
+              {bots.map(bot => (
+                <button
+                  key={bot.id}
+                  onClick={() => setSelectedBotId(bot.id)}
+                  className={`px-6 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all whitespace-nowrap flex items-center gap-2 border ${selectedBotId === bot.id ? 'bg-slate-800 border-cyan-500/50 text-cyan-400 shadow-lg' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full ${bot.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
+                  {bot.name.includes(' / ') ? bot.name.split(' / ')[1] : bot.name}
+                </button>
+              ))}
+            </div>
+
+
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="font-bold flex items-center gap-2 text-cyan-400">
+                    <Activity className="w-5 h-5" /> {t('mon_equity')}
+                    {selectedBotId !== 'all' && <span className="text-[9px] text-slate-500 font-normal ml-2 uppercase tracking-widest">Global Context</span>}
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                      {(['H', 'D', 'M'] as const).map(tf => (
+                        <button
+                          key={tf}
+                          onClick={() => setTimeframe(tf)}
+                          className={`px-4 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${timeframe === tf ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                          {tf === 'H' ? '1H' : tf === 'D' ? '1D' : '1M'}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded border border-emerald-500/20">REAL-TIME</span>
+                  </div>
+                </div>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={equityData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                      <XAxis dataKey="time" stroke="#64748b" fontSize={10} />
+                      <YAxis stroke="#64748b" fontSize={10} domain={['dataMin - 500', 'dataMax + 500']} hide />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                        itemStyle={{ color: '#22d3ee', fontWeight: 'bold' }}
+                        formatter={(v: number) => [`$${v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, 'Equity']}
+                      />
+                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                        {equityData.map((entry, index) => {
+                          const prev = equityData[index - 1]?.value ?? entry.value;
+                          const isUp = entry.value >= prev;
+                          const isLast = index === equityData.length - 1;
+                          return (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={isLast ? '#06b6d4' : isUp ? '#10b981' : '#f43f5e'}
+                              opacity={isLast ? 1 : 0.7}
+                            />
+                          );
+                        })}
+                        <LabelList dataKey="value" position="top" fill="#94a3b8" fontSize={9} formatter={(v: number) => `$${(v / 1000).toFixed(1)}k`} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Chart Legend */}
+                <div className="flex items-center gap-6 mt-4 pl-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-emerald-500/70" />
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Alta</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-rose-500/70" />
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Queda</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-cyan-500" />
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Atual</span>
+                  </div>
+                </div>
+              </div>
+
+              <section className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div className="p-6 border-b border-slate-800 bg-slate-900/50 font-bold flex items-center gap-2 text-purple-400">
+                  <Bot className="w-5 h-5" /> Active Operations
+                </div>
+                <div className="p-6 space-y-4">
+                  {filteredBots.filter(b => b.status === 'ACTIVE' || b.status === 'PAUSED').map(bot => (
+                    <div key={bot.id} className="flex flex-col gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group transition-all hover:border-cyan-500/30">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${bot.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                          <span className="text-xs font-bold text-slate-200">
+                            {bot.name.includes(' / ') ? bot.name.split(' / ')[1] : bot.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[9px] font-bold ${bot.status === 'ACTIVE' ? 'text-cyan-500' : 'text-amber-500'}`}>
+                            {bot.status === 'ACTIVE' ? t('mon_status_op') : t('mon_status_paused')}
+                          </span>
+                          {onToggleBot && (
+                            <button
+                              onClick={() => {
+                                const newStatus = bot.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+                                onToggleBot(bot.id, newStatus);
+                                if (newStatus === 'PAUSED') {
+                                  botService.pauseBot(bot.id);
+                                } else {
+                                  // Ideally needs exchange logic to reconnect
+                                }
+                              }}
+                              className={`p-1 rounded-md text-[8px] font-bold transition-all border ${bot.status === 'ACTIVE'
+                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                }`}
+                            >
+                              {bot.status === 'ACTIVE' ? 'PAUSAR' : 'RETOMAR'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Ativos</p>
+                          <p className="text-sm font-bold text-slate-300">{(bot.config as any).assets?.join(', ') || 'N/A'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-[9px] font-bold uppercase tracking-widest ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>P&L Hoje</p>
+                          <p className={`text-sm font-bold ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                            {bot.performance.todayPnl >= 0 ? '+' : ''}{formatCurrency(bot.performance.todayPnl)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800">
+                        <div className="text-center">
+                          <p className="text-[8px] text-slate-600 uppercase font-bold">Trades</p>
+                          <p className="text-xs font-bold text-slate-300">{bot.performance.trades}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[8px] text-slate-600 uppercase font-bold">Win Rate</p>
+                          <p className="text-xs font-bold text-cyan-400">{bot.performance.trades > 0 ? bot.performance.winRate.toFixed(0) : '0'}%</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[8px] text-slate-600 uppercase font-bold">Loss Seq.</p>
+                          <p className={`text-xs font-bold ${bot.performance.consecutiveLosses >= 2 ? 'text-rose-400' : 'text-slate-400'}`}>
+                            {bot.performance.consecutiveLosses}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredBots.filter(b => b.status === 'ACTIVE' || b.status === 'PAUSED').length === 0 && (
+                    <div className="p-8 text-center bg-slate-950/50 rounded-2xl border border-dashed border-slate-800">
+                      <Bot className="w-10 h-10 text-slate-700 mx-auto mb-2 opacity-20" />
+                      <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">No Active Robots</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <section className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-slate-800 bg-slate-900/50 font-bold flex items-center justify-between">
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <History className="w-5 h-5" /> {t('mon_history')}
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-bold text-slate-500">{filteredTrades.length} registros</span>
+                  {onClearHistory && filteredTrades.length > 0 && (
+                    <button
+                      onClick={onClearHistory}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 rounded-lg text-[10px] font-black tracking-widest transition-all"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      LIMPAR
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-950/50">
+                      <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_time')}</th>
+                      <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_asset')}</th>
+                      <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_type')}</th>
+                      <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_price')}</th>
+                      <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_amount')}</th>
+                      <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_result')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {filteredTrades.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-12 text-center text-slate-600 font-bold uppercase text-xs tracking-widest">No history recorded for this selection</td>
+                      </tr>
+                    ) : filteredTrades.map(trade => (
+                      <tr key={trade.id} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="p-4 text-xs font-mono text-slate-400">{trade.timestamp}</td>
+                        <td className="p-4 text-xs font-bold text-slate-200">{trade.asset}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-md text-[9px] font-bold ${trade.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
+                            {trade.type}
+                          </span>
+                        </td>
+                        <td className="p-4 text-xs font-mono text-slate-300">{formatCurrency(trade.price)}</td>
+                        <td className="p-4 text-xs font-mono text-slate-300">{trade.amount}</td>
+                        <td className="p-4">
+                          <span className={`text-xs font-bold ${trade.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
+                            {trade.result_usd != null ? (trade.result_usd >= 0 ? '+' : '') + formatCurrency(trade.result_usd) : '---'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+          );
   };
 
-  const generatedCode = getGeneratedCode();
-
-  return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
-        <div className="flex border-b border-slate-800 gap-8 overflow-x-auto whitespace-nowrap scrollbar-hide flex-1">
-          <TabBtn label="Token Lab Generator" active={activeTab === 'generator'} onClick={() => setActiveTab('generator')} icon={<Cpu className="w-4 h-4" />} />
-        </div>
-      </div>
-
-      {activeTab === 'generator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <PlusCircle className="text-purple-400" /> {t('utility_blueprint')}
-            </h3>
-
-            <div className="space-y-6 pt-4">
-              <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('token_name')}</label>
-                <input
-                  type="text"
-                  value={tokenConfig.name}
-                  onChange={(e) => setTokenConfig({ ...tokenConfig, name: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('symbol')}</label>
-                <input
-                  type="text"
-                  value={tokenConfig.symbol}
-                  onChange={(e) => setTokenConfig({ ...tokenConfig, symbol: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50 uppercase"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('total_supply')}</label>
-                <input
-                  type="number"
-                  value={tokenConfig.supply}
-                  onChange={(e) => setTokenConfig({ ...tokenConfig, supply: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('network_chain')}</label>
-                <select
-                  value={tokenConfig.chain}
-                  onChange={(e) => setTokenConfig({ ...tokenConfig, chain: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl font-bold text-slate-100 outline-none focus:border-purple-500/50 appearance-none cursor-pointer"
-                >
-                  <option value="BSC">Binance Smart Chain (BSC)</option>
-                  <option value="ETH">Ethereum (ETH)</option>
-                  <option value="SOL">Solana (SOL)</option>
-                  <option value="POLYGON">Polygon</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('token_logo')}</label>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
-                    {tokenConfig.logo ? (
-                      <img src={tokenConfig.logo} alt="Logo" className="w-full h-full object-cover" />
-                    ) : (
-                      <PieChartIcon className="w-6 h-6 text-slate-700" />
-                    )}
-                  </div>
-                  <label className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all border border-slate-700 cursor-pointer text-center">
-                    {t('choose_image')}
-                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                  </label>
-                </div>
-              </div>
-              <div className="pt-4 flex flex-col gap-3">
-
-                <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-start gap-3 text-indigo-200">
-                  <div className="bg-indigo-500/20 p-2 rounded-lg mt-0.5">
-                    <AlertTriangle className="w-4 h-4 text-indigo-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-indigo-300 mb-1">Passo Importante: Conex√£o da Carteira</h4>
-                    <p className="text-xs text-indigo-200/80 leading-relaxed">
-                      Antes de emitir seu criptoativo, certifique-se de que sua carteira <strong>MetaMask</strong> (ou compat√≠vel) est√° conectada e configurada na <strong>mesma rede</strong> selecionada acima ({tokenConfig.chain}). A taxa de g√°s ser√° cobrada na rede escolhida.
-                    </p>
-                  </div>
-                </div>
-
-                {walletError && (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 text-rose-400 animate-in slide-in-from-top-2">
-                    <div className="bg-rose-500/20 p-2 rounded-lg mt-0.5 shrink-0">
-                      <AlertTriangle className="w-4 h-4 text-rose-500" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-rose-400 mb-1">Aviso da Carteira</h4>
-                      <p className="text-xs text-rose-300/80 leading-relaxed">
-                        {walletError}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => {
-                    setShowPaymentModal(true);
-                    setHasClickedPay(false);
-                  }}
-                  disabled={isDeploying}
-                  className={`w-full py-4 ${isDeploying ? 'bg-slate-800' :
-                    tokenConfig.chain === 'BTC' ? 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500' :
-                      tokenConfig.chain === 'SOL' ? 'bg-gradient-to-r from-teal-500 to-purple-600 hover:from-teal-400 hover:to-purple-500' :
-                        tokenConfig.chain === 'ETH' ? 'bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-500 hover:to-blue-600' :
-                          tokenConfig.chain === 'POLYGON' ? 'bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-600 hover:to-indigo-700' :
-                            tokenConfig.chain === 'AVAX' ? 'bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700' :
-                              'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500'
-                    } text-white font-bold rounded-2xl transition-all shadow-xl flex flex-col items-center justify-center gap-1 group`}
-                >
-                  <div className="flex items-center gap-2">
-                    {isDeploying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 group-hover:animate-pulse" />}
-                    {isDeploying ? t('proc_protocol') :
-                      tokenConfig.chain === 'BTC' ? "Initiate Bitcoin Inscription" :
-                        tokenConfig.chain === 'SOL' ? "Initialize Solana Program" :
-                          tokenConfig.chain === 'POLYGON' ? "Deploy to Polygon" :
-                            tokenConfig.chain === 'AVAX' ? "Deploy to Avalanche" :
-                              t('deploy_smart_contract')}
-                  </div>
-                  {!isDeploying && (
-                    <span className="text-[10px] opacity-60 font-medium">
-                      {tokenConfig.chain === 'BTC' ? "BRC-20 Ordinals Protocol" :
-                        tokenConfig.chain === 'SOL' ? "Solana SPL Standard" :
-                          tokenConfig.chain === 'ETH' ? "Ethereum Mainnet (ERC-20)" :
-                            tokenConfig.chain === 'POLYGON' ? "Polygon (Matic/ERC-20)" :
-                              tokenConfig.chain === 'AVAX' ? "Avalanche C-Chain (ERC-20)" :
-                                "Binance Smart Chain (BEP-20)"}
-                    </span>
-                  )}
-                </button>
-
-                {ethAccount && (
-                  <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-xl space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('conn_wallet')}</span>
-                      <span className="text-[10px] text-emerald-500 font-bold">ACTIVE</span>
-                    </div>
-                    <p className="text-[11px] font-mono text-slate-300 truncate">{ethAccount}</p>
-                    {gasFee && (
-                      <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
-                        <span className="text-[10px] text-slate-500 font-bold">{t('est_gas_fee')}</span>
-                        <span className="text-[10px] text-cyan-400 font-bold">{gasFee}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {deployedTokenAddress && (
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl animate-in fade-in zoom-in duration-300">
-                    <h4 className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">{t('contract_success')}</h4>
-                    <p className="text-[11px] font-mono text-slate-300 truncate mb-2">{deployedTokenAddress}</p>
-                    <button
-                      onClick={() => window.open(`https://bscscan.com/address/${deployedTokenAddress}`, '_blank')}
-                      className="text-[10px] text-emerald-500 hover:underline font-bold flex items-center gap-1"
-                    >
-                      <Globe className="w-3 h-3" /> {t('view_explorer')}
-                    </button>
-                  </div>
-                )}
-
-                <div className="bg-purple-500/5 border border-purple-500/20 p-4 rounded-xl">
-                  <p className="text-[10px] text-purple-400 font-medium">Standard: {tokenConfig.chain} Utility Protocol</p>
-                  <p className="text-[9px] text-slate-500 mt-1">Audit-ready code. Smart contract is verified through Neural Core factory.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-3xl p-1 overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-              <div className="flex items-center gap-2">
-                <FileText className={`w-4 h-4 ${tokenConfig.chain === 'BTC' ? 'text-orange-400' :
-                  tokenConfig.chain === 'SOL' ? 'text-teal-400' :
-                    tokenConfig.chain === 'ETH' ? 'text-indigo-400' :
-                      tokenConfig.chain === 'POLYGON' ? 'text-purple-400' :
-                        tokenConfig.chain === 'AVAX' ? 'text-red-400' :
-                          'text-purple-400'
-                  }`} />
-                <span className="text-xs font-bold text-slate-300">
-                  {tokenConfig.chain === 'BTC' ? 'brc20-manifest.json' :
-                    tokenConfig.chain === 'SOL' ? 'lib.rs (Anchor)' :
-                      tokenConfig.chain === 'POLYGON' ? 'SimpleUtilityToken.sol (Polygon)' :
-                        tokenConfig.chain === 'AVAX' ? 'SimpleUtilityToken.sol (Avalanche)' :
-                          'SimpleUtilityToken.sol'}
-                </span>
-              </div>
-              <button
-                onClick={() => { navigator.clipboard.writeText(generatedCode); }}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all border border-slate-700 flex items-center gap-2"
-              >
-                <Save className="w-3 h-3" /> {t('copy_code')}
-              </button>
-            </div>
-            <pre className={`p-8 text-[11px] font-mono ${tokenConfig.chain === 'BTC' ? 'text-orange-500/80' :
-              tokenConfig.chain === 'SOL' ? 'text-teal-500/80' :
-                tokenConfig.chain === 'ETH' ? 'text-indigo-500/80' :
-                  tokenConfig.chain === 'POLYGON' ? 'text-purple-500/80' :
-                    tokenConfig.chain === 'AVAX' ? 'text-red-500/80' :
-                      'text-cyan-500/80'
-              } overflow-auto max-h-[500px] scrollbar-thin`}>
-              {generatedCode}
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full relative animate-in zoom-in-95 duration-300">
-            <button onClick={() => setShowPaymentModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
-              <X className="w-6 h-6" />
-            </button>
-
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                <CreditCard className="w-8 h-8 text-blue-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-white tracking-tight">Taxa de Implanta√ß√£o</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Para iniciar a emiss√£o inteligente do seu ativo <strong className="text-cyan-400 font-mono">{tokenConfig.symbol}</strong> na rede <strong className="text-purple-400">{tokenConfig.chain}</strong>, √© necess√°rio efetuar o pagamento da taxa de infraestrutura.
-              </p>
-
-              <a
-                href="https://buy.stripe.com/00w00kcnD06JawW8MU5c402"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setHasClickedPay(true)}
-                className="w-full py-4 mt-4 bg-[#635BFF] hover:bg-[#5851E5] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#635BFF]/30 flex justify-center items-center gap-3 group"
-              >
-                <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="tracking-wide">{hasClickedPay ? "Pagar Novamente" : "Pagar via Stripe"}</span>
-              </a>
-
-              {hasClickedPay && (
-                <div className="w-full mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="w-full flex items-center gap-4 my-4 opacity-60">
-                    <div className="flex-1 h-px bg-slate-800"></div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Ap√≥s o pagamento</span>
-                    <div className="flex-1 h-px bg-slate-800"></div>
-                  </div>
-
-                  <p className="text-xs text-slate-400 mb-3 px-2">
-                    J√° realizou o pagamento? Prossiga com a cria√ß√£o para abrir a sua carteira e assinar o contrato na blockchain de forma segura.
-                  </p>
-
-                  <button
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      deploySmartContract();
-                    }}
-                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex justify-center items-center gap-2 group"
-                  >
-                    <Zap className="w-5 h-5 group-hover:animate-pulse text-emerald-100" />
-                    <span className="tracking-wide text-emerald-50">Confirmar Pagamento e Emitir Token</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-};
-
-export default App;
-
-
-const BotMonitoringView: React.FC<{
-  t: (k: any) => string;
-  formatCurrency: (v: number) => string;
-  bots: TradingBot[];
-  trades: Trade[];
-  equityData: EquityPoint[];
-  cashAvailable: number;
-  onToggleBot?: (id: string, newStatus: 'ACTIVE' | 'PAUSED') => void;
-  onClearHistory?: () => void;
-}> = ({ t, formatCurrency, bots, trades, equityData, cashAvailable, onToggleBot, onClearHistory }) => {
-  const [selectedBotId, setSelectedBotId] = useState<string>('all');
-  const [timeframe, setTimeframe] = useState<'H' | 'D' | 'M'>('D');
-
-  const filteredBots = selectedBotId === 'all' ? bots : bots.filter(b => b.id === selectedBotId);
-  const filteredTrades = selectedBotId === 'all' ? trades : trades.filter(tr => tr.botId === selectedBotId);
-
-  const activeBotsCount = filteredBots.filter(b => b.status === 'ACTIVE').length;
-  const totalPnl = filteredBots.reduce((acc, b) => acc + b.performance.totalPnl, 0);
-  const totalTrades = filteredBots.reduce((acc, b) => acc + b.performance.trades, 0);
-  const avgWinRate = filteredBots.length > 0
-    ? filteredBots.reduce((acc, b) => acc + (b.performance.trades > 0 ? b.performance.winRate : 0), 0) / filteredBots.filter(b => b.performance.trades > 0).length || 0
-    : 0;
-
-  // Compute max drawdown dynamically from equity history
-  let maxDrawdown = 0;
-  let peak = equityData[0]?.value || 10000;
-  for (const point of equityData) {
-    if (point.value > peak) peak = point.value;
-    const dd = ((peak - point.value) / peak) * 100;
-    if (dd > maxDrawdown) maxDrawdown = dd;
-  }
-
-  // Calculate current total equity (balance + positions)
-  const currentEquity = (Number(cashAvailable) || 0) + filteredBots.reduce((acc, b) => acc + (Number(b.performance.totalPnl) || 0), 0);
-
-  return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <MetricCard
-          label={t('total_equity') || 'Patrim√¥nio Total'}
-          value={formatCurrency(currentEquity)}
-          icon={<Wallet className="text-emerald-400" />}
-          trend="Real-time"
-          positive={true}
-        />
-        <MetricCard
-          label={t('mon_pnl')}
-          value={formatCurrency(totalPnl)}
-          icon={<Zap className="text-cyan-400" />}
-          trend={totalPnl > 0 ? `+${formatCurrency(totalPnl)} total` : totalPnl < 0 ? `-${formatCurrency(Math.abs(totalPnl))} total` : "No activity"}
-          positive={totalPnl >= 0}
-        />
-        <MetricCard
-          label={t('mon_winrate')}
-          value={`${avgWinRate.toFixed(1)}%`}
-          icon={<TrendingUp className="text-purple-400" />}
-          trend="Avg Scalp"
-          positive={avgWinRate > 50}
-        />
-        <MetricCard
-          label={t('mon_drawdown')}
-          value={`${maxDrawdown.toFixed(2)}%`}
-          icon={<Shield className="text-rose-400" />}
-          trend="Risk Limit: 5%"
-          positive={maxDrawdown < 3}
-        />
-        <MetricCard
-          label={t('mon_active_bots')}
-          value={activeBotsCount.toString()}
-          icon={<Cpu className="text-blue-400" />}
-          trend={`${totalTrades} Total Trades`}
-          positive={activeBotsCount > 0}
-        />
-      </div>
-
-      {/* Bot Selector */}
-      <div className="flex bg-slate-900/50 p-2 rounded-2xl border border-slate-800 overflow-x-auto scrollbar-hide gap-2">
-        <button
-          onClick={() => setSelectedBotId('all')}
-          className={`px-6 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all whitespace-nowrap flex items-center gap-2 ${selectedBotId === 'all' ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-900/20' : 'text-slate-500 hover:text-slate-300'}`}
-        >
-          <LayoutDashboard className="w-3.5 h-3.5" />
-          {t('all_robots') || 'Todos os Rob√¥s'}
-        </button>
-        {bots.map(bot => (
-          <button
-            key={bot.id}
-            onClick={() => setSelectedBotId(bot.id)}
-            className={`px-6 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all whitespace-nowrap flex items-center gap-2 border ${selectedBotId === bot.id ? 'bg-slate-800 border-cyan-500/50 text-cyan-400 shadow-lg' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-          >
-            <div className={`w-1.5 h-1.5 rounded-full ${bot.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
-            {bot.name.includes(' / ') ? bot.name.split(' / ')[1] : bot.name}
-          </button>
-        ))}
-      </div>
-
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="font-bold flex items-center gap-2 text-cyan-400">
-              <Activity className="w-5 h-5" /> {t('mon_equity')}
-              {selectedBotId !== 'all' && <span className="text-[9px] text-slate-500 font-normal ml-2 uppercase tracking-widest">Global Context</span>}
-            </h3>
-            <div className="flex items-center gap-4">
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-                {(['H', 'D', 'M'] as const).map(tf => (
-                  <button
-                    key={tf}
-                    onClick={() => setTimeframe(tf)}
-                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${timeframe === tf ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    {tf === 'H' ? '1H' : tf === 'D' ? '1D' : '1M'}
-                  </button>
-                ))}
-              </div>
-              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded border border-emerald-500/20">REAL-TIME</span>
-            </div>
-          </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={equityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="time" stroke="#64748b" fontSize={10} />
-                <YAxis stroke="#64748b" fontSize={10} domain={['dataMin - 500', 'dataMax + 500']} hide />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                  itemStyle={{ color: '#22d3ee', fontWeight: 'bold' }}
-                  formatter={(v: number) => [`$${v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, 'Equity']}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {equityData.map((entry, index) => {
-                    const prev = equityData[index - 1]?.value ?? entry.value;
-                    const isUp = entry.value >= prev;
-                    const isLast = index === equityData.length - 1;
-                    return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={isLast ? '#06b6d4' : isUp ? '#10b981' : '#f43f5e'}
-                        opacity={isLast ? 1 : 0.7}
-                      />
-                    );
-                  })}
-                  <LabelList dataKey="value" position="top" fill="#94a3b8" fontSize={9} formatter={(v: number) => `$${(v / 1000).toFixed(1)}k`} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          {/* Chart Legend */}
-          <div className="flex items-center gap-6 mt-4 pl-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-emerald-500/70" />
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Alta</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-rose-500/70" />
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Queda</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-cyan-500" />
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Atual</span>
-            </div>
-          </div>
-        </div>
-
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-          <div className="p-6 border-b border-slate-800 bg-slate-900/50 font-bold flex items-center gap-2 text-purple-400">
-            <Bot className="w-5 h-5" /> Active Operations
-          </div>
-          <div className="p-6 space-y-4">
-            {filteredBots.filter(b => b.status === 'ACTIVE' || b.status === 'PAUSED').map(bot => (
-              <div key={bot.id} className="flex flex-col gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group transition-all hover:border-cyan-500/30">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${bot.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                    <span className="text-xs font-bold text-slate-200">
-                      {bot.name.includes(' / ') ? bot.name.split(' / ')[1] : bot.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[9px] font-bold ${bot.status === 'ACTIVE' ? 'text-cyan-500' : 'text-amber-500'}`}>
-                      {bot.status === 'ACTIVE' ? t('mon_status_op') : t('mon_status_paused')}
-                    </span>
-                    {onToggleBot && (
-                      <button
-                        onClick={() => {
-                          const newStatus = bot.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-                          onToggleBot(bot.id, newStatus);
-                          if (newStatus === 'PAUSED') {
-                            botService.pauseBot(bot.id);
-                          } else {
-                            // Ideally needs exchange logic to reconnect
-                          }
-                        }}
-                        className={`p-1 rounded-md text-[8px] font-bold transition-all border ${bot.status === 'ACTIVE'
-                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                          : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                          }`}
-                      >
-                        {bot.status === 'ACTIVE' ? 'PAUSAR' : 'RETOMAR'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Ativos</p>
-                    <p className="text-sm font-bold text-slate-300">{(bot.config as any).assets?.join(', ') || 'N/A'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-[9px] font-bold uppercase tracking-widest ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>P&L Hoje</p>
-                    <p className={`text-sm font-bold ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      {bot.performance.todayPnl >= 0 ? '+' : ''}{formatCurrency(bot.performance.todayPnl)}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800">
-                  <div className="text-center">
-                    <p className="text-[8px] text-slate-600 uppercase font-bold">Trades</p>
-                    <p className="text-xs font-bold text-slate-300">{bot.performance.trades}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[8px] text-slate-600 uppercase font-bold">Win Rate</p>
-                    <p className="text-xs font-bold text-cyan-400">{bot.performance.trades > 0 ? bot.performance.winRate.toFixed(0) : '0'}%</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[8px] text-slate-600 uppercase font-bold">Loss Seq.</p>
-                    <p className={`text-xs font-bold ${bot.performance.consecutiveLosses >= 2 ? 'text-rose-400' : 'text-slate-400'}`}>
-                      {bot.performance.consecutiveLosses}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {filteredBots.filter(b => b.status === 'ACTIVE' || b.status === 'PAUSED').length === 0 && (
-              <div className="p-8 text-center bg-slate-950/50 rounded-2xl border border-dashed border-slate-800">
-                <Bot className="w-10 h-10 text-slate-700 mx-auto mb-2 opacity-20" />
-                <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">No Active Robots</p>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      <section className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="p-6 border-b border-slate-800 bg-slate-900/50 font-bold flex items-center justify-between">
-          <div className="flex items-center gap-2 text-cyan-400">
-            <History className="w-5 h-5" /> {t('mon_history')}
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-bold text-slate-500">{filteredTrades.length} registros</span>
-            {onClearHistory && filteredTrades.length > 0 && (
-              <button
-                onClick={onClearHistory}
-                className="flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 rounded-lg text-[10px] font-black tracking-widest transition-all"
-              >
-                <Trash2 className="w-3 h-3" />
-                LIMPAR
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/50">
-                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_time')}</th>
-                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_asset')}</th>
-                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_type')}</th>
-                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_price')}</th>
-                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_amount')}</th>
-                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_result')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {filteredTrades.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-600 font-bold uppercase text-xs tracking-widest">No history recorded for this selection</td>
-                </tr>
-              ) : filteredTrades.map(trade => (
-                <tr key={trade.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="p-4 text-xs font-mono text-slate-400">{trade.timestamp}</td>
-                  <td className="p-4 text-xs font-bold text-slate-200">{trade.asset}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-md text-[9px] font-bold ${trade.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
-                      {trade.type}
-                    </span>
-                  </td>
-                  <td className="p-4 text-xs font-mono text-slate-300">{formatCurrency(trade.price)}</td>
-                  <td className="p-4 text-xs font-mono text-slate-300">{trade.amount}</td>
-                  <td className="p-4">
-                    <span className={`text-xs font-bold ${trade.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
-                      {trade.result_usd != null ? (trade.result_usd >= 0 ? '+' : '') + formatCurrency(trade.result_usd) : '---'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  );
-};
 
 

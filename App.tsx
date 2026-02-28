@@ -3516,6 +3516,10 @@ const AssetFactoryView: React.FC<{
 
                 <button
                   onClick={() => {
+                    if ((tokenConfig.chain !== 'BTC' && tokenConfig.chain !== 'SOL') && !ethAccount) {
+                      connectMetamask();
+                      return;
+                    }
                     setShowPaymentModal(true);
                     setHasClickedPay(false);
                   }}
@@ -3532,11 +3536,12 @@ const AssetFactoryView: React.FC<{
                   <div className="flex items-center gap-2">
                     {isDeploying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 group-hover:animate-pulse" />}
                     {isDeploying ? t('proc_protocol') :
-                      tokenConfig.chain === 'BTC' ? "Initiate Bitcoin Inscription" :
-                        tokenConfig.chain === 'SOL' ? "Initialize Solana Program" :
-                          tokenConfig.chain === 'POLYGON' ? "Deploy to Polygon" :
-                            tokenConfig.chain === 'AVAX' ? "Deploy to Avalanche" :
-                              t('deploy_smart_contract')}
+                      (tokenConfig.chain !== 'BTC' && tokenConfig.chain !== 'SOL' && !ethAccount) ? "Conectar Carteira (MetaMask)" :
+                        tokenConfig.chain === 'BTC' ? "Initiate Bitcoin Inscription" :
+                          tokenConfig.chain === 'SOL' ? "Initialize Solana Program" :
+                            tokenConfig.chain === 'POLYGON' ? "Deploy to Polygon" :
+                              tokenConfig.chain === 'AVAX' ? "Deploy to Avalanche" :
+                                t('deploy_smart_contract')}
                   </div>
                   {!isDeploying && (
                     <span className="text-[10px] opacity-60 font-medium">

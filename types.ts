@@ -459,6 +459,26 @@ export interface AnatomiaFluxoConfig {
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
 }
 
+
+export interface RoboEnsaioConfig {
+  exchangeId: string;
+  assets: string[];
+  leverage: number;
+  stopLossPct: number;
+  takeProfitPct: number;
+  riskPerTrade: number;
+  maxDailyLoss: number;
+  maxTradesPerDay: number;
+  maxConsecutiveLosses: number;
+  positionSizePct: number;
+  tradingHours: { start: string; end: string; use24h?: boolean };
+  aiProvider: 'GEMINI' | 'DEEPSEEK' | 'OPENAI' | 'ANTHROPIC' | 'MOCK';
+  marginMode: 'CROSS' | 'ISOLATED';
+  marketMode: 'SPOT' | 'FUTURES';
+  timeframe: '1m' | '5m' | '15m' | '1h' | 'AUTO';
+  cooldown: number;
+}
+
 export interface AutomationRule {
   id: string;
   asset: string;
@@ -477,7 +497,7 @@ export interface TradingBot {
   name: string;
   strategyId: 'AGGRESSIVE_SCALP' | 'CONSERVATIVE_TREND' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ANATOMIA_FLUXO' | 'ROBO_IA' | 'ROBO_ENSAIO';
   status: 'ACTIVE' | 'PAUSED' | 'STOPPED' | 'TEST';
-  config: AggressiveConfig | ConservativeConfig | SimpleMAConfig | ZigZagConfig | MatrixScalpConfig | MatrixNeuralConfig | AnatomiaFluxoConfig;
+  config: AggressiveConfig | ConservativeConfig | SimpleMAConfig | ZigZagConfig | MatrixScalpConfig | MatrixNeuralConfig | AnatomiaFluxoConfig | RoboEnsaioConfig;
   performance: {
     totalPnl: number;
     todayPnl: number;

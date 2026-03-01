@@ -1797,7 +1797,7 @@ const ExecutiveSummary: React.FC<{ analysis: AnalysisResponse | null; isLoading:
 
 // --- Deployment Wizard Technical Core ---
 type WizardState = {
-  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA' | 'ANATOMIA_FLUXO';
+  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA' | 'ANATOMIA_FLUXO' | 'ROBO_ENSAIO';
   exchangeId: string;
   assets: string[];
   leverage: number;
@@ -1842,7 +1842,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
               action.payload === 'MATRIX_NEURAL' ? { leverage: 5, stopLoss: 0.5, takeProfit: 1.5 } :
                 action.payload === 'ROBO_IA' ? { leverage: 5, stopLoss: 0.5, takeProfit: 2.0 } :
                   action.payload === 'ANATOMIA_FLUXO' ? { leverage: 5, stopLoss: 2.0, takeProfit: 4.0 } :
-                    { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
+                    action.payload === 'ROBO_ENSAIO' ? { leverage: 1, stopLoss: 1.0, takeProfit: 2.0 } :
+                      { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'ROBO_IA') ? 'DEEPSEEK' : 'GEMINI';
       return { ...state, strategy: action.payload, ...defaults, aiProvider };
     case 'SET_EXCHANGE':
@@ -1942,6 +1943,11 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
       rsi_sobrecomprado: 70, estocastico_k: 14, estocastico_d: 3, risco_por_operacao: 2, alavancagem_maxima: 20,
       trailing_stop_distancia: 1.5, max_ativos_simultaneos: 3, timeframes: { '1d': '1d', '4h': '4h', '1h': '1h', '15m': '15m' },
       marketMode: 'FUTURES'
+    },
+    'ROBO_ENSAIO': {
+      leverage: 1, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 2.0, maxTradesPerDay: 500, positionSizePct: 1.0,
+      tradingHours: { start: '00:00', end: '23:59', use24h: true }, aiProvider: 'MOCK', marginMode: 'ISOLATED', marketMode: 'SPOT', timeframe: '1m',
+      cooldown: 0, maxConsecutiveLosses: 100
     }
   };
 
@@ -1963,7 +1969,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
             wizard.strategy === 'MATRIX_SCALP' ? t('bot_naming_matrix') :
               wizard.strategy === 'MATRIX_NEURAL' ? t('bot_naming_neural') :
                 wizard.strategy === 'ANATOMIA_FLUXO' ? 'Rob Anatomia Fluxo' :
-                  t('bot_naming_ma')
+                  wizard.strategy === 'ROBO_ENSAIO' ? 'Rob Ensaio MEXC' :
+                    t('bot_naming_ma')
         } ${bots.length + 1}`,
       strategyId:
         wizard.strategy === 'AGGRESSIVE' ? 'AGGRESSIVE_SCALP' :
@@ -1972,7 +1979,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
                 wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
                   wizard.strategy === 'ANATOMIA_FLUXO' ? 'ANATOMIA_FLUXO' :
-                    'SIMPLE_MA',
+                    wizard.strategy === 'ROBO_ENSAIO' ? 'ROBO_ENSAIO' :
+                      'SIMPLE_MA',
       status: 'ACTIVE',
       lastActivity: new Date().toLocaleTimeString(),
       config: {
@@ -1983,7 +1991,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
                 wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
                   wizard.strategy === 'ANATOMIA_FLUXO' ? 'ANATOMIA_FLUXO' :
-                    'SIMPLE_MA'
+                    wizard.strategy === 'ROBO_ENSAIO' ? 'ROBO_ENSAIO' :
+                      'SIMPLE_MA'
         ],
         exchangeId: wizard.exchangeId,
         assets: wizard.assets.map(a => a + 'USDT'),

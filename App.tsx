@@ -3114,6 +3114,7 @@ const AssetFactoryView: React.FC<{
   const [tokenConfig, setTokenConfig] = useState({ name: 'My Utility Token', symbol: 'MUTL', supply: '100000000', chain: 'BSC', logo: '' });
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [hasClickedPay, setHasClickedPay] = useState(false);
+  const [paymentVerified, setPaymentVerified] = useState(false);
 
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3157,13 +3158,9 @@ const AssetFactoryView: React.FC<{
       const successValue = localStorage.getItem('tradepro_stripe_success');
       if (successValue) {
         console.log("Payment detected via polling interval!");
-        setShowPaymentModal(false);
+        setPaymentVerified(true);
         // Clean up
         localStorage.removeItem('tradepro_stripe_success');
-        // Trigger deployment automatically using latest state
-        if (deployRef.current) {
-          deployRef.current();
-        }
       }
     }, 1000);
 
@@ -3669,67 +3666,92 @@ const AssetFactoryView: React.FC<{
               <X className="w-6 h-6" />
             </button>
 
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                <CreditCard className="w-8 h-8 text-blue-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-white tracking-tight">Taxa de Implantação</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Para iniciar a emissão inteligente do seu ativo <strong className="text-cyan-400 font-mono">{tokenConfig.symbol}</strong> na rede <strong className="text-purple-400">{tokenConfig.chain}</strong>, é necessário efetuar o pagamento da taxa de infraestrutura.
-              </p>
-
-              <a
-                href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
-                target="_blank"
-                onClick={() => setHasClickedPay(true)}
-                className={`w-full py-4 mt-4 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 group ${hasClickedPay ? 'bg-slate-800 text-slate-300 pointer-events-none border border-slate-700' : 'bg-[#635BFF] hover:bg-[#5851E5] text-white shadow-[#635BFF]/30'}`}
-              >
-                {hasClickedPay ? (
-                  <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" />
-                ) : (
-                  <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                )}
-                <span className="tracking-wide">
-                  {hasClickedPay ? "Aguardando Confirmação..." : "Pagar via Stripe"}
-                </span>
-              </a>
-
-              {hasClickedPay && (
-                <div className="w-full mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="w-full flex items-center gap-4 my-4 opacity-60">
-                    <div className="flex-1 h-px bg-slate-800"></div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Processando</span>
-                    <div className="flex-1 h-px bg-slate-800"></div>
-                  </div>
-
-                  <p className="text-xs text-slate-400 mb-4 px-2">
-                    Não feche esta janela. O pagamento está sendo realizado na outra aba. Assim que aprovado pelo Stripe, a MetaMask abrirá automaticamente de forma segura.
-                  </p>
-
-                  <a
-                    href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
-                    target="_blank"
-                    className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1 mb-4"
-                  >
-                    A aba de pagamento fechou? <span className="underline decoration-dashed underline-offset-2">Clique aqui para abrir novamente</span>
-                  </a>
-
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mt-4">
-                    <p className="text-[10px] text-amber-500 mb-2 font-medium">O pagamento já foi aprovado mas a MetaMask não abriu?</p>
-                    <button
-                      onClick={() => {
-                        console.log("Fallback manual deployment triggered");
-                        setShowPaymentModal(false);
-                        deploySmartContract();
-                      }}
-                      className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Zap className="w-3 h-3" /> Emitir Token Manualmente
-                    </button>
-                  </div>
+            {paymentVerified ? (
+              <div className="flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in-95">
+                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
-              )}
-            </div>
+                <h3 className="text-2xl font-bold text-white tracking-tight">Pagamento Verificado!</h3>
+                <p className="text-sm text-slate-400 leading-relaxed mb-4">
+                  Sua taxa de implantação foi processada com sucesso. Agora, clique no botão abaixo para assinar a transação na sua carteira MetaMask e emitir o contrato.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setPaymentVerified(false);
+                    setHasClickedPay(false);
+                    if (deployRef.current) deployRef.current();
+                  }}
+                  className="w-full py-4 mt-2 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  <Zap className="w-5 h-5" />
+                  <span>Emitir Token na MetaMask</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                  <CreditCard className="w-8 h-8 text-blue-500" />
+                </div>
+                <h3 className="text-2xl font-bold text-white tracking-tight">Taxa de Implantação</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Para iniciar a emissão inteligente do seu ativo <strong className="text-cyan-400 font-mono">{tokenConfig.symbol}</strong> na rede <strong className="text-purple-400">{tokenConfig.chain}</strong>, é necessário efetuar o pagamento da taxa de infraestrutura.
+                </p>
+
+                <a
+                  href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
+                  target="_blank"
+                  onClick={() => setHasClickedPay(true)}
+                  className={`w-full py-4 mt-4 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 group ${hasClickedPay ? 'bg-slate-800 text-slate-300 pointer-events-none border border-slate-700' : 'bg-[#635BFF] hover:bg-[#5851E5] text-white shadow-[#635BFF]/30'}`}
+                >
+                  {hasClickedPay ? (
+                    <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" />
+                  ) : (
+                    <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  )}
+                  <span className="tracking-wide">
+                    {hasClickedPay ? "Aguardando Confirmação..." : "Pagar via Stripe"}
+                  </span>
+                </a>
+
+                {hasClickedPay && (
+                  <div className="w-full mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="w-full flex items-center gap-4 my-4 opacity-60">
+                      <div className="flex-1 h-px bg-slate-800"></div>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Processando</span>
+                      <div className="flex-1 h-px bg-slate-800"></div>
+                    </div>
+
+                    <p className="text-xs text-slate-400 mb-4 px-2">
+                      Não feche esta janela. O pagamento está sendo realizado na outra aba. Assim que aprovado pelo Stripe, a MetaMask abrirá automaticamente de forma segura.
+                    </p>
+
+                    <a
+                      href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
+                      target="_blank"
+                      className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1 mb-4"
+                    >
+                      A aba de pagamento fechou? <span className="underline decoration-dashed underline-offset-2">Clique aqui para abrir novamente</span>
+                    </a>
+
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mt-4">
+                      <p className="text-[10px] text-amber-500 mb-2 font-medium">O pagamento já foi aprovado mas a MetaMask não abriu?</p>
+                      <button
+                        onClick={() => {
+                          console.log("Fallback manual deployment triggered");
+                          setShowPaymentModal(false);
+                          setHasClickedPay(false);
+                          if (deployRef.current) deployRef.current();
+                        }}
+                        className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Zap className="w-3 h-3" /> Emitir Token Manualmente
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

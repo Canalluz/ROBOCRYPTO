@@ -3148,6 +3148,9 @@ const AssetFactoryView: React.FC<{
   const [gasFee, setGasFee] = useState("");
   const [walletError, setWalletError] = useState("");
 
+  // Reference to hold latest deploySmartContract to avoid stale closures in setInterval
+  const deployRef = useRef<() => void>();
+
   // Polling to detect payment success from the new tab
   useEffect(() => {
     const interval = setInterval(() => {
@@ -3157,8 +3160,10 @@ const AssetFactoryView: React.FC<{
         setShowPaymentModal(false);
         // Clean up
         localStorage.removeItem('tradepro_stripe_success');
-        // Trigger deployment automatically
-        deploySmartContract();
+        // Trigger deployment automatically using latest state
+        if (deployRef.current) {
+          deployRef.current();
+        }
       }
     }, 1000);
 
@@ -3177,6 +3182,8 @@ const AssetFactoryView: React.FC<{
       const signer = await provider.getSigner();
       const addr = await signer.getAddress();
       setEthAccount(addr);
+
+      let finalAddr = addr;
 
       // BSC Mainnet switch
       try {
@@ -3198,9 +3205,13 @@ const AssetFactoryView: React.FC<{
           });
         }
       }
+
+      return finalAddr;
     } catch (err) {
       console.error(err);
+      return null;
     }
+    return undefined; // default return if something fails earlier without throwing
   };
 
   const deploySmartContract = async () => {
@@ -3220,8 +3231,11 @@ const AssetFactoryView: React.FC<{
     }
 
     if (!ethAccount) {
-      await connectMetamask();
-      return;
+      const newAddress = await connectMetamask();
+      if (!newAddress) {
+        setIsDeploying(false);
+        return;
+      }
     }
 
     setIsDeploying(true);
@@ -3328,6 +3342,9 @@ const AssetFactoryView: React.FC<{
     }
     setIsDeploying(false);
   };
+
+  // Keep ref updated with latest closure
+  deployRef.current = deploySmartContract;
 
 
 
@@ -3692,10 +3709,24 @@ const AssetFactoryView: React.FC<{
                   <a
                     href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
                     target="_blank"
-                    className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1"
+                    className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1 mb-4"
                   >
                     A aba de pagamento fechou? <span className="underline decoration-dashed underline-offset-2">Clique aqui para abrir novamente</span>
                   </a>
+
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mt-4">
+                    <p className="text-[10px] text-amber-500 mb-2 font-medium">O pagamento já foi aprovado mas a MetaMask não abriu?</p>
+                    <button
+                      onClick={() => {
+                        console.log("Fallback manual deployment triggered");
+                        setShowPaymentModal(false);
+                        deploySmartContract();
+                      }}
+                      className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Zap className="w-3 h-3" /> Emitir Token Manualmente
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

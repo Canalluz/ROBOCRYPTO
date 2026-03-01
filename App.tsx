@@ -3767,7 +3767,7 @@ const AssetFactoryView: React.FC<{
                 </p>
 
                 <a
-                  href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
+                  href="https://buy.stripe.com/00w00kcnD06JawW8MU5c402"
                   target="_blank"
                   onClick={() => setHasClickedPay(true)}
                   className={`w-full py-4 mt-4 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 group ${hasClickedPay ? 'bg-slate-800 text-slate-300 pointer-events-none border border-slate-700' : 'bg-[#635BFF] hover:bg-[#5851E5] text-white shadow-[#635BFF]/30'}`}
@@ -3795,7 +3795,7 @@ const AssetFactoryView: React.FC<{
                     </p>
 
                     <a
-                      href="https://buy.stripe.com/test_aFabJ2fzP2eR8oO5AI5c401"
+                      href="https://buy.stripe.com/00w00kcnD06JawW8MU5c402"
                       target="_blank"
                       className="text-[11px] text-[#635BFF] hover:text-[#5851E5] font-semibold transition-colors flex items-center justify-center gap-1 mb-4"
                     >

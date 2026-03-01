@@ -3178,15 +3178,19 @@ const AssetFactoryView: React.FC<{
 
   const connectMetamask = async () => {
     setWalletError("");
+    console.log("[METAMASK] connectMetamask triggered");
     if (!(window as any).ethereum) {
+      console.error("[METAMASK] No ethereum provider found!");
       setWalletError("Não foi possível detectar uma carteira Web3. Por favor, instale a extensão da MetaMask para conectar sua conta e melhorar sua experiência.");
       return;
     }
     try {
+      console.log("[METAMASK] Requesting accounts...");
       await (window as any).ethereum.request({ method: "eth_requestAccounts" });
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const signer = await provider.getSigner();
       const addr = await signer.getAddress();
+      console.log("[METAMASK] Account connected:", addr);
       setEthAccount(addr);
 
       let finalAddr = addr;
@@ -3221,6 +3225,7 @@ const AssetFactoryView: React.FC<{
   };
 
   const deploySmartContract = async () => {
+    console.log("[DEPLOY] deploySmartContract triggered. Current account:", ethAccount);
     setWalletError("");
     setDeployedTokenAddress("");
     if (tokenConfig.chain === 'BTC' || tokenConfig.chain === 'SOL') {
@@ -3269,14 +3274,26 @@ const AssetFactoryView: React.FC<{
               "0x38";
 
       if (network.chainId !== targetChainId) {
-        setWalletError(`Ação Necessária: Por favor, troque para a rede ${chainName} na sua carteira MetaMask.`);
+        console.log(`[DEPLOY] Chain ID mismatch. Local: ${network.chainId}, Target: ${targetChainId}. Switching...`);
+        setWalletError(`Ação Necessária: Por favor, confirme a troca para a rede ${chainName} na sua carteira MetaMask.`);
         try {
           await (window as any).ethereum.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: hexChainId }],
           });
-        } catch (swErr) {
+          console.log("[DEPLOY] Network switch request sent successfully.");
+          // After a successful switch, we should ideally re-run the check,
+          // but MetaMask usually reloads the provider background. 
+          // For now, we'll ask the user to click deploy again if it doesn't auto-proceed.
+          setWalletError("");
+        } catch (swErr: any) {
           console.error("Network switch failed:", swErr);
+          // Error 4902 means the chain has not been added to MetaMask.
+          if (swErr.code === 4902) {
+            setWalletError(`Erro: A rede ${chainName} não está configurada na sua MetaMask. Por favor, adicione-a manualmente.`);
+          } else {
+            setWalletError(`Erro ao trocar de rede: ${swErr.message || "Usuário rejeitou a troca"}. Por favor, troque manualmente para ${chainName}.`);
+          }
         }
         setIsDeploying(false);
         return;
@@ -3686,10 +3703,11 @@ const AssetFactoryView: React.FC<{
                 </p>
                 <button
                   onClick={() => {
+                    console.log("[MODAL] Emit Token button clicked!");
                     setShowPaymentModal(false);
                     setPaymentVerified(false);
                     setHasClickedPay(false);
-                    if (deployRef.current) deployRef.current();
+                    deploySmartContract();
                   }}
                   className="w-full py-4 mt-2 font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white"
                 >

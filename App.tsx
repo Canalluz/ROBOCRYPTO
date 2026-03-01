@@ -3195,23 +3195,54 @@ const AssetFactoryView: React.FC<{
 
       let finalAddr = addr;
 
-      // BSC Mainnet switch
+      const targetChainIdHex =
+        tokenConfig.chain === 'ETH' ? "0x1" :
+          tokenConfig.chain === 'POLYGON' ? "0x89" :
+            tokenConfig.chain === 'AVAX' ? "0xa86a" :
+              "0x38"; // BSC
+
+      const chainName =
+        tokenConfig.chain === 'ETH' ? "Ethereum Mainnet" :
+          tokenConfig.chain === 'POLYGON' ? "Polygon Mainnet" :
+            tokenConfig.chain === 'AVAX' ? "Avalanche C-Chain" :
+              "Binance Smart Chain";
+
+      // Dynamic Network switch
+      console.log(`[METAMASK] Requesting switch to ${chainName} (${targetChainIdHex})`);
       try {
         await (window as any).ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x38" }],
+          params: [{ chainId: targetChainIdHex }],
         });
       } catch (switchError: any) {
         if (switchError.code === 4902) {
+          console.log("[METAMASK] Network not found, attempting to add...");
+          const params =
+            tokenConfig.chain === 'POLYGON' ? [{
+              chainId: '0x89',
+              chainName: 'Polygon Mainnet',
+              nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+              rpcUrls: ['https://polygon-rpc.com/'],
+              blockExplorerUrls: ['https://polygonscan.com/']
+            }] :
+              tokenConfig.chain === 'AVAX' ? [{
+                chainId: '0xa86a',
+                chainName: 'Avalanche C-Chain',
+                nativeCurrency: { name: 'AVAX', symbol: 'AVAX', decimals: 18 },
+                rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
+                blockExplorerUrls: ['https://snowtrace.io/']
+              }] :
+                [{
+                  chainId: '0x38',
+                  chainName: 'Binance Smart Chain',
+                  nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+                  rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                  blockExplorerUrls: ['https://bscscan.com/']
+                }];
+
           await (window as any).ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x38',
-              chainName: 'Binance Smart Chain',
-              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-              rpcUrls: ['https://bsc-dataseed.binance.org/'],
-              blockExplorerUrls: ['https://bscscan.com/']
-            }],
+            params: params,
           });
         }
       }
@@ -3326,7 +3357,12 @@ const AssetFactoryView: React.FC<{
       try {
         const estimatedGas = await signer.estimateGas(deployTx);
         const feeData = await provider.getFeeData();
-        setGasFee(ethers.formatEther(estimatedGas * (feeData.gasPrice || 1000000000n)) + " BNB");
+        const gasSymbol =
+          tokenConfig.chain === 'ETH' ? "ETH" :
+            tokenConfig.chain === 'POLYGON' ? "MATIC" :
+              tokenConfig.chain === 'AVAX' ? "AVAX" :
+                "BNB";
+        setGasFee(ethers.formatEther(estimatedGas * (feeData.gasPrice || 1000000000n)) + ` ${gasSymbol}`);
       } catch (gErr) {
         console.warn("Gas estimation failed:", gErr);
       }
@@ -3571,6 +3607,11 @@ const AssetFactoryView: React.FC<{
 
                 <button
                   onClick={() => {
+                    if (paymentVerified) {
+                      console.log("[FACTORY] Payment verified, triggering direct deploy");
+                      deploySmartContract();
+                      return;
+                    }
                     if ((tokenConfig.chain !== 'BTC' && tokenConfig.chain !== 'SOL') && !ethAccount) {
                       connectMetamask();
                       return;

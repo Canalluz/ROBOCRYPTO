@@ -102,6 +102,7 @@ const TRANSLATIONS = {
     nav_assets: "Emisso de Ativos",
     nav_monitoring: "Data Analysis",
     nav_settings: "Settings",
+    nav_logout: "Log Out",
     ai_core: "Neural Core Config",
     ai_provider: "AI Service Provider",
     ai_model_sel: "Model Selection",
@@ -358,8 +359,9 @@ const TRANSLATIONS = {
     api_secret: "Segredo API",
     save: "Salvar",
     timeframe: "Tempo Grfico",
-    auto_mode: "AUTO (Seleo IA)",
-    nav_charts: "Grficos Avanados",
+    auto_mode: "AUTO (Seleção IA)",
+    nav_charts: "Gráficos Avançados",
+    nav_logout: "Sair do Sistema",
     header_charts: "Terminal de Anlise Institucional",
     mon_pnl: "P&L Total",
     mon_winrate: "Taxa de Acerto",
@@ -513,6 +515,117 @@ const TRANSLATIONS = {
   }
 };
 
+// --- LOGIN VIEW COMPONENT ---
+const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    // Hardcoded credentials as requested
+    if (username.toLowerCase() === 'vitoria' && password === 'nossa') {
+      setTimeout(() => {
+        onLogin();
+      }, 800);
+    } else {
+      setTimeout(() => {
+        setError('Usuário ou senha incorretos.');
+        setIsSubmitting(false);
+      }, 500);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 overflow-hidden relative">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px]" />
+      
+      <div className="w-full max-w-md relative animate-in fade-in zoom-in-95 duration-700">
+        <div className="bg-slate-900/40 backdrop-blur-2xl border border-slate-800 rounded-[32px] p-8 shadow-2xl overflow-hidden relative group transition-all duration-500 hover:border-cyan-500/30">
+          {/* Top accent line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
+          
+          <div className="flex flex-col items-center mb-10">
+            <div className="bg-cyan-500/10 p-5 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
+              <Zap className="w-10 h-10 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">ROBOCRYPTO</h1>
+            <p className="text-slate-400 text-sm font-medium">Terminal de Trading Inteligente</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Usuário</label>
+              <div className="relative group/input">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-cyan-400 transition-colors">
+                  <User className="w-5 h-5" />
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 transition-all"
+                  placeholder="Seu usuário"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Senha</label>
+              <div className="relative group/input">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-cyan-400 transition-colors">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 transition-all"
+                  placeholder="Sua senha"
+                  required
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-center gap-3 text-rose-500 text-xs font-medium animate-in slide-in-from-top-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 disabled:from-slate-800 disabled:to-slate-800 disabled:cursor-not-allowed text-slate-950 font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(6,182,212,0.3)] hover:shadow-[0_8px_30px_rgba(6,182,212,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn"
+            >
+              {isSubmitting ? (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <span>Entrar no Terminal</span>
+                  <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-10 pt-6 border-t border-slate-800/50 flex justify-center">
+            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Quantum Capital Intelligence &copy; 2024</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
   // Early return for payment success tab
@@ -550,6 +663,10 @@ const App: React.FC = () => {
       </div>
     );
   }
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return sessionStorage.getItem('tradepro_auth') === '1';
+  });
 
   const [data, setData] = useState<SystemData>(() => {
     const saved = localStorage.getItem('tradepro_system_data');
@@ -1009,6 +1126,10 @@ const App: React.FC = () => {
   const cashAvailable = exchanges.reduce((acc, ex) => acc + (Number(ex.balance) || 0), 0);
 
   // --- MAIN RENDER (AUTHENTICATED) ---
+  if (!isLoggedIn) {
+    return <LoginView onLogin={() => { sessionStorage.setItem('tradepro_auth', '1'); setIsLoggedIn(true); }} />;
+  }
+
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-50">
       {/* Sidebar Navigation */}
@@ -1041,6 +1162,22 @@ const App: React.FC = () => {
               <div className={`h-full ${error ? 'bg-rose-500' : 'bg-cyan-500'} w-[98%]`}></div>
             </div>
           </div>
+        </div>
+
+        <div className="p-4 border-t border-slate-800">
+          <button
+            onClick={() => {
+              sessionStorage.removeItem('tradepro_auth');
+              setIsLoggedIn(false);
+            }}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 hover:text-rose-500 group transition-all duration-300 text-slate-400 font-medium border border-transparent hover:border-rose-500/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:bg-rose-500" />
+              <span className="text-sm">{t('nav_logout')}</span>
+            </div>
+            <ZapOff className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
         </div>
       </aside>
 

@@ -1,0 +1,6 @@
+{
+  "project_type": "nodejs",
+  "build_command": "npm run build",
+  "start_command": "npm start",
+  "port": 3001
+}

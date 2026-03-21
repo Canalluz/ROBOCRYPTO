@@ -984,21 +984,88 @@ const App: React.FC = () => {
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+  const onToggleBot = (id: string, newStatus: 'ACTIVE' | 'PAUSED') => {
+    setBots(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
+    if (newStatus === 'ACTIVE') {
+      const bot = bots.find(b => b.id === id);
+      const ex = exchanges.find(e => e.id === bot?.config.exchangeId);
+      if (bot && ex) {
+        botService.deployBot({
+          ...bot,
+          paperTrade: bot.status === 'TEST'
+        }, ex);
+      }
+    } else {
+      botService.pauseBot(id);
+    }
+  };
 
+  const onClearHistory = () => {
+    if (confirm(language === 'pt' ? 'Limpar histórico de ordens?' : 'Clear order history?')) {
+      setTradeHistory([]);
+    }
+  };
 
+  const cashAvailable = exchanges.reduce((acc, ex) => acc + (Number(ex.balance) || 0), 0);
 
   // --- MAIN RENDER (AUTHENTICATED) ---
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-50">
+      {/* Sidebar Navigation */}
+      <aside className="w-64 border-r border-slate-800 bg-slate-900/50 hidden lg:flex flex-col sticky top-0 h-screen">
+        <div className="p-6 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="bg-cyan-500 p-2 rounded-lg shadow-lg shadow-cyan-900/40">
+              <Zap className="w-5 h-5 text-slate-950" />
+            </div>
+            <h1 className="font-bold text-xl tracking-tight">{t('terminal_name')}</h1>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2 font-bold tracking-widest uppercase opacity-70">{t('inst_terminal')}</p>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-2 mt-2">
+          <NavBtn active={currentView === 'monitoring'} onClick={() => setCurrentView('monitoring')} icon={<LayoutDashboard />} label={t('nav_monitoring')} />
+          <NavBtn active={currentView === 'robots'} onClick={() => setCurrentView('robots')} icon={<Bot />} label={t('nav_robots')} />
+          <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
+          <NavBtn active={currentView === 'charts'} onClick={() => setCurrentView('charts')} icon={<BarChart3 />} label={t('nav_charts')} />
+          <NavBtn active={currentView === 'settings'} onClick={() => setCurrentView('settings')} icon={<SettingsIcon />} label={t('nav_settings')} />
+        </nav>
+
+        <div className="p-4 border-t border-slate-800 space-y-4">
+          <div className="bg-slate-800/50 p-4 rounded-xl">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-slate-400">{t('sys_health')}</span>
+              <span className={`w-2 h-2 rounded-full ${error ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`}></span>
+            </div>
+            <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+              <div className={`h-full ${error ? 'bg-rose-500' : 'bg-cyan-500'} w-[98%]`}></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
       <main className="flex-1 p-8 overflow-y-auto">
-        <header className="flex flex-col gap-4 mb-10 mt-4">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-5xl lg:text-6xl font-extrabold tracking-tighter bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-500 bg-clip-text text-transparent pb-2 drop-shadow-lg hover:filter hover:brightness-125 transition-all duration-500">
-              Dê Vida à Sua Próxima Grande Ideia
-            </h2>
-            <p className="text-lg md:text-xl text-slate-400 font-medium max-w-3xl mt-2 leading-relaxed">
-              Crie sua própria criptomoeda com rapidez, segurança e tecnologia de ponta. Desenvolva, configure e lance seu ativo digital nas principais redes descentralizadas em poucos minutos. Transforme sua ideia em um projeto real na Web3
-            </p>
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-bold tracking-tight">
+                {currentView === 'robots' ? t('header_robots') :
+                  currentView === 'assets' ? t('header_assets') :
+                    currentView === 'monitoring' ? t('header_monitoring') :
+                      currentView === 'charts' ? t('header_charts') : t('header_settings')}
+              </h2>
+            </div>
+            <div className="flex items-center gap-3 text-slate-400">
+              <div className="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                <div className={`w-1.5 h-1.5 rounded-full ${tradingAuthority === 'AI' ? 'bg-cyan-500 animate-pulse' : 'bg-purple-500'}`} />
+                {tradingAuthority} {t('logic_enabled')}
+              </div>
+              <span className="text-xs opacity-50">|</span>
+              <div className="flex items-center gap-2 text-xs">
+                <Clock className="w-4 h-4" />
+                <span>{t('last_scan')}: {lastUpdated.toLocaleTimeString()}</span>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -1008,7 +1075,60 @@ const App: React.FC = () => {
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
+
+        {currentView === 'monitoring' && (
+          <BotMonitoringView
+            t={t}
+            formatCurrency={formatCurrency}
+            bots={bots}
+            trades={tradeHistory}
+            equityData={equityHistory}
+            cashAvailable={cashAvailable}
+            onToggleBot={onToggleBot}
+            onClearHistory={onClearHistory}
+          />
+        )}
+
+        {currentView === 'robots' && (
+          <RobotsView
+            data={data}
+            bots={bots}
+            setBots={setBots}
+            exchanges={exchanges}
+            formatCurrency={formatCurrency}
+            t={t}
+          />
+        )}
+
         {currentView === 'assets' && <AssetFactoryView data={data} setData={setData} exchanges={exchanges} t={t} />}
+
+        {currentView === 'charts' && (
+          <div className="space-y-6">
+             <BotMonitoringView
+                t={t}
+                formatCurrency={formatCurrency}
+                bots={bots}
+                trades={tradeHistory}
+                equityData={equityHistory}
+                cashAvailable={cashAvailable}
+                onToggleBot={onToggleBot}
+                onClearHistory={onClearHistory}
+              />
+          </div>
+        )}
+
+        {currentView === 'settings' && (
+          <SettingsView
+            data={data}
+            setData={setData}
+            exchanges={exchanges}
+            setExchanges={setExchanges}
+            language={language}
+            setLanguage={setLanguage}
+            t={t}
+            onTradeExecuted={(trade) => setTradeHistory(prev => [trade, ...prev])}
+          />
+        )}
       </main>
     </div>
   );

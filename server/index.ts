@@ -4,10 +4,10 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots } from './bot-engine.js';
+import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots, getEquityHistory, recordEquityPoint, updateExternalBalance } from './bot-engine.js';
 
-import { getUsdtBalance, placeOrder } from './exchanges/mexc.js';
-import { getUsdtBalance as getBinanceUsdtBalance } from './exchanges/binance.js';
+import { getUsdtBalance, getBalance, getAccountTotalValue, placeOrder } from './exchanges/mexc.js';
+import { getUsdtBalance as getBinanceUsdtBalance, getAccountTotalValue as getBinanceTotalValue } from './exchanges/binance.js';
 
 const app = express();
 app.use(cors());
@@ -27,6 +27,10 @@ wss.on('connection', (ws) => {
     const currentBots = getAllBots();
     ws.send(JSON.stringify({ type: 'SYNC_BOTS', payload: currentBots }));
 
+    // Sync equity history
+    const history = getEquityHistory();
+    ws.send(JSON.stringify({ type: 'SYNC_EQUITY', payload: history }));
+
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message.toString());
@@ -41,6 +45,9 @@ wss.on('connection', (ws) => {
                 pauseBot(data.payload.id);
             } else if (data.type === 'STOP_BOT') {
                 stopBot(data.payload.id);
+            } else if (data.type === 'SYNC_BALANCE') {
+                const { balance } = data.payload;
+                updateExternalBalance(Number(balance) || 0);
             }
         } catch (e) {
             console.error('[WS] Error processing message:', e);
@@ -60,6 +67,9 @@ registerWsBroadcaster(
     },
     (botId: string, status: any) => {
         clients.forEach(c => c.send(JSON.stringify({ type: 'BOT_STATUS', payload: { botId, status } })));
+    },
+    (history: any) => {
+        clients.forEach(c => c.send(JSON.stringify({ type: 'SYNC_EQUITY', payload: history })));
     }
 );
 
@@ -74,8 +84,11 @@ app.post('/api/balance/mexc', async (req, res) => {
         const apiKey = req.body.apiKey || 'mx0vglx73gnNfwgSE7';
         const secret = req.body.secret || '6e19dfc6a212425883a5cb5676edb10c';
 
+        const { getUsdtBalance, getBalance, getAccountTotalValue } = await import('./exchanges/mexc.js');
         const balance = await getUsdtBalance(apiKey, secret);
-        res.json({ balance });
+        const assets = await getBalance(apiKey, secret);
+        const totalValue = await getAccountTotalValue(apiKey, secret);
+        res.json({ balance, assets, totalValue });
     } catch (e: any) {
         console.error('[MEXC] API Error:', e.response?.data || e.message);
         res.status(500).json({ error: e.response?.data || e.message || 'Failed to fetch balance' });
@@ -87,8 +100,11 @@ app.post('/api/balance/binance', async (req, res) => {
         console.log('[BINANCE] Balance request received. Body:', req.body);
         const { apiKey, secret } = req.body;
         if (!apiKey || !secret) return res.status(400).json({ error: 'Missing credentials', bodyReceived: req.body });
-        const balance = await getBinanceUsdtBalance(apiKey, secret);
-        res.json({ balance });
+        const { getUsdtBalance, getBalance, getAccountTotalValue } = await import('./exchanges/binance.js');
+        const balance = await getUsdtBalance(apiKey, secret);
+        const assets = await getBalance(apiKey, secret);
+        const totalValue = await getAccountTotalValue(apiKey, secret);
+        res.json({ balance, assets, totalValue });
     } catch (e: any) {
         console.error('[BINANCE] API Error:', e.response?.data || e.message);
         res.status(500).json({ error: e.response?.data || e.message || 'Failed to fetch balance' });
@@ -141,4 +157,17 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`🚀 Robô Crypto Backend Engine running on port ${PORT}`);
     loadBots();
+
+    // Record equity point every 1 hour (3600000ms)
+    // For testing/initial results, let's also do one every 5 minutes if it's empty
+    setInterval(() => {
+        recordEquityPoint();
+    }, 3600000);
+
+    // Initial record if empty
+    setTimeout(() => {
+        if (getEquityHistory().length === 0) {
+            recordEquityPoint();
+        }
+    }, 10000);
 });

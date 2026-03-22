@@ -39,3 +39,30 @@ export async function getUsdtBalance(apiKey: string, secret: string): Promise<nu
     const balances = await getBalance(apiKey, secret);
     return balances['USDT'] ?? 0;
 }
+
+/** Get total account value in USDT (Stablecoins + positions) */
+export async function getAccountTotalValue(apiKey: string, secret: string): Promise<number> {
+    try {
+        const balances = await getBalance(apiKey, secret);
+        // Binance also supports fetching all prices at once
+        const allPricesRes = await axios.get(`${BASE_URL}/api/v3/ticker/price`);
+        const priceMap: Record<string, number> = {};
+        for (const p of allPricesRes.data as any[]) {
+            priceMap[p.symbol] = parseFloat(p.price);
+        }
+
+        let total = 0;
+        for (const [asset, qty] of Object.entries(balances)) {
+            if (asset === 'USDT' || asset === 'USDC' || asset === 'BUSD' || asset === 'TUSD') {
+                total += qty;
+            } else {
+                const price = priceMap[asset + 'USDT'] || 0;
+                total += qty * price;
+            }
+        }
+        return total;
+    } catch (e) {
+        console.error('[BINANCE] Error calculating total value:', e);
+        return getUsdtBalance(apiKey, secret);
+    }
+}

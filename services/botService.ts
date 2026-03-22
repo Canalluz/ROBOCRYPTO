@@ -3,6 +3,7 @@ export class BotService {
     private onTradeCb?: (trade: any) => void;
     private onStatusCb?: (botId: string, status: any) => void;
     private onSyncCb?: (bots: any[]) => void;
+    private onEquitySyncCb?: (history: any[]) => void;
     private onConnectCb?: () => void;
     private pendingQueue: string[] = []; // Messages waiting for WS to open
 
@@ -37,6 +38,8 @@ export class BotService {
                         this.onStatusCb(data.payload.botId, data.payload.status);
                     } else if (data.type === 'SYNC_BOTS' && this.onSyncCb) {
                         this.onSyncCb(data.payload);
+                    } else if (data.type === 'SYNC_EQUITY' && this.onEquitySyncCb) {
+                        this.onEquitySyncCb(data.payload);
                     }
                 } catch (e) {
                     console.error('[Frontend] Error parsing WS message', e);
@@ -72,6 +75,7 @@ export class BotService {
     onTrade(cb: (trade: any) => void) { this.onTradeCb = cb; }
     onStatus(cb: (botId: string, status: any) => void) { this.onStatusCb = cb; }
     onSync(cb: (bots: any[]) => void) { this.onSyncCb = cb; }
+    onEquitySync(cb: (history: any[]) => void) { this.onEquitySyncCb = cb; }
     onConnect(cb: () => void) { this.onConnectCb = cb; }
 
     deployBot(bot: any, exchange: any) {
@@ -85,6 +89,10 @@ export class BotService {
 
     stopBot(id: string) {
         this.send({ type: 'STOP_BOT', payload: { id } });
+    }
+
+    syncBalance(balance: number) {
+        this.send({ type: 'SYNC_BALANCE', payload: { balance } });
     }
 }
 

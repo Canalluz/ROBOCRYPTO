@@ -33,3 +33,8 @@ export interface StrategyContext {
 }
 
 export type StrategyFunction = (context: StrategyContext) => TradeSignal;
+
+export interface EquityPoint {
+    time: string;
+    value: number;
+}

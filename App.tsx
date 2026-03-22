@@ -367,7 +367,7 @@ const TRANSLATIONS = {
     mon_winrate: "Taxa de Acerto",
     mon_drawdown: "Drawdown Mx",
     mon_active_bots: "Robs Ativos",
-    mon_equity: "Evoluo do Patrimnio",
+    mon_equity: "Evolução do Patrimônio",
     mon_history: "Histrico de Trades",
     all_robots: "Todos os Robs",
     mon_status_op: "OPERANDO",
@@ -696,7 +696,7 @@ const App: React.FC = () => {
     localStorage.setItem('tradepro_system_data', JSON.stringify(data));
   }, [data]);
   const [language, setLanguage] = useState<'en' | 'pt'>('pt');
-  const [currentView, setCurrentView] = useState<'settings' | 'robots' | 'assets' | 'charts' | 'monitoring'>('assets');
+  const [currentView, setCurrentView] = useState<'settings' | 'robots' | 'assets' | 'monitoring'>('assets');
 
   const t = (key: keyof typeof TRANSLATIONS.en) => TRANSLATIONS[language][key] || key;
   const [bots, setBots] = useState<TradingBot[]>(() => {
@@ -792,6 +792,11 @@ const App: React.FC = () => {
         return merged;
       });
     });
+
+    botService.onEquitySync((history) => {
+      console.log('[Frontend] Syncing equity history from backend:', history.length);
+      setEquityHistory(history);
+    });
   }, []);
 
   // Bot persistence is now handled by backend state loading on startup.
@@ -802,9 +807,9 @@ const App: React.FC = () => {
 
   const [exchanges, setExchanges] = useState<ExchangeConfig[]>(() => {
     const defaultExchanges: ExchangeConfig[] = [
-      { id: 'binance', name: 'Binance Institutional', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
-      { id: 'mexc', name: 'MEXC Global', status: 'CONNECTED', lastSync: 'N/A', balance: 0, apiKey: 'mx0vglx73gnNfwgSE7', apiSecret: '6e19dfc6a212425883a5cb5676edb10c' },
-      { id: 'kraken', name: 'Kraken Pro', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' }
+      { id: 'binance', name: 'Binance Institutional', exchangeType: 'binance', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' },
+      { id: 'mexc', name: 'MEXC Global', exchangeType: 'mexc', status: 'CONNECTED', lastSync: 'N/A', balance: 0, apiKey: 'mx0vglx73gnNfwgSE7', apiSecret: '6e19dfc6a212425883a5cb5676edb10c' },
+      { id: 'kraken', name: 'Kraken Pro', exchangeType: 'mexc', status: 'DISCONNECTED', lastSync: 'N/A', balance: 0, apiKey: '', apiSecret: '' }
     ];
 
     const saved = localStorage.getItem('tradepro_exchanges');
@@ -812,31 +817,15 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return defaultExchanges.map(defEx => {
-            const found = parsed.find((p: any) => p.id === defEx.id);
-            if (!found) return defEx;
-
-            // Force hardcoded MEXC keys
-            if (defEx.id === 'mexc') {
-              return {
-                ...defEx,
-                balance: 0,
-                status: 'CONNECTED',
-                lastSync: 'N/A'
-              };
-            }
-
-            const cleanKey = found.apiKey || '';
-            const cleanSecret = found.apiSecret || '';
-
+          // If we have saved exchanges, we use them + ensure exchangeType exists
+          return parsed.map((p: any) => {
+            const exchangeType = p.exchangeType || (p.id === 'binance' ? 'binance' : 'mexc');
             return {
-              ...defEx,
-              ...found,
-              apiKey: cleanKey,
-              apiSecret: cleanSecret,
-              balance: 0, // Unconditionally set balance to 0 on initial load to force a fresh fetch
-              status: cleanKey ? found.status : 'DISCONNECTED',
-              lastSync: cleanKey ? found.lastSync : 'N/A'
+              ...p,
+              exchangeType,
+              balance: 0, // Force fresh fetch
+              status: p.apiKey ? p.status : 'DISCONNECTED',
+              lastSync: p.apiKey ? p.lastSync : 'N/A'
             };
           });
         }
@@ -865,11 +854,13 @@ const App: React.FC = () => {
 
   // 🔧 FIX: Reusable balance fetcher — called on save AND on periodic sync
   const fetchBalanceForExchange = useCallback((exId: string, apiKey: string, secret: string) => {
-    if (!apiKey || !secret || (exId !== 'mexc' && exId !== 'binance')) return;
+    const ex = exchangesRef.current.find(e => e.id === exId);
+    if (!ex || !apiKey || !secret) return;
 
-    console.log(`[Balance] Initiating fetch for ${exId}...`);
+    const type = ex.exchangeType || 'mexc';
+    console.log(`[Balance] Initiating fetch for ${exId} (${type})...`);
 
-    fetch(`/api/balance/${exId}`, {
+    fetch(`/api/balance/${type}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ apiKey, secret })
@@ -888,7 +879,18 @@ const App: React.FC = () => {
             const draft = [...current];
             const idx = draft.findIndex(e => e.id === exId);
             if (idx !== -1) {
-              draft[idx] = { ...draft[idx], balance: data.balance, lastSync: new Date().toLocaleTimeString() };
+              const assets = data.assets || {};
+              draft[idx] = { 
+                ...draft[idx], 
+                balance: data.balance, 
+                totalValue: data.totalValue || data.balance,
+                assets: assets,
+                lastSync: new Date().toLocaleTimeString() 
+              };
+              
+              // 🔧 SYNC: Update backend with the latest total portfolio value (Stablecoins + Positions)
+              const totalPortfolioValue = draft.reduce((acc, e) => acc + (e.totalValue || e.balance || 0), 0);
+              botService.syncBalance(totalPortfolioValue);
             }
             return draft;
           });
@@ -1083,12 +1085,12 @@ const App: React.FC = () => {
     }
   }, [data, language]);
 
-  // Only auto-run analysis when landing on the charts view
+  // Only auto-run analysis when landing on the monitoring view
   useEffect(() => {
-    if (currentView === 'charts') {
+    if (currentView === 'monitoring') {
       runAnalysis();
     }
-  }, [currentView]);
+  }, [currentView, runAnalysis]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
@@ -1139,7 +1141,6 @@ const App: React.FC = () => {
           <NavBtn active={currentView === 'monitoring'} onClick={() => setCurrentView('monitoring')} icon={<LayoutDashboard />} label={t('nav_monitoring')} />
           <NavBtn active={currentView === 'robots'} onClick={() => setCurrentView('robots')} icon={<Bot />} label={t('nav_robots')} />
           <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
-          <NavBtn active={currentView === 'charts'} onClick={() => setCurrentView('charts')} icon={<BarChart3 />} label={t('nav_charts')} />
           <NavBtn active={currentView === 'settings'} onClick={() => setCurrentView('settings')} icon={<SettingsIcon />} label={t('nav_settings')} />
         </nav>
 
@@ -1179,8 +1180,7 @@ const App: React.FC = () => {
               <h2 className="text-3xl font-bold tracking-tight">
                 {currentView === 'robots' ? t('header_robots') :
                   currentView === 'assets' ? t('header_assets') :
-                    currentView === 'monitoring' ? t('header_monitoring') :
-                      currentView === 'charts' ? t('header_charts') : t('header_settings')}
+                    currentView === 'monitoring' ? t('header_monitoring') : t('header_settings')}
               </h2>
             </div>
             <div className="flex items-center gap-3 text-slate-400">
@@ -1211,7 +1211,7 @@ const App: React.FC = () => {
             bots={bots}
             trades={tradeHistory}
             equityData={equityHistory}
-            cashAvailable={cashAvailable}
+            exchanges={exchanges}
             onToggleBot={onToggleBot}
             onClearHistory={onClearHistory}
           />
@@ -1230,20 +1230,6 @@ const App: React.FC = () => {
 
         {currentView === 'assets' && <AssetFactoryView data={data} setData={setData} exchanges={exchanges} t={t} />}
 
-        {currentView === 'charts' && (
-          <div className="space-y-6">
-             <BotMonitoringView
-                t={t}
-                formatCurrency={formatCurrency}
-                bots={bots}
-                trades={tradeHistory}
-                equityData={equityHistory}
-                cashAvailable={cashAvailable}
-                onToggleBot={onToggleBot}
-                onClearHistory={onClearHistory}
-              />
-          </div>
-        )}
 
         {currentView === 'settings' && (
           <SettingsView
@@ -1287,6 +1273,7 @@ const SettingsView: React.FC<{
   const [activeTab, setActiveTab] = useState<'exchanges' | 'ai' | 'execution'>('exchanges');
   const [isAddingExchange, setIsAddingExchange] = useState(false);
   const [newExchangeName, setNewExchangeName] = useState('');
+  const [newExchangeType, setNewExchangeType] = useState<'mexc' | 'binance'>('mexc');
 
   const [aiKeys, setAiKeys] = useState({
     geminiKey: data.neural_core.geminiKey || '',
@@ -1315,12 +1302,13 @@ const SettingsView: React.FC<{
     if (!newExchangeName.trim()) return;
     const newId = newExchangeName.toLowerCase().replace(/\s+/g, '-');
     if (exchanges.find(ex => ex.id === newId)) {
-      alert('Exchange already exists');
+      alert('Account ID already exists');
       return;
     }
     const newExchange: ExchangeConfig = {
       id: newId,
       name: newExchangeName,
+      exchangeType: newExchangeType,
       status: 'DISCONNECTED',
       lastSync: 'N/A',
       balance: 0,
@@ -1360,6 +1348,7 @@ const SettingsView: React.FC<{
             <ExchangeCard
               key={ex.id}
               name={ex.name}
+              exchangeType={ex.exchangeType}
               status={ex.status}
               lastSync={ex.lastSync}
               balance={ex.balance}
@@ -1380,29 +1369,54 @@ const SettingsView: React.FC<{
           ))}
           {isAddingExchange ? (
             <div className="bg-slate-900 border-2 border-cyan-500/30 rounded-2xl p-8 space-y-4 animate-in zoom-in duration-300">
-              <div className="flex items-center gap-3 mb-2">
-                <Zap className="w-5 h-5 text-cyan-400" />
-                <h4 className="font-bold">New Connection</h4>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Zap className="w-5 h-5 text-cyan-400" />
+                  <h4 className="font-bold">New Connection</h4>
+                </div>
               </div>
-              <input
-                type="text"
-                autoFocus
-                value={newExchangeName}
-                onChange={(e) => setNewExchangeName(e.target.value)}
-                placeholder="Exchange Name (e.g. Coinbase)"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm font-bold text-slate-100 outline-none focus:border-cyan-500"
-                onKeyDown={(e) => e.key === 'Enter' && handleAddExchange()}
-              />
-              <div className="flex gap-2">
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Exchange Provider</label>
+                <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+                  <button 
+                    onClick={() => setNewExchangeType('mexc')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${newExchangeType === 'mexc' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-400'}`}
+                  >
+                    MEXC
+                  </button>
+                  <button 
+                    onClick={() => setNewExchangeType('binance')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${newExchangeType === 'binance' ? 'bg-amber-600 text-white' : 'text-slate-500 hover:text-slate-400'}`}
+                  >
+                    BINANCE
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Account Name</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newExchangeName}
+                  onChange={(e) => setNewExchangeName(e.target.value)}
+                  placeholder="e.g. Primary Account, Mexc 2..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm font-bold text-slate-100 outline-none focus:border-cyan-500"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddExchange()}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={handleAddExchange}
-                  className="flex-1 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-lg transition-all"
+                  className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-cyan-900/20"
                 >
-                  Create
+                  Create Connection
                 </button>
                 <button
                   onClick={() => setIsAddingExchange(false)}
-                  className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-bold rounded-lg transition-all"
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-bold rounded-xl transition-all"
                 >
                   Cancel
                 </button>
@@ -1759,7 +1773,18 @@ const TabBtn: React.FC<{ label: string; active: boolean; onClick: () => void; ic
   </button>
 );
 
-const ExchangeCard: React.FC<{ name: string; status: string; lastSync: string; balance: number; apiKey: string; apiSecret: string; onClear: () => void; onUpdate: (key: string, secret: string) => void; t: (k: any) => string }> = ({ name, status, lastSync, balance, apiKey, apiSecret, onClear, onUpdate, t }) => {
+const ExchangeCard: React.FC<{ 
+  name: string; 
+  exchangeType: 'mexc' | 'binance';
+  status: string; 
+  lastSync: string; 
+  balance: number; 
+  apiKey: string; 
+  apiSecret: string; 
+  onClear: () => void; 
+  onUpdate: (key: string, secret: string) => void; 
+  t: (k: any) => string 
+}> = ({ name, exchangeType, status, lastSync, balance, apiKey, apiSecret, onClear, onUpdate, t }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempKey, setTempKey] = useState(apiKey);
   const [tempSecret, setTempSecret] = useState(apiSecret);
@@ -1805,7 +1830,12 @@ const ExchangeCard: React.FC<{ name: string; status: string; lastSync: string; b
       }`}>
       <div className="flex justify-between items-start">
         <div>
-          <h4 className="font-bold text-lg">{name}</h4>
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-bold text-lg">{name}</h4>
+            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${exchangeType === 'binance' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'}`}>
+              {exchangeType}
+            </span>
+          </div>
           <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Latency Sync: {lastSync}</p>
         </div>
         <div className="text-right">
@@ -2045,7 +2075,7 @@ const ExecutiveSummary: React.FC<{ analysis: AnalysisResponse | null; isLoading:
 
 // --- Deployment Wizard Technical Core ---
 type WizardState = {
-  strategy: 'AGGRESSIVE' | 'SECURE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA' | 'ANATOMIA_FLUXO' | 'ROBO_ENSAIO';
+  strategy: 'AGGRESSIVE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA';
   exchangeId: string;
   assets: string[];
   leverage: number;
@@ -2083,15 +2113,12 @@ const initialWizardState: WizardState = {
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
     case 'SET_STRATEGY':
-      const defaults = action.payload === 'SECURE' ? { leverage: 3, stopLoss: 1.0, takeProfit: 3.0 } :
-        action.payload === 'AGGRESSIVE' ? { leverage: 10, stopLoss: 0.4, takeProfit: 0.8 } :
+      const defaults = action.payload === 'AGGRESSIVE' ? { leverage: 10, stopLoss: 0.4, takeProfit: 0.8 } :
           action.payload === 'ZIGZAG_PRO' ? { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 } :
             action.payload === 'MATRIX_SCALP' ? { leverage: 10, stopLoss: 0.3, takeProfit: 1.0 } :
               action.payload === 'MATRIX_NEURAL' ? { leverage: 5, stopLoss: 0.5, takeProfit: 1.5 } :
                 action.payload === 'ROBO_IA' ? { leverage: 5, stopLoss: 0.5, takeProfit: 2.0 } :
-                  action.payload === 'ANATOMIA_FLUXO' ? { leverage: 5, stopLoss: 2.0, takeProfit: 4.0 } :
-                    action.payload === 'ROBO_ENSAIO' ? { leverage: 1, stopLoss: 1.0, takeProfit: 2.0 } :
-                      { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
+                  { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'ROBO_IA') ? 'DEEPSEEK' : 'GEMINI';
       return { ...state, strategy: action.payload, ...defaults, aiProvider };
     case 'SET_EXCHANGE':
@@ -2111,7 +2138,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, isValid: !error, error };
     case 'RUN_DRY_BOOT':
       // ... same logic ...
-      const bias = state.strategy === 'SECURE' ? 0.05 : 0.02;
+      const bias = 0.02;
       return {
         ...state, dryRunResult: {
           winRate: 50 + (Math.random() * 15) + (bias * 100),
@@ -2172,9 +2199,9 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
       fastMa: 20, slowMa: 50, trendMa: 200, volMultiplier: 1.5, rsiRange: [30, 70], rsiPeriod: 14, capitalPerTrade: 100, maxOpenTrades: 3, tpRatios: [0.5, 1.0], emergencyStopPct: 5.0, cooldownTrades: 5, maxConsecutiveLosses: 3
     },
     'ZIGZAG_PRO': {
-      leverage: 1, maxDailyLoss: 1, stopLossPct: 2.0, takeProfitPct: 5.0, maxTradesPerDay: 10, positionSizePct: 3.0,
+      leverage: 1, maxDailyLoss: 1, positionSizePct: 3.0,
       tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO',
-      depth: 12, deviation: 5, backstep: 3, profitTarget: 5.0, stopLoss: 2.0
+      depth: 12, deviation: 5, backstep: 3
     },
     'MATRIX_SCALP': {
       leverage: 10, maxDailyLoss: 1, stopLossPct: 0.3, takeProfitPct: 1.0, maxTradesPerDay: 50, positionSizePct: 5.0,
@@ -2185,17 +2212,9 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
       leverage: 5, maxDailyLoss: 1, stopLossPct: 0.5, takeProfitPct: 1.5, maxTradesPerDay: 10, positionSizePct: 3.0,
       minConfidence: 85, tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO'
     },
-    'ANATOMIA_FLUXO': {
-      leverage: 5, ema_curta: 21, ema_media: 50, ema_longa: 200, volume_profile_dias: 180, smi_periodo_acum: 20,
-      smi_periodo_dist: 10, smi_threshold: 0.3, cvd_suavizacao: 14, bandas_desvio: 2, rsi_periodo: 14, rsi_sobrevendido: 30,
-      rsi_sobrecomprado: 70, estocastico_k: 14, estocastico_d: 3, risco_por_operacao: 2, alavancagem_maxima: 20,
-      trailing_stop_distancia: 1.5, max_ativos_simultaneos: 3, timeframes: { '1d': '1d', '4h': '4h', '1h': '1h', '15m': '15m' },
-      marketMode: 'FUTURES'
-    },
-    'ROBO_ENSAIO': {
-      leverage: 1, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 2.0, maxTradesPerDay: 500, positionSizePct: 1.0,
-      tradingHours: { start: '00:00', end: '23:59', use24h: true }, aiProvider: 'MOCK', marginMode: 'ISOLATED', marketMode: 'SPOT', timeframe: '1m',
-      cooldown: 0, maxConsecutiveLosses: 100
+    'QUANTUM_EDGE': {
+      leverage: 3, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 3.0, maxTradesPerDay: 15, positionSizePct: 2.5,
+      minConfidence: 75, tradingHours: { start: '00:00', end: '23:59', use24h: true }, aiProvider: 'DEEPSEEK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: '1h'
     }
   };
 
@@ -2212,35 +2231,26 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
     const newBot: TradingBot = {
       id: Math.random().toString(36).substr(2, 9),
       name: `${wizard.strategy === 'AGGRESSIVE' ? t('bot_naming_agg') :
-        wizard.strategy === 'SECURE' ? t('bot_naming_sec') :
           wizard.strategy === 'ZIGZAG_PRO' ? t('bot_naming_zz') :
             wizard.strategy === 'MATRIX_SCALP' ? t('bot_naming_matrix') :
               wizard.strategy === 'MATRIX_NEURAL' ? t('bot_naming_neural') :
-                wizard.strategy === 'ANATOMIA_FLUXO' ? 'Rob Anatomia Fluxo' :
-                  wizard.strategy === 'ROBO_ENSAIO' ? 'Rob Ensaio MEXC' :
-                    t('bot_naming_ma')
+                t('bot_naming_ma')
         } ${bots.length + 1}`,
       strategyId:
         wizard.strategy === 'AGGRESSIVE' ? 'AGGRESSIVE_SCALP' :
-          wizard.strategy === 'SECURE' ? 'CONSERVATIVE_TREND' :
-            wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
-              wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
-                wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
-                  wizard.strategy === 'ANATOMIA_FLUXO' ? 'ANATOMIA_FLUXO' :
-                    wizard.strategy === 'ROBO_ENSAIO' ? 'ROBO_ENSAIO' :
-                      'SIMPLE_MA',
+          wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
+            wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
+              wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
+                'SIMPLE_MA',
       status: 'ACTIVE',
       lastActivity: new Date().toLocaleTimeString(),
       config: {
         ...strategyDefaults[
         wizard.strategy === 'AGGRESSIVE' ? 'AGGRESSIVE_SCALP' :
-          wizard.strategy === 'SECURE' ? 'CONSERVATIVE_TREND' :
-            wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
-              wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
-                wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
-                  wizard.strategy === 'ANATOMIA_FLUXO' ? 'ANATOMIA_FLUXO' :
-                    wizard.strategy === 'ROBO_ENSAIO' ? 'ROBO_ENSAIO' :
-                      'SIMPLE_MA'
+          wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
+            wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
+              wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
+                'SIMPLE_MA'
         ],
         exchangeId: wizard.exchangeId,
         assets: wizard.assets.map(a => a + 'USDT'),
@@ -2319,20 +2329,20 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/50">
                   <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">Daily Profit</p>
-                  <p className={`text-sm font-bold ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {formatCurrency(bot.performance.todayPnl)}
+                  <p className={`text-sm font-bold ${(bot.performance?.todayPnl || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {formatCurrency(bot.performance?.todayPnl || 0)}
                   </p>
                 </div>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/50">
                   <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">Win Rate</p>
-                  <p className="text-sm font-bold text-cyan-400">{bot.performance.winRate.toFixed(1)}%</p>
+                  <p className="text-sm font-bold text-cyan-400">{(bot.performance?.winRate || 0).toFixed(1)}%</p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-[11px] font-bold">
                   <span className="text-slate-500 tracking-wider">DAILY LOSS LIMIT</span>
-                  <span className="text-rose-400">-{bot.config.maxDailyLoss}%</span>
+                  <span className="text-rose-400">-{bot.config?.maxDailyLoss || 0}%</span>
                 </div>
                 <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-rose-500/50 w-[15%]" />
@@ -2358,7 +2368,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           leverage: bot.config.leverage,
                           stopLossPct: bot.config.stopLossPct,
                           takeProfitPct: bot.config.takeProfitPct,
-                          riskPerTrade: bot.config.riskPerTrade,
+                          riskPerTrade: bot.config?.riskPerTrade,
                           // 🔧 FIX: removed `|| true` that was keeping paper mode always on
                           paperTrade: bot.status === 'TEST'
                         }, ex);
@@ -2427,28 +2437,23 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               <div className="flex items-center gap-4">
                 <div className="bg-cyan-500 p-2.5 rounded-xl text-slate-950">
                   {wizard.strategy === 'AGGRESSIVE' ? <Flame className="w-6 h-6" /> :
-                    wizard.strategy === 'SECURE' ? <Shield className="w-6 h-6" /> :
-                      wizard.strategy === 'MATRIX_NEURAL' ? <BrainCircuit className="w-6 h-6" /> :
+                    wizard.strategy === 'MATRIX_NEURAL' ? <BrainCircuit className="w-6 h-6" /> :
+                      wizard.strategy === 'QUANTUM_EDGE' ? <Zap className="w-6 h-6 text-slate-950" /> :
                         <Activity className="w-6 h-6" />}
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold tracking-tight">
                     {wizard.strategy === 'AGGRESSIVE' ? `${t('deploy_wizard')}: ${t('agg_scalper')}` :
-                      wizard.strategy === 'SECURE' ? `${t('deploy_wizard')}: ${t('secure_trend')}` :
                         wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: ${t('matrix_neural')}` :
-                          wizard.strategy === 'ANATOMIA_FLUXO' ? `${t('deploy_wizard')}: Anatomia do Fluxo` :
-                            wizard.strategy === 'ROBO_IA' ? `${t('deploy_wizard')}: ROBO IA` :
-                              wizard.strategy === 'ROBO_ENSAIO' ? `${t('deploy_wizard')}: ROBO ENSAIO` :
+                          wizard.strategy === 'MATRIX_SCALP' ? `${t('deploy_wizard')}: Matrix Scalp Pro` :
+                            wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: Matrix Neural X` :
+                              wizard.strategy === 'ZIGZAG_PRO' ? `${t('deploy_wizard')}: ZigZag Pro` :
                                 `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
                   </h3>
                   <p className="text-sm text-slate-500 tracking-wide">
                     {wizard.strategy === 'AGGRESSIVE' ? t('mexc_logic_desc') :
-                      wizard.strategy === 'SECURE' ? t('secure_logic_desc') :
-                        wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
-                          wizard.strategy === 'ROBO_IA' ? "Advanced AI-driven strategy with automated SL/TP and adaptive signals." :
-                            wizard.strategy === 'ROBO_ENSAIO' ? "Testes hiperagressivos de 15s para testar comunicao com a API." :
-                              wizard.strategy === 'ANATOMIA_FLUXO' ? "4-Painis Python Script - Integrao Institucional, Fluxo, Gatilhos e Macro." :
-                                wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
+                      wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
+                        wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
                   </p>
                 </div>
               </div>
@@ -2465,13 +2470,6 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 >
                   <Zap className="w-8 h-8 relative z-10" />
                   <span className="font-black text-xs tracking-widest uppercase relative z-10">{t('agg_scalp_label')}</span>
-                </button>
-                <button
-                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'SECURE' })}
-                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'SECURE' ? 'border-emerald-500 bg-gradient-to-br from-emerald-500/20 to-slate-900 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
-                >
-                  <Shield className="w-8 h-8 relative z-10" />
-                  <span className="font-black text-xs tracking-widest uppercase relative z-10">{t('secure_trend_label')}</span>
                 </button>
                 <button
                   onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'SIMPLE_MA' })}
@@ -2502,41 +2500,15 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   <span className="font-black text-xs tracking-widest uppercase relative z-10">{t('matrix_neural')}</span>
                 </button>
                 <button
-                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ANATOMIA_FLUXO' })}
-                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ANATOMIA_FLUXO' ? 'border-cyan-500 bg-gradient-to-br from-cyan-500/20 to-slate-900 text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
-                >
-                  <Activity className="w-8 h-8 relative z-10" />
-                  <span className="font-black text-xs tracking-widest uppercase relative z-10">Anatomia Fluxo</span>
-                </button>
-                <button
-                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ROBO_IA' })}
-                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ROBO_IA' ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-slate-900 text-purple-400 shadow-[0_0_30px_rgba(168,85,247,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
-                >
-                  <Cpu className="w-8 h-8 relative z-10" />
-                  <span className="font-black text-xs tracking-widest uppercase relative z-10">ROBO IA</span>
-                </button>
-                <button
-                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'ROBO_ENSAIO' })}
-                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'ROBO_ENSAIO' ? 'border-white bg-gradient-to-br from-white/20 to-slate-900 text-white shadow-[0_0_30px_rgba(255,255,255,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
+                  onClick={() => dispatch({ type: 'SET_STRATEGY', payload: 'QUANTUM_EDGE' })}
+                  className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'QUANTUM_EDGE' ? 'border-emerald-500 bg-gradient-to-br from-emerald-500/20 to-slate-900 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
                 >
                   <Zap className="w-8 h-8 relative z-10" />
-                  <span className="font-black text-xs tracking-widest uppercase relative z-10 text-center">ROBO ENSAIO<br /><span className="text-[9px]">(Teste Rpido)</span></span>
+                  <span className="font-black text-xs tracking-widest uppercase relative z-10">Quantum Edge</span>
                 </button>
               </div>
 
 
-              {wizard.strategy === 'ROBO_ENSAIO' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/20">
-                    <h4 className="font-bold text-white mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> Configurao do ENSAIO</h4>
-                    <p className="text-xs text-slate-400 mb-4">Esse bot no usa Inteligncia. Ele compra agora e vende nos prximos 15 segundos repetidamente at voc pausar. Use APENAS com modo Simulao (Dry Run) ou valores mnimos na vida real (Live) para Diagnosticar Erros da MEXC.</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <SettingField label="Atuao" value="Loop Compra/Venda infinito" />
-                      <SettingField label={t('stop_loss')} value={`${wizard.stopLoss}% (Fixo)`} />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {wizard.strategy === 'AGGRESSIVE' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
@@ -2553,37 +2525,6 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 </div>
               )}
 
-              {wizard.strategy === 'SECURE' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                  <div className="p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
-                    <h4 className="font-bold text-emerald-400 mb-2 flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {t('cons_config')}</h4>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">{t('entry_strat')}</label>
-                        <div className="flex flex-col gap-2">
-                          <ToggleRow label="EMA Rejection" active={true} />
-                          <ToggleRow label="HH/HL Structure" active={true} />
-                          <ToggleRow label="RSI Check" active={true} />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">{t('trend_filter')}</label>
-                        <select
-                          value="4H"
-                          readOnly
-                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-bold text-slate-300 outline-none"
-                        >
-                          <option value="4H">4 Hour Trend</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <SettingField label={t('risk_reward')} value="1:2 Min" />
-                      <SettingField label={t('trailing_stop')} value="ATR x 1.5" />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {wizard.strategy === 'SIMPLE_MA' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
@@ -2692,41 +2633,40 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <SettingField label="Market Regime" value="Dynamic Adaptation" />
-                      <SettingField label="Learning Status" value="Online / Adaptive" />
+                  </div>
+                </div>
+              )}
+
+              {wizard.strategy === 'QUANTUM_EDGE' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
+                    <h4 className="font-bold text-emerald-400 mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> QUANTUM EDGE Ensemble</h4>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Hybrid Protocol</label>
+                        <div className="flex flex-col gap-2">
+                          <ToggleRow label="Alpha Momentum Core" active={true} />
+                          <ToggleRow label="Smart Money Index" active={true} />
+                          <ToggleRow label="Mean Reversion Bias" active={true} />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Confidence Target</label>
+                        <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase">Min Confidence</span>
+                            <span className="text-xs font-bold text-white">75%</span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-emerald-500 h-full w-[75%]" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {wizard.strategy === 'ANATOMIA_FLUXO' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                  <div className="p-4 bg-cyan-500/5 rounded-xl border border-cyan-500/20">
-                    <h4 className="font-bold text-cyan-400 mb-2 flex items-center gap-2"><Activity className="w-4 h-4" /> Anatomia do Fluxo</h4>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Anlise 4-Painis</label>
-                        <div className="flex flex-col gap-2">
-                          <ToggleRow label="Painel 1 (Macro)" active={true} />
-                          <ToggleRow label="Painel 2 (Institucional)" active={true} />
-                          <ToggleRow label="Painel 3 (Gatilhos)" active={true} />
-                          <ToggleRow label="Painel 4 (Micro)" active={true} />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Indicadores Base</label>
-                        <div className="flex flex-col gap-2">
-                          <SettingField label="SMI" value="20 / 10 / 0.3" />
-                          <SettingField label="CVD" value="14 Smooth" />
-                          <SettingField label="Bands" value="2.0 Deviations" />
-                          <SettingField label="Volume Profile" value="180 / 24 bins" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Neural Core section removed by user request (bots operate without AI) */}
 
@@ -2738,17 +2678,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('trend_filter')}</label>
-                    {wizard.strategy === 'SECURE' ? (
-                      <select
-                        value="4H"
-                        readOnly
-                        className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl font-bold text-slate-200 outline-none"
-                      >
-                        <option value="4H">4 Hours (Standard)</option>
-                      </select>
-                    ) : (
-                      <SettingField label="EMA Threshold" value={`${wizard.strategy === 'AGGRESSIVE' ? '200 Period (15m/1H)' : '200 Period (Daily)'}`} />
-                    )}
+                    <SettingField label="EMA Threshold" value={`${wizard.strategy === 'AGGRESSIVE' ? '200 Period (15m/1H)' : '200 Period (Daily)'}`} />
                   </div>
                 </div>
               </section>
@@ -2765,12 +2695,6 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         <ToggleRow label="RSI Range (50-70)" active={true} />
                         <ToggleRow label="Relative Volume Check" active={true} />
                       </>
-                    ) : wizard.strategy === 'SECURE' ? (
-                      <>
-                        <ToggleRow label="EMA Rejection (20/50)" active={true} />
-                        <ToggleRow label="HH/HL Structure Filter" active={true} />
-                        <ToggleRow label="RSI Range (45-60)" active={true} />
-                      </>
                     ) : (
                       <>
                         <ToggleRow label="Crossover (9/21 EMA)" active={true} />
@@ -2785,9 +2709,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                       <p className="text-xs leading-relaxed text-slate-300 italic">
                         {wizard.strategy === 'AGGRESSIVE'
                           ? t('desc_agg_tech')
-                          : wizard.strategy === 'SECURE'
-                            ? t('desc_sec_tech')
-                            : wizard.strategy === 'MATRIX_NEURAL'
+                          : wizard.strategy === 'MATRIX_NEURAL'
                               ? t('desc_neural_tech')
                               : wizard.strategy === 'MATRIX_SCALP'
                                 ? t('desc_matrix_tech')
@@ -2806,7 +2728,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   disabled={!wizard.isValid}
                   className={`w-full py-4 rounded-2xl font-black text-sm tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl ${!wizard.isValid ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white'}`}
                 >
-                  <Zap className="w-5 h-5" /> {wizard.strategy === 'AGGRESSIVE' ? t('instantiate_agg') : wizard.strategy === 'SECURE' ? t('instantiate_sec') : wizard.strategy === 'ANATOMIA_FLUXO' ? 'DEPLOY ANATOMIA FLUXO' : t('instantiate_ma')}
+                  <Zap className="w-5 h-5" /> {wizard.strategy === 'AGGRESSIVE' ? t('instantiate_agg') : t('instantiate_ma')}
                 </button>
               </div>
             </div>
@@ -3029,21 +2951,31 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   <div className="col-span-2 space-y-4">
                     <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Advanced Configuration</label>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400">{t('max_trades_daily')}</label>
-                        <input
-                          type="number"
-                          placeholder="Ex: 10"
-                          value={editingBot.config.maxTradesPerDay || ''}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            const updated = { ...editingBot, config: { ...editingBot.config, maxTradesPerDay: val } };
-                            setEditingBot(updated);
-                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
-                          }}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-slate-200 outline-none focus:border-cyan-500/50"
-                        />
-                      </div>
+                      {editingBot.strategyId !== 'ZIGZAG_PRO' && editingBot.strategyId !== 'MATRIX_NEURAL' && editingBot.strategyId !== 'QUANTUM_EDGE' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">{t('max_trades_daily')}</label>
+                          <input
+                            type="number"
+                            placeholder="Ex: 10"
+                            value={editingBot.config.maxTradesPerDay || ''}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              const updated = { ...editingBot, config: { ...editingBot.config, maxTradesPerDay: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-slate-200 outline-none focus:border-cyan-500/50"
+                          />
+                        </div>
+                      )}
+                      {(editingBot.strategyId === 'ZIGZAG_PRO' || editingBot.strategyId === 'MATRIX_NEURAL' || editingBot.strategyId === 'QUANTUM_EDGE') && (
+                        <div className="col-span-1 p-3 bg-cyan-500/5 rounded-xl border border-cyan-500/20 flex flex-col justify-center">
+                          <span className="text-[9px] font-bold text-cyan-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                            <Zap className="w-3 h-3" /> Autonomous Engine
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium leading-tight">Logic determines optimal exits based on market structure.</span>
+                        </div>
+                      )}
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-400">{t('pos_size_pct')}</label>
                         <input
@@ -3060,38 +2992,42 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-emerald-400 outline-none focus:border-cyan-500/50"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400">{t('tp_pct')}</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          placeholder="Ex: 0.5%"
-                          value={editingBot.config.takeProfitPct || ''}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            const updated = { ...editingBot, config: { ...editingBot.config, takeProfitPct: val } };
-                            setEditingBot(updated);
-                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
-                          }}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-cyan-400 outline-none focus:border-cyan-500/50"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400">{t('sl_pct')}</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          placeholder="Ex: 0.3%"
-                          value={editingBot.config.stopLossPct || ''}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            const updated = { ...editingBot, config: { ...editingBot.config, stopLossPct: val } };
-                            setEditingBot(updated);
-                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
-                          }}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-rose-400 outline-none focus:border-cyan-500/50"
-                        />
-                      </div>
+                      {editingBot.strategyId !== 'ZIGZAG_PRO' && editingBot.strategyId !== 'MATRIX_NEURAL' && editingBot.strategyId !== 'QUANTUM_EDGE' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">{t('tp_pct')}</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            placeholder="Ex: 0.5%"
+                            value={editingBot.config.takeProfitPct || ''}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              const updated = { ...editingBot, config: { ...editingBot.config, takeProfitPct: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-cyan-400 outline-none focus:border-cyan-500/50"
+                          />
+                        </div>
+                      )}
+                      {editingBot.strategyId !== 'ZIGZAG_PRO' && editingBot.strategyId !== 'MATRIX_NEURAL' && editingBot.strategyId !== 'QUANTUM_EDGE' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">{t('sl_pct')}</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            placeholder="Ex: 0.3%"
+                            value={editingBot.config.stopLossPct || ''}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              const updated = { ...editingBot, config: { ...editingBot.config, stopLossPct: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-rose-400 outline-none focus:border-cyan-500/50"
+                          />
+                        </div>
+                      )}
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] font-bold text-slate-400">{t('timeframe')}</label>
                         <select
@@ -3243,7 +3179,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           <input
                             type="number"
                             step="1"
-                            value={(editingBot.config as MatrixNeuralConfig).minConfidence || 85}
+                            value={(editingBot.config as any).minConfidence || 85}
                             onChange={(e) => {
                               const val = Number(e.target.value);
                               const updated = { ...editingBot, config: { ...editingBot.config, minConfidence: val } };
@@ -3272,6 +3208,37 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         <div className="flex items-center gap-2 p-2 bg-slate-900/50 rounded-lg border border-slate-800">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                           <span className="text-[9px] font-bold text-slate-400 uppercase">NLP Sentiment</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {editingBot.strategyId === 'QUANTUM_EDGE' && (
+                    <div className="col-span-2 p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20 space-y-4 animate-in fade-in slide-in-from-top-2">
+                      <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                        <Zap className="w-3 h-3" /> Quantum Ensemble Protocol
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">Min Confidence (%)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            value={(editingBot.config as any).minConfidence || 75}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              const updated = { ...editingBot, config: { ...editingBot.config, minConfidence: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-emerald-400 outline-none focus:border-emerald-500/50"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">Hybrid Strategies</label>
+                          <div className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-[9px] text-emerald-300 font-mono">
+                            Momentum + MeanRev + SmartMoney + OF
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -4085,10 +4052,10 @@ const BotMonitoringView: React.FC<{
   bots: TradingBot[];
   trades: Trade[];
   equityData: EquityPoint[];
-  cashAvailable: number;
+  exchanges: ExchangeConfig[];
   onToggleBot?: (id: string, newStatus: 'ACTIVE' | 'PAUSED') => void;
   onClearHistory?: () => void;
-}> = ({ t, formatCurrency, bots, trades, equityData, cashAvailable, onToggleBot, onClearHistory }) => {
+}> = ({ t, formatCurrency, bots, trades, equityData, exchanges, onToggleBot, onClearHistory }) => {
   const [selectedBotId, setSelectedBotId] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<'H' | 'D' | 'M'>('D');
 
@@ -4096,23 +4063,26 @@ const BotMonitoringView: React.FC<{
   const filteredTrades = selectedBotId === 'all' ? trades : trades.filter(tr => tr.botId === selectedBotId);
 
   const activeBotsCount = filteredBots.filter(b => b.status === 'ACTIVE').length;
-  const totalPnl = filteredBots.reduce((acc, b) => acc + b.performance.totalPnl, 0);
-  const totalTrades = filteredBots.reduce((acc, b) => acc + b.performance.trades, 0);
+  const totalPnl = filteredBots.reduce((acc, b) => acc + (b.performance?.totalPnl || 0), 0);
+  const totalTrades = filteredBots.reduce((acc, b) => acc + (b.performance?.trades || 0), 0);
   const avgWinRate = filteredBots.length > 0
-    ? filteredBots.reduce((acc, b) => acc + (b.performance.trades > 0 ? b.performance.winRate : 0), 0) / filteredBots.filter(b => b.performance.trades > 0).length || 0
+    ? filteredBots.reduce((acc, b) => acc + (b.performance?.trades > 0 ? b.performance.winRate : 0), 0) / (filteredBots.filter(b => b.performance?.trades > 0).length || 1)
     : 0;
 
   // Compute max drawdown dynamically from equity history
   let maxDrawdown = 0;
-  let peak = equityData[0]?.value || 10000;
+  const currentTotalExchangeValue = exchanges.reduce((acc, e) => acc + (e.totalValue || e.balance || 0), 0);
+  let peak = equityData[0]?.value || currentTotalExchangeValue;
   for (const point of equityData) {
     if (point.value > peak) peak = point.value;
     const dd = ((peak - point.value) / peak) * 100;
     if (dd > maxDrawdown) maxDrawdown = dd;
   }
 
-  // Calculate current total equity (balance + positions)
-  const currentEquity = (Number(cashAvailable) || 0) + filteredBots.reduce((acc, b) => acc + (Number(b.performance.totalPnl) || 0), 0);
+  // Calculate current total equity (sum of all bot paper balances + real exchange total values)
+  const currentEquity = currentTotalExchangeValue + filteredBots.reduce((acc, b) => {
+    return acc + (b.paperTrade ? (Number((b.performance as any)?.paperBalance) || 0) : 0);
+  }, 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -4205,7 +4175,7 @@ const BotMonitoringView: React.FC<{
               <BarChart data={equityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="time" stroke="#64748b" fontSize={10} />
-                <YAxis stroke="#64748b" fontSize={10} domain={['dataMin - 500', 'dataMax + 500']} hide />
+                <YAxis stroke="#64748b" fontSize={10} domain={['auto', 'auto']} hide />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
                   itemStyle={{ color: '#22d3ee', fontWeight: 'bold' }}
@@ -4224,7 +4194,7 @@ const BotMonitoringView: React.FC<{
                       />
                     );
                   })}
-                  <LabelList dataKey="value" position="top" fill="#94a3b8" fontSize={9} formatter={(v: number) => `$${(v / 1000).toFixed(1)}k`} />
+                  <LabelList dataKey="value" position="top" fill="#94a3b8" fontSize={9} formatter={(v: number) => v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v.toFixed(0)}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -4247,6 +4217,64 @@ const BotMonitoringView: React.FC<{
         </div>
 
         <section className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+            <div className="flex items-center gap-2 font-bold text-cyan-400">
+              <Wallet className="w-5 h-5" /> Exposições da Carteira (Real)
+            </div>
+            <span className="text-[10px] text-slate-500 font-medium">Filtro: Ativos &gt; 1 unidade</span>
+          </div>
+          <div className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-950/50">
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800">Ativo</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 text-right">Quantidade</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {exchanges.filter(ex => ex.status === 'CONNECTED' && ex.assets).flatMap(ex => {
+                    const validAssets = Object.entries(ex.assets || {}).filter(([_, qty]) => (qty as number) > 1);
+                    return validAssets.map(([asset, qty]) => (
+                      <tr key={`${ex.id}-${asset}`} className="hover:bg-slate-800/20 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                              {asset.substring(0, 3)}
+                            </div>
+                            <span className="text-sm font-bold text-slate-200">{asset}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="text-sm font-mono text-cyan-400">{(qty as number).toString().includes('.') ? (qty as number).toFixed(6) : qty}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold border border-emerald-500/20">
+                            EM CARTEIRA
+                          </span>
+                        </td>
+                      </tr>
+                    ));
+                  })}
+                  {!exchanges.some(ex => 
+                    ex.status === 'CONNECTED' && 
+                    ex.assets && 
+                    Object.values(ex.assets).some(qty => (qty as number) > 1)
+                  ) && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-slate-500 text-sm">
+                        Nenhuma exposição significativa (&gt; 1 unidade) detectada.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
           <div className="p-6 border-b border-slate-800 bg-slate-900/50 font-bold flex items-center gap-2 text-purple-400">
             <Bot className="w-5 h-5" /> Active Operations
           </div>
@@ -4259,6 +4287,11 @@ const BotMonitoringView: React.FC<{
                     <span className="text-xs font-bold text-slate-200">
                       {bot.name.includes(' / ') ? bot.name.split(' / ')[1] : bot.name}
                     </span>
+                    {(bot.performance as any)?.activePositions?.length > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[8px] font-bold border border-cyan-500/20 animate-pulse">
+                        POSIÇÃO ABERTA: {(bot.performance as any).activePositions.join(', ')}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-[9px] font-bold ${bot.status === 'ACTIVE' ? 'text-cyan-500' : 'text-amber-500'}`}>
@@ -4291,25 +4324,25 @@ const BotMonitoringView: React.FC<{
                     <p className="text-sm font-bold text-slate-300">{(bot.config as any).assets?.join(', ') || 'N/A'}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-[9px] font-bold uppercase tracking-widest ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>P&L Hoje</p>
-                    <p className={`text-sm font-bold ${bot.performance.todayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      {bot.performance.todayPnl >= 0 ? '+' : ''}{formatCurrency(bot.performance.todayPnl)}
+                    <p className={`text-[9px] font-bold uppercase tracking-widest ${(bot.performance?.todayPnl || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>P&L Hoje</p>
+                    <p className={`text-sm font-bold ${(bot.performance?.todayPnl || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {(bot.performance?.todayPnl || 0) >= 0 ? '+' : ''}{formatCurrency(bot.performance?.todayPnl || 0)}
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800">
                   <div className="text-center">
                     <p className="text-[8px] text-slate-600 uppercase font-bold">Trades</p>
-                    <p className="text-xs font-bold text-slate-300">{bot.performance.trades}</p>
+                    <p className="text-xs font-bold text-slate-300">{bot.performance?.trades || 0}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-[8px] text-slate-600 uppercase font-bold">Win Rate</p>
-                    <p className="text-xs font-bold text-cyan-400">{bot.performance.trades > 0 ? bot.performance.winRate.toFixed(0) : '0'}%</p>
+                    <p className="text-xs font-bold text-cyan-400">{(bot.performance?.trades || 0) > 0 ? (bot.performance?.winRate || 0).toFixed(0) : '0'}%</p>
                   </div>
                   <div className="text-center">
                     <p className="text-[8px] text-slate-600 uppercase font-bold">Loss Seq.</p>
-                    <p className={`text-xs font-bold ${bot.performance.consecutiveLosses >= 2 ? 'text-rose-400' : 'text-slate-400'}`}>
-                      {bot.performance.consecutiveLosses}
+                    <p className={`text-xs font-bold ${(bot.performance?.consecutiveLosses || 0) >= 2 ? 'text-rose-400' : 'text-slate-400'}`}>
+                      {bot.performance?.consecutiveLosses || 0}
                     </p>
                   </div>
                 </div>

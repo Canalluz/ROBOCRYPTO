@@ -139,60 +139,32 @@ export const zigzagPro = ({ candles, symbol, config }: StrategyContext): TradeSi
     // Classify the last pivot
     const lastLabel = classifyPivot(pivots, pivots.length - 1);
 
-    // ===== BUY Signals =====
-    // 1. Direction changed to Bullish (same as Pine Script "Bullish Direction" alert)
-    if (directionChanged && lastDirection > 0) {
-        return {
-            symbol,
-            action: 'BUY',
-            price: currentPrice,
-            reason: `ZigZag++ Bullish Direction Change | last pivot: ${lastLabel || 'HL'} @ ${last.price.toFixed(4)}`,
-            stopLoss: currentPrice * (1 - (config.stopLossPct ?? 1) / 100),
-            takeProfit: currentPrice * (1 + (config.takeProfitPct ?? 1.5) / 100)
-        };
+    // ===== Signals =====
+    // Trigger only on direction changes (autonomous logic)
+    if (directionChanged) {
+        if (lastDirection > 0) {
+            // Reversal to Bullish -> BUY
+            return {
+                symbol,
+                action: 'BUY',
+                price: currentPrice,
+                reason: `ZigZag++ Reversal Bullish | pivot: ${lastLabel || 'HL'} @ ${last.price.toFixed(4)}`
+            };
+        } else {
+            // Reversal to Bearish -> SELL
+            return {
+                symbol,
+                action: 'SELL',
+                price: currentPrice,
+                reason: `ZigZag++ Reversal Bearish | pivot: ${lastLabel || 'LH'} @ ${last.price.toFixed(4)}`
+            };
+        }
     }
 
-    // 2. Higher Low detected (uptrend continuation — "New Higher Low" alert)
-    if (!directionChanged && lastLabel === 'HL') {
-        return {
-            symbol,
-            action: 'BUY',
-            price: currentPrice,
-            reason: `ZigZag++ Higher Low (HL) — uptrend continuation @ ${last.price.toFixed(4)}`,
-            stopLoss: last.price * (1 - (config.stopLossPct ?? 1) / 100), // SL below the HL pivot
-            takeProfit: currentPrice * (1 + (config.takeProfitPct ?? 1.5) / 100)
-        };
-    }
-
-    // ===== SELL Signals =====
-    // 1. Direction changed to Bearish (same as Pine Script "Bearish Direction" alert)
-    if (directionChanged && lastDirection < 0) {
-        return {
-            symbol,
-            action: 'SELL',
-            price: currentPrice,
-            reason: `ZigZag++ Bearish Direction Change | last pivot: ${lastLabel || 'LH'} @ ${last.price.toFixed(4)}`,
-            stopLoss: currentPrice * (1 + (config.stopLossPct ?? 1) / 100),
-            takeProfit: currentPrice * (1 - (config.takeProfitPct ?? 1.5) / 100)
-        };
-    }
-
-    // 2. Lower High detected (downtrend continuation — "New Lower High" alert)
-    if (!directionChanged && lastLabel === 'LH') {
-        return {
-            symbol,
-            action: 'SELL',
-            price: currentPrice,
-            reason: `ZigZag++ Lower High (LH) — downtrend continuation @ ${last.price.toFixed(4)}`,
-            stopLoss: last.price * (1 + (config.stopLossPct ?? 1) / 100), // SL above the LH pivot
-            takeProfit: currentPrice * (1 - (config.takeProfitPct ?? 1.5) / 100)
-        };
-    }
-
-    // No actionable signal — HH or LL continuation
+    // No actionable signal while direction is maintained (autonomous)
     return {
         symbol,
         action: 'HOLD',
-        reason: `ZigZag++ HOLD | label: ${lastLabel || 'none'} | direction: ${lastDirection > 0 ? '▲UP' : '▼DOWN'} | pivots: ${pivots.length}`
+        reason: `ZigZag++ HOLD | direction: ${lastDirection > 0 ? '▲UP' : '▼DOWN'} | pivots: ${pivots.length}`
     };
 };

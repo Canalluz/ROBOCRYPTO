@@ -3,10 +3,13 @@ export interface ExchangeConfig {
   id: string;
   name: string;
   status: 'CONNECTED' | 'DISCONNECTED';
+  exchangeType: 'mexc' | 'binance';
   lastSync: string;
   balance: number;
+  totalValue?: number;
   apiKey: string;
   apiSecret: string;
+  assets?: Record<string, number>;
 }
 
 export interface Position {
@@ -505,6 +508,7 @@ export interface TradingBot {
     trades: number;
     consecutiveLosses: number;
     avgTradeDuration: string;
+    activePositions?: string[];
   };
   lastActivity: string;
 }

@@ -1,4 +1,4 @@
-import { BotConfig, StrategyContext } from './types.js';
+import { BotConfig, StrategyContext, EquityPoint } from './types.js';
 import { aggressiveScalp } from './strategies/aggressive-scalp.js';
 import { secureTrend } from './strategies/secure-trend.js';
 import { simpleMaCross } from './strategies/simple-ma.js';
@@ -6,6 +6,8 @@ import { zigzagPro } from './strategies/zigzag-pro.js';
 import { roboIa } from './strategies/robo-ia.js';
 import { roboEnsaio } from './strategies/robo-ensaio.js';
 import { AnatomiaFluxoStrategy, Sinal as FluxoSinal } from './strategies/anatomia-fluxo.js';
+import { matrixNeural } from './strategies/matrix-neural.js';
+import { quantumEdge } from './strategies/quantum-edge.js';
 import { getCandles, placeOrder, getUsdtBalance, getPrice } from './exchanges/mexc.js';
 import fs from 'fs';
 import path from 'path';
@@ -33,14 +35,23 @@ type BotState = {
 };
 
 const bots = new Map<string, BotState>();
+let equityHistory: EquityPoint[] = [];
+let externalBalance = 0;
+
+export function updateExternalBalance(bal: number) {
+    externalBalance = bal;
+    console.log(`[ENGINE] External Balance updated to: $${bal.toFixed(4)}`);
+}
 
 // Broadcast callbacks (registered by WS server)
 export let onTradeExecuted: (botId: string, trade: any) => void = () => { };
 export let onBotStatus: (botId: string, status: any) => void = () => { };
+export let onEquityUpdate: (history: EquityPoint[]) => void = () => { };
 
-export function registerWsBroadcaster(tradeCb: any, statusCb: any) {
+export function registerWsBroadcaster(tradeCb: any, statusCb: any, equityCb?: any) {
     onTradeExecuted = tradeCb;
     onBotStatus = statusCb;
+    if (equityCb) onEquityUpdate = equityCb;
 }
 
 export function deployBot(config: BotConfig, apiKey: string, secret: string) {
@@ -59,9 +70,10 @@ export function deployBot(config: BotConfig, apiKey: string, secret: string) {
         paperBalance: 1000,
         activePositions: new Set<string>(),
     };
-
+    
     bots.set(config.id, state);
     saveBots();
+    recordEquityPoint(); // Immediate snapshot
     startInterval(state);
 }
 
@@ -78,7 +90,11 @@ function saveBots() {
             paperBalance: b.paperBalance,
             activePositions: Array.from(b.activePositions)
         }));
-        fs.writeFileSync(STORAGE_PATH, JSON.stringify(botData, null, 2));
+        const fullState = {
+            bots: botData,
+            equityHistory
+        };
+        fs.writeFileSync(STORAGE_PATH, JSON.stringify(fullState, null, 2));
     } catch (e) {
         console.error('[ENGINE] Failed to save bots:', e);
     }
@@ -88,7 +104,22 @@ export function loadBots() {
     try {
         if (!fs.existsSync(STORAGE_PATH)) return;
         const data = fs.readFileSync(STORAGE_PATH, 'utf-8');
-        const botData = JSON.parse(data);
+        const parsed = JSON.parse(data);
+        
+        let botData = [];
+        if (Array.isArray(parsed)) {
+            botData = parsed; // Legacy format
+        } else {
+            botData = parsed.bots || [];
+            equityHistory = parsed.equityHistory || [];
+            
+            // Auto-cleanup for legacy example data (10k baseline or 1k initial paper balance)
+            const hasLegacyData = equityHistory.some(p => (p.value >= 9000 && p.value <= 11000) || (p.value >= 900 && p.value <= 1100));
+            if (equityHistory.length > 0 && hasLegacyData) {
+                console.log("[ENGINE] Detected legacy example data (1k or 10k baseline). Clearing for a fresh start...");
+                equityHistory = [];
+            }
+        }
         
         console.log(`[ENGINE] Restoring ${botData.length} bots from storage...`);
         
@@ -101,7 +132,7 @@ export function loadBots() {
                 winRate: b.winRate || 0,
                 todayPnl: b.todayPnl || 0,
                 consecutiveLosses: b.consecutiveLosses || 0,
-                paperBalance: b.paperBalance || 1000,
+                paperBalance: b.paperBalance || (b.config.paperTrade ? 1000 : 0),
                 activePositions: new Set(b.activePositions || []),
             };
             bots.set(b.config.id, state);
@@ -135,14 +166,20 @@ export function stopBot(id: string) {
 
 export function getAllBots() {
     return Array.from(bots.values()).map(b => ({
-        ...b.config,
+        id: b.config.id,
+        name: b.config.name,
+        strategyId: b.config.strategyId,
+        status: b.config.status,
+        config: b.config,
         performance: {
             todayPnl: b.todayPnl,
+            totalPnl: b.todayPnl, // Using todayPnl as totalPnl for now
             trades: b.trades,
             winRate: b.winRate,
             consecutiveLosses: b.consecutiveLosses,
             paperBalance: b.paperBalance
-        }
+        },
+        lastActivity: new Date().toISOString()
     }));
 }
 
@@ -150,6 +187,41 @@ export function resumeBot(id: string) {
     const bot = bots.get(id);
     if (!bot) return;
     startInterval(bot);
+}
+
+export function getEquityHistory() {
+    return equityHistory;
+}
+
+export async function recordEquityPoint() {
+    console.log('[ENGINE] Recording equity snapshot...');
+    let totalPnl = 0;
+    for (const bot of bots.values()) {
+        totalPnl += bot.todayPnl;
+    }
+
+    const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    // Calculate total value as sum of paper balances (only for PAPER bots) + the real external exchange balance
+    const value = Array.from(bots.values()).reduce((acc, b) => {
+        return acc + (b.config.paperTrade ? (b.paperBalance || 0) : 0);
+    }, 0) + externalBalance;
+
+    // Detect if we have legacy 1k or 10k data points while the current real value is much lower (< 100)
+    const hasLegacyData = equityHistory.some(p => (p.value >= 9000 && p.value <= 11000) || (p.value >= 900 && p.value <= 1100));
+    if (hasLegacyData && value < 100) {
+        console.log("[ENGINE] Force clearing legacy 1k/10k equity history for a clean start.");
+        equityHistory = [];
+    }
+
+    equityHistory.push({ time: timeStr, value });
+    
+    // Keep last 48 points (e.g., 2 days of hourly data)
+    if (equityHistory.length > 48) {
+        equityHistory.shift();
+    }
+
+    saveBots();
+    onEquityUpdate(equityHistory);
 }
 
 function startInterval(bot: BotState) {
@@ -173,14 +245,30 @@ async function tickEngine(id: string) {
 
     for (const asset of bot.config.assets) {
         try {
-            // ------ Open Position Control ------
-            // If bot is already in a position for this asset, skip signal logic
-            // (Note: For Futures, this could be expanded to allow Short signals while Long, etc.)
-            if (bot.activePositions.has(asset)) {
-                // Determine if we should exit (this engine simplified: exit on next signal or auto-simulation)
-                // For now, respect user's "doesn't open multiple positions"
-                continue;
+            // ------ Wallet Sync: Sync activePositions with real wallet balance ------
+            // If the user already has the asset in their wallet, the bot should know so it can SELL if signaled
+            if (!bot.config.paperTrade) {
+                const { getBalance } = await import('./exchanges/mexc.js');
+                const balances = await getBalance(bot.apiKey, bot.secret);
+                const assetQty = balances[asset] || 0;
+                
+                // If we have a significant amount (> 0.0001), consider it an active position
+                if (assetQty > 0.0001) {
+                    if (!bot.activePositions.has(asset)) {
+                        console.log(`[ENGINE] Wallet Sync: Found ${assetQty} ${asset} in wallet. Mark as active position for "${bot.config.name}".`);
+                        bot.activePositions.add(asset);
+                    }
+                } else {
+                    // If balance is zero but we thought we had a position, clear it (it was sold elsewhere)
+                    if (bot.activePositions.has(asset)) {
+                        console.log(`[ENGINE] Wallet Sync: ${asset} no longer in wallet. Clearing position for "${bot.config.name}".`);
+                        bot.activePositions.delete(asset);
+                    }
+                }
             }
+
+            // ------ Open Position Control ------
+            const hasPosition = bot.activePositions.has(asset);
 
             const stratId = (bot.config.strategyId ?? '').toUpperCase();
             let signal;
@@ -221,6 +309,10 @@ async function tickEngine(id: string) {
                     signal = zigzagPro(ctx);
                 } else if (stratId.includes('ROBO_IA') || stratId.includes('ROBOIA')) {
                     signal = roboIa(ctx);
+                } else if (stratId.includes('MATRIX_NEURAL') || stratId.includes('MATRIX')) {
+                    signal = matrixNeural(ctx);
+                } else if (stratId.includes('QUANTUM_EDGE') || stratId.includes('QUANTUM')) {
+                    signal = quantumEdge(ctx);
                 } else if (stratId.includes('ENSAIO') || stratId.includes('TEST')) {
                     signal = roboEnsaio(ctx);
                 } else {
@@ -231,7 +323,16 @@ async function tickEngine(id: string) {
             console.log(`[ENGINE] "${bot.config.name}" | ${asset} | SIGNAL: ${signal.action}${signal.reason ? ` (${signal.reason})` : ''}`);
 
             if (signal.action === 'HOLD') {
-                // No signal this tick — this is normal, continue
+                continue;
+            }
+
+            // Skip BUY if already in position, skip SELL if no position
+            if (signal.action === 'BUY' && hasPosition) {
+                console.log(`[ENGINE] "${bot.config.name}" | ${asset} | Already in position, skipping BUY.`);
+                continue;
+            }
+            if (signal.action === 'SELL' && !hasPosition) {
+                console.log(`[ENGINE] "${bot.config.name}" | ${asset} | No position to SELL, skipping signal.`);
                 continue;
             }
 
@@ -288,8 +389,12 @@ async function tickEngine(id: string) {
                 continue; // Move to the next asset
             }
 
-            // Mark position as active
-            bot.activePositions.add(asset);
+            // Update internal position tracking
+            if (signal.action === 'BUY') {
+                bot.activePositions.add(asset);
+            } else if (signal.action === 'SELL') {
+                bot.activePositions.delete(asset);
+            }
 
             // ------ Simulate outcome (for paper trades) ------
             // In real mode, actual PnL comes from subsequent monitoring
@@ -366,11 +471,10 @@ async function tickEngine(id: string) {
                 }
             }
 
-            // Reset position track after "execution" summary (in this simple tick model, we assume entry -> exit move simulation)
             // In a more complex model, we'd wait for SL/TP hit to .delete(asset)
             // For now, we clear it after the simulated move so the next tick can fire again.
             // (If we wanted persistent multi-candle trades, we'd keep it until a reversal signal)
-            bot.activePositions.delete(asset);
+            // bot.activePositions.delete(asset); // REMOVED for persistent tracking
 
             onTradeExecuted(bot.config.id, tradeData);
             onBotStatus(id, {
@@ -378,7 +482,8 @@ async function tickEngine(id: string) {
                 trades: bot.trades,
                 winRate: bot.winRate,
                 consecutiveLosses: bot.consecutiveLosses,
-                paperBalance: bot.paperBalance
+                paperBalance: bot.paperBalance,
+                activePositions: Array.from(bot.activePositions)
             });
 
             console.log(`[ENGINE] Trade recorded: ${signal.action} ${asset} | P&L: $${profitUsd.toFixed(2)} | Total hoje: $${bot.todayPnl.toFixed(2)}`);

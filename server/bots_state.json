@@ -2,43 +2,26 @@
   "bots": [
     {
       "config": {
-        "id": "0q5pq0lnl",
-        "name": "Cruzamento MA 1",
-        "strategyId": "SIMPLE_MA",
+        "id": "invsa2a2h",
+        "name": "SUPERBOT 3V 1",
+        "strategyId": "QUANTUM_EDGE",
         "status": "ACTIVE",
-        "leverage": 1,
+        "leverage": 3,
         "maxDailyLoss": 1,
-        "stopLossPct": 2,
-        "takeProfitPct": 5,
-        "maxTradesPerDay": 10,
-        "positionSizePct": 3,
+        "stopLossPct": 1,
+        "takeProfitPct": 3,
+        "maxTradesPerDay": 15,
+        "positionSizePct": 100,
+        "minConfidence": 75,
         "tradingHours": {
-          "start": "09:00",
-          "end": "17:00",
+          "start": "00:00",
+          "end": "23:59",
           "use24h": true
         },
-        "aiProvider": "GEMINI",
+        "aiProvider": "DEEPSEEK",
         "marginMode": "CROSS",
-        "marketMode": "SPOT",
-        "timeframe": "AUTO",
-        "fastMa": 20,
-        "slowMa": 50,
-        "trendMa": 200,
-        "volMultiplier": 1.5,
-        "rsiRange": [
-          30,
-          70
-        ],
-        "rsiPeriod": 14,
-        "capitalPerTrade": 100,
-        "maxOpenTrades": 3,
-        "tpRatios": [
-          0.5,
-          1
-        ],
-        "emergencyStopPct": 5,
-        "cooldownTrades": 5,
-        "maxConsecutiveLosses": 3,
+        "marketMode": "FUTURES",
+        "timeframe": "1h",
         "exchangeId": "mexc",
         "assets": [
           "BTCUSDT",
@@ -68,6 +51,10 @@
     {
       "time": "19:44",
       "value": 213.72272295984075
+    },
+    {
+      "time": "19:54",
+      "value": 210.2838618066339
     }
   ]
 }

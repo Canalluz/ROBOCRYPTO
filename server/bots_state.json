@@ -1,5 +1,61 @@
 {
-  "bots": [],
+  "bots": [
+    {
+      "config": {
+        "id": "0q5pq0lnl",
+        "name": "Cruzamento MA 1",
+        "strategyId": "SIMPLE_MA",
+        "status": "ACTIVE",
+        "leverage": 1,
+        "maxDailyLoss": 1,
+        "stopLossPct": 2,
+        "takeProfitPct": 5,
+        "maxTradesPerDay": 10,
+        "positionSizePct": 3,
+        "tradingHours": {
+          "start": "09:00",
+          "end": "17:00",
+          "use24h": true
+        },
+        "aiProvider": "GEMINI",
+        "marginMode": "CROSS",
+        "marketMode": "SPOT",
+        "timeframe": "AUTO",
+        "fastMa": 20,
+        "slowMa": 50,
+        "trendMa": 200,
+        "volMultiplier": 1.5,
+        "rsiRange": [
+          30,
+          70
+        ],
+        "rsiPeriod": 14,
+        "capitalPerTrade": 100,
+        "maxOpenTrades": 3,
+        "tpRatios": [
+          0.5,
+          1
+        ],
+        "emergencyStopPct": 5,
+        "cooldownTrades": 5,
+        "maxConsecutiveLosses": 3,
+        "exchangeId": "mexc",
+        "assets": [
+          "BTCUSDT",
+          "ETHUSDT"
+        ],
+        "riskPerTrade": 1
+      },
+      "apiKey": "mx0vglx73gnNfwgSE7",
+      "secret": "6e19dfc6a212425883a5cb5676edb10c",
+      "trades": 0,
+      "winRate": 0,
+      "todayPnl": 0,
+      "consecutiveLosses": 0,
+      "paperBalance": 1000,
+      "activePositions": []
+    }
+  ],
   "equityHistory": [
     {
       "time": "18:50",
@@ -8,6 +64,10 @@
     {
       "time": "18:58",
       "value": 0.03899527030269868
+    },
+    {
+      "time": "19:44",
+      "value": 213.72272295984075
     }
   ]
 }

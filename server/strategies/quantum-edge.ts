@@ -2,7 +2,7 @@ import { TradeSignal, StrategyContext } from '../types.js';
 import { Indicators } from './indicators.js';
 
 /**
- * QUANTUM EDGE Strategy v3.0 (Adapted from Python)
+ * SUPERBOT 3V Strategy (formerly Quantum Edge)
  * Institutional-grade ensemble using 5 hybrid strategies.
  */
 export const quantumEdge = ({ candles, symbol, config }: StrategyContext): TradeSignal => {

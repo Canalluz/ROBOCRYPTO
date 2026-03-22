@@ -2075,7 +2075,7 @@ const ExecutiveSummary: React.FC<{ analysis: AnalysisResponse | null; isLoading:
 
 // --- Deployment Wizard Technical Core ---
 type WizardState = {
-  strategy: 'AGGRESSIVE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA';
+  strategy: 'AGGRESSIVE' | 'SIMPLE_MA' | 'ZIGZAG_PRO' | 'MATRIX_SCALP' | 'MATRIX_NEURAL' | 'ROBO_IA' | 'QUANTUM_EDGE';
   exchangeId: string;
   assets: string[];
   leverage: number;
@@ -2117,9 +2117,9 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
           action.payload === 'ZIGZAG_PRO' ? { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 } :
             action.payload === 'MATRIX_SCALP' ? { leverage: 10, stopLoss: 0.3, takeProfit: 1.0 } :
               action.payload === 'MATRIX_NEURAL' ? { leverage: 5, stopLoss: 0.5, takeProfit: 1.5 } :
-                action.payload === 'ROBO_IA' ? { leverage: 5, stopLoss: 0.5, takeProfit: 2.0 } :
+                action.payload === 'QUANTUM_EDGE' ? { leverage: 3, stopLoss: 1.0, takeProfit: 3.0 } :
                   { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
-      const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'ROBO_IA') ? 'DEEPSEEK' : 'GEMINI';
+      const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'QUANTUM_EDGE') ? 'DEEPSEEK' : 'GEMINI';
       return { ...state, strategy: action.payload, ...defaults, aiProvider };
     case 'SET_EXCHANGE':
       return { ...state, exchangeId: action.payload };
@@ -2213,7 +2213,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
       minConfidence: 85, tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO'
     },
     'QUANTUM_EDGE': {
-      leverage: 3, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 3.0, maxTradesPerDay: 15, positionSizePct: 2.5,
+      leverage: 3, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 3.0, maxTradesPerDay: 15, positionSizePct: 100.0,
       minConfidence: 75, tradingHours: { start: '00:00', end: '23:59', use24h: true }, aiProvider: 'DEEPSEEK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: '1h'
     }
   };
@@ -2234,14 +2234,16 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
           wizard.strategy === 'ZIGZAG_PRO' ? t('bot_naming_zz') :
             wizard.strategy === 'MATRIX_SCALP' ? t('bot_naming_matrix') :
               wizard.strategy === 'MATRIX_NEURAL' ? t('bot_naming_neural') :
-                t('bot_naming_ma')
+                wizard.strategy === 'QUANTUM_EDGE' ? 'SUPERBOT 3V' :
+                  t('bot_naming_ma')
         } ${bots.length + 1}`,
       strategyId:
         wizard.strategy === 'AGGRESSIVE' ? 'AGGRESSIVE_SCALP' :
           wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
             wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
               wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
-                'SIMPLE_MA',
+                wizard.strategy === 'QUANTUM_EDGE' ? 'QUANTUM_EDGE' :
+                  'SIMPLE_MA',
       status: 'ACTIVE',
       lastActivity: new Date().toLocaleTimeString(),
       config: {
@@ -2250,7 +2252,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
           wizard.strategy === 'ZIGZAG_PRO' ? 'ZIGZAG_PRO' :
             wizard.strategy === 'MATRIX_SCALP' ? 'MATRIX_SCALP' :
               wizard.strategy === 'MATRIX_NEURAL' ? 'MATRIX_NEURAL' :
-                'SIMPLE_MA'
+                wizard.strategy === 'QUANTUM_EDGE' ? 'QUANTUM_EDGE' :
+                  'SIMPLE_MA'
         ],
         exchangeId: wizard.exchangeId,
         assets: wizard.assets.map(a => a + 'USDT'),
@@ -2446,14 +2449,16 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                     {wizard.strategy === 'AGGRESSIVE' ? `${t('deploy_wizard')}: ${t('agg_scalper')}` :
                         wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: ${t('matrix_neural')}` :
                           wizard.strategy === 'MATRIX_SCALP' ? `${t('deploy_wizard')}: Matrix Scalp Pro` :
-                            wizard.strategy === 'MATRIX_NEURAL' ? `${t('deploy_wizard')}: Matrix Neural X` :
+                            wizard.strategy === 'QUANTUM_EDGE' ? `${t('deploy_wizard')}: SUPERBOT 3V` :
                               wizard.strategy === 'ZIGZAG_PRO' ? `${t('deploy_wizard')}: ZigZag Pro` :
                                 `${t('deploy_wizard')}: ${t('simple_ma_core')}`}
                   </h3>
                   <p className="text-sm text-slate-500 tracking-wide">
                     {wizard.strategy === 'AGGRESSIVE' ? t('mexc_logic_desc') :
                       wizard.strategy === 'SIMPLE_MA' ? t('simple_ma_desc') :
-                        wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') : t('zigzag_desc')}
+                        wizard.strategy === 'MATRIX_NEURAL' ? t('matrix_neural_desc') :
+                          wizard.strategy === 'QUANTUM_EDGE' ? 'Hybrid ensemble strategy with 5 institutional protocols.' :
+                            t('zigzag_desc')}
                   </p>
                 </div>
               </div>
@@ -2504,7 +2509,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                   className={`relative flex-1 py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 overflow-hidden group ${wizard.strategy === 'QUANTUM_EDGE' ? 'border-emerald-500 bg-gradient-to-br from-emerald-500/20 to-slate-900 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)]' : 'border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 text-slate-500 hover:border-slate-700 hover:scale-[1.02]'}`}
                 >
                   <Zap className="w-8 h-8 relative z-10" />
-                  <span className="font-black text-xs tracking-widest uppercase relative z-10">Quantum Edge</span>
+                  <span className="font-black text-xs tracking-widest uppercase relative z-10">SUPERBOT 3V</span>
                 </button>
               </div>
 
@@ -2640,7 +2645,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               {wizard.strategy === 'QUANTUM_EDGE' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                   <div className="p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
-                    <h4 className="font-bold text-emerald-400 mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> QUANTUM EDGE Ensemble</h4>
+                    <h4 className="font-bold text-emerald-400 mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> SUPERBOT 3V Ensemble</h4>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Hybrid Protocol</label>
@@ -2976,22 +2981,24 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           <span className="text-[10px] text-slate-400 font-medium leading-tight">Logic determines optimal exits based on market structure.</span>
                         </div>
                       )}
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400">{t('pos_size_pct')}</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          placeholder="Ex: 5%"
-                          value={editingBot.config.positionSizePct || ''}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            const updated = { ...editingBot, config: { ...editingBot.config, positionSizePct: val } };
-                            setEditingBot(updated);
-                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
-                          }}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-emerald-400 outline-none focus:border-cyan-500/50"
-                        />
-                      </div>
+                      {editingBot.strategyId !== 'QUANTUM_EDGE' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">{t('pos_size_pct')}</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            placeholder="Ex: 5%"
+                            value={editingBot.config.positionSizePct || ''}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              const updated = { ...editingBot, config: { ...editingBot.config, positionSizePct: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-emerald-400 outline-none focus:border-cyan-500/50"
+                          />
+                        </div>
+                      )}
                       {editingBot.strategyId !== 'ZIGZAG_PRO' && editingBot.strategyId !== 'MATRIX_NEURAL' && editingBot.strategyId !== 'QUANTUM_EDGE' && (
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-slate-400">{t('tp_pct')}</label>
@@ -3028,10 +3035,11 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           />
                         </div>
                       )}
-                      <div className="space-y-1 col-span-2">
-                        <label className="text-[10px] font-bold text-slate-400">{t('timeframe')}</label>
-                        <select
-                          value={editingBot.config.timeframe && editingBot.config.timeframe !== 'AUTO' ? editingBot.config.timeframe : '5m'}
+                      {editingBot.strategyId !== 'ZIGZAG_PRO' && editingBot.strategyId !== 'MATRIX_NEURAL' && editingBot.strategyId !== 'QUANTUM_EDGE' && (
+                        <div className="space-y-1 col-span-2">
+                          <label className="text-[10px] font-bold text-slate-400">{t('timeframe')}</label>
+                          <select
+                            value={editingBot.config.timeframe && editingBot.config.timeframe !== 'AUTO' ? editingBot.config.timeframe : '5m'}
                           onChange={(e) => {
                             const val = e.target.value;
                             const updated = { ...editingBot, config: { ...editingBot.config, timeframe: val } };
@@ -3048,7 +3056,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           <option value="1D">1D</option>
                         </select>
                       </div>
-                    </div>
+                    )}
+                  </div>
                   </div>
 
 

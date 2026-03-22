@@ -174,7 +174,7 @@ async function tickEngine(id: string) {
                 console.log(`[ENGINE] [LIVE] Exchange balance: $${availableBalance.toFixed(2)}`);
             }
 
-            const riskPct = bot.config.riskPerTrade ?? 2; // default 2%
+            const riskPct = bot.config.positionSizePct ?? bot.config.riskPerTrade ?? 2; // prioritize positionSizePct then riskPerTrade, default 2%
             // In Spot mode, no leverage for position sizing (leverage=1)
             const leverage = bot.config.marketMode === 'SPOT' ? 1 : (bot.config.leverage ?? 1);
             let positionSizeUsdt = availableBalance * (riskPct / 100) * leverage;

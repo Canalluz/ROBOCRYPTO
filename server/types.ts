@@ -8,6 +8,7 @@ export interface BotConfig {
     stopLossPct: number;
     takeProfitPct: number;
     riskPerTrade: number;
+    positionSizePct?: number;
     paperTrade: boolean;
     status: 'ACTIVE' | 'PAUSED' | 'TEST';
     marketMode?: 'SPOT' | 'FUTURES';

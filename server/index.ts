@@ -4,7 +4,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { deployBot, pauseBot, stopBot, registerWsBroadcaster } from './bot-engine.js';
+import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots } from './bot-engine.js';
+
 import { getUsdtBalance, placeOrder } from './exchanges/mexc.js';
 import { getUsdtBalance as getBinanceUsdtBalance } from './exchanges/binance.js';
 
@@ -21,6 +22,10 @@ const clients = new Set<WebSocket>();
 wss.on('connection', (ws) => {
     console.log('[WS] Client connected');
     clients.add(ws);
+
+    // Sync current bots state with the newly connected client
+    const currentBots = getAllBots();
+    ws.send(JSON.stringify({ type: 'SYNC_BOTS', payload: currentBots }));
 
     ws.on('message', (message) => {
         try {
@@ -135,4 +140,5 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`🚀 Robô Crypto Backend Engine running on port ${PORT}`);
+    loadBots();
 });

@@ -2,6 +2,7 @@ export class BotService {
     private ws: WebSocket | null = null;
     private onTradeCb?: (trade: any) => void;
     private onStatusCb?: (botId: string, status: any) => void;
+    private onSyncCb?: (bots: any[]) => void;
     private onConnectCb?: () => void;
     private pendingQueue: string[] = []; // Messages waiting for WS to open
 
@@ -34,6 +35,8 @@ export class BotService {
                         this.onTradeCb(data.payload.trade);
                     } else if (data.type === 'BOT_STATUS' && this.onStatusCb) {
                         this.onStatusCb(data.payload.botId, data.payload.status);
+                    } else if (data.type === 'SYNC_BOTS' && this.onSyncCb) {
+                        this.onSyncCb(data.payload);
                     }
                 } catch (e) {
                     console.error('[Frontend] Error parsing WS message', e);
@@ -68,6 +71,7 @@ export class BotService {
 
     onTrade(cb: (trade: any) => void) { this.onTradeCb = cb; }
     onStatus(cb: (botId: string, status: any) => void) { this.onStatusCb = cb; }
+    onSync(cb: (bots: any[]) => void) { this.onSyncCb = cb; }
     onConnect(cb: () => void) { this.onConnectCb = cb; }
 
     deployBot(bot: any, exchange: any) {

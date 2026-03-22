@@ -775,36 +775,27 @@ const App: React.FC = () => {
         return b;
       }));
     });
-  }, []);
 
-  // Hydrate stateless backend with active/test bots restored from local storage
-  useEffect(() => {
-    botService.onConnect(() => {
-      botsRef.current.forEach(bot => {
-        if (bot.status === 'ACTIVE' || bot.status === 'TEST') {
-          const ex = exchangesRef.current.find(e => e.id === bot.config.exchangeId);
-          if (ex && ex.apiKey) {
-            console.log('[Frontend] Redeploying restored bot:', bot.name);
-            botService.deployBot({
-              id: bot.id,
-              name: bot.name,
-              strategyId: bot.strategyId,
-              exchangeId: bot.config.exchangeId,
-              assets: bot.config.assets,
-              leverage: bot.config.leverage,
-              stopLossPct: bot.config.stopLossPct,
-              takeProfitPct: bot.config.takeProfitPct,
-              riskPerTrade: bot.config.riskPerTrade,
-              marketMode: (bot.config || {}).marketMode ?? 'SPOT',
-              paperTrade: bot.status === 'TEST',
-              status: bot.status
-            }, ex);
+    botService.onSync((syncedBots) => {
+      console.log('[Frontend] Syncing bots from backend:', syncedBots.length);
+      setBots(prev => {
+        // Merge synced bots with local ones, preferring backend for stats
+        const merged = [...prev];
+        syncedBots.forEach(sb => {
+          const idx = merged.findIndex(b => b.id === sb.id);
+          if (idx >= 0) {
+            merged[idx] = sb;
+          } else {
+            merged.push(sb);
           }
-        }
+        });
+        return merged;
       });
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Bot persistence is now handled by backend state loading on startup.
+  // We no longer need to redeploy active bots from the frontend on every connection.
 
 
 

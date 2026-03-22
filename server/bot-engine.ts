@@ -7,6 +7,14 @@ import { roboIa } from './strategies/robo-ia.js';
 import { roboEnsaio } from './strategies/robo-ensaio.js';
 import { AnatomiaFluxoStrategy, Sinal as FluxoSinal } from './strategies/anatomia-fluxo.js';
 import { getCandles, placeOrder, getUsdtBalance, getPrice } from './exchanges/mexc.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const STORAGE_PATH = path.join(__dirname, 'bots_state.json');
+
 
 
 
@@ -53,7 +61,58 @@ export function deployBot(config: BotConfig, apiKey: string, secret: string) {
     };
 
     bots.set(config.id, state);
+    saveBots();
     startInterval(state);
+}
+
+function saveBots() {
+    try {
+        const botData = Array.from(bots.values()).map(b => ({
+            config: b.config,
+            apiKey: b.apiKey,
+            secret: b.secret,
+            trades: b.trades,
+            winRate: b.winRate,
+            todayPnl: b.todayPnl,
+            consecutiveLosses: b.consecutiveLosses,
+            paperBalance: b.paperBalance,
+            activePositions: Array.from(b.activePositions)
+        }));
+        fs.writeFileSync(STORAGE_PATH, JSON.stringify(botData, null, 2));
+    } catch (e) {
+        console.error('[ENGINE] Failed to save bots:', e);
+    }
+}
+
+export function loadBots() {
+    try {
+        if (!fs.existsSync(STORAGE_PATH)) return;
+        const data = fs.readFileSync(STORAGE_PATH, 'utf-8');
+        const botData = JSON.parse(data);
+        
+        console.log(`[ENGINE] Restoring ${botData.length} bots from storage...`);
+        
+        for (const b of botData) {
+            const state: BotState = {
+                config: b.config,
+                apiKey: b.apiKey,
+                secret: b.secret,
+                trades: b.trades || 0,
+                winRate: b.winRate || 0,
+                todayPnl: b.todayPnl || 0,
+                consecutiveLosses: b.consecutiveLosses || 0,
+                paperBalance: b.paperBalance || 1000,
+                activePositions: new Set(b.activePositions || []),
+            };
+            bots.set(b.config.id, state);
+            
+            if (state.config.status === 'ACTIVE' || state.config.status === 'TEST') {
+                startInterval(state);
+            }
+        }
+    } catch (e) {
+        console.error('[ENGINE] Failed to load bots:', e);
+    }
 }
 
 export function pauseBot(id: string) {
@@ -62,6 +121,7 @@ export function pauseBot(id: string) {
     clearInterval(bot.interval);
     bot.interval = undefined;
     bot.config.status = 'PAUSED';
+    saveBots();
     onBotStatus(id, { status: 'PAUSED' });
     console.log(`[ENGINE] Bot "${bot.config.name}" paused.`);
 }
@@ -69,7 +129,21 @@ export function pauseBot(id: string) {
 export function stopBot(id: string) {
     pauseBot(id);
     bots.delete(id);
+    saveBots();
     console.log(`[ENGINE] Bot removed.`);
+}
+
+export function getAllBots() {
+    return Array.from(bots.values()).map(b => ({
+        ...b.config,
+        performance: {
+            todayPnl: b.todayPnl,
+            trades: b.trades,
+            winRate: b.winRate,
+            consecutiveLosses: b.consecutiveLosses,
+            paperBalance: b.paperBalance
+        }
+    }));
 }
 
 export function resumeBot(id: string) {
@@ -208,24 +282,9 @@ async function tickEngine(id: string) {
                 console.error(`[ENGINE] ⚠️ ORDER FAILED for "${bot.config.name}" | ${asset}: ${failureReason}`);
             }
 
-            // If order failed, log it as a failed trade in history and skip the rest of the tick
+            // If order failed, log the error but do NOT record it in "Historico de Trades" as per user request
             if (orderFailed || !result) {
-                const failedTradeData = {
-                    id: 'fail-' + Date.now(),
-                    botId: bot.config.id,
-                    asset,
-                    type: signal.action,
-                    price: signal.price || 0, // Fallback since currentPrice isn't directly in this scope easily
-                    amount: '0.000000',
-                    result_usd: 0,
-                    profit: false,
-                    timestamp: new Date().toLocaleTimeString('pt-BR'),
-                    paper: bot.config.paperTrade,
-                    stopLoss: signal.stopLoss,
-                    takeProfit: signal.takeProfit,
-                    reason: `ERRO DE ORDEM: ${failureReason}`
-                };
-                onTradeExecuted(bot.config.id, failedTradeData);
+                console.error(`[ENGINE] Skipping trade history for "${bot.config.name}" due to failure.`);
                 continue; // Move to the next asset
             }
 
@@ -258,9 +317,13 @@ async function tickEngine(id: string) {
                 bot.winRate = (bot.winRate * (bot.trades - 1)) / bot.trades;
             }
 
-            // MEXC sometimes returns price: 0 and qty: 0 synchronously on MARKET orders
             const finalPrice = result.price > 0 ? result.price : (signal.price || 1);
             const finalQty = result.qty > 0 ? result.qty : (positionSizeUsdt / finalPrice);
+
+            if (finalQty <= 0) {
+                console.warn(`[ENGINE] Skipping trade history for "${bot.config.name}": Zero quantity calculated.`);
+                continue;
+            }
 
             // Build trade record first so auto-pause can reference it
             const tradeData = {
@@ -319,6 +382,7 @@ async function tickEngine(id: string) {
             });
 
             console.log(`[ENGINE] Trade recorded: ${signal.action} ${asset} | P&L: $${profitUsd.toFixed(2)} | Total hoje: $${bot.todayPnl.toFixed(2)}`);
+            saveBots(); // Update persistence with new stats
 
         } catch (err: any) {
             console.error(`[ENGINE] Error on tick for "${bot.config.name}" / ${asset}:`, err.message);

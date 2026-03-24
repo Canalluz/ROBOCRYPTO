@@ -345,7 +345,14 @@ export interface ZigZagConfig {
   aiProvider?: 'GEMINI' | 'DEEPSEEK' | 'OPENAI' | 'ANTHROPIC' | 'MOCK';
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
-  timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO' | '1W';
+  tradeStyle?: 'SCALP' | 'DAY' | 'SWING' | 'POSITION';
+  marketType?: 'AUTO' | 'CRYPTO' | 'STOCKS_BR' | 'STOCKS_US' | 'FOREX';
+  liquidityFilter?: boolean;
+  minVolumeRatio?: number;
+  volatilityFilter?: boolean;
+  minVolatility?: number;
+  riskReward?: number;
 }
 
 export interface MatrixScalpConfig {

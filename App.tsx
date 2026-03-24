@@ -2117,6 +2117,10 @@ type WizardState = {
   error?: string;
   dryRunResult?: { winRate: number; expectedProfit: number };
   aiProvider: 'GEMINI' | 'DEEPSEEK' | 'OPENAI' | 'ANTHROPIC' | 'MOCK';
+  tradeStyle?: 'SCALP' | 'DAY' | 'SWING' | 'POSITION';
+  marketType?: 'AUTO' | 'CRYPTO' | 'STOCKS_BR' | 'STOCKS_US' | 'FOREX';
+  liquidityFilter?: boolean;
+  volatilityFilter?: boolean;
 };
 
 type WizardAction =
@@ -2151,7 +2155,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
                 action.payload === 'QUANTUM_EDGE' ? { leverage: 3, stopLoss: 1.0, takeProfit: 3.0 } :
                   { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'QUANTUM_EDGE') ? 'DEEPSEEK' : 'GEMINI';
-      return { ...state, strategy: action.payload, ...defaults, aiProvider };
+      const zzDefaults = action.payload === 'ZIGZAG_PRO' ? { tradeStyle: 'SWING' as const, marketType: 'CRYPTO' as const, liquidityFilter: true, volatilityFilter: true } : {};
+      return { ...state, strategy: action.payload, ...defaults, ...zzDefaults, aiProvider };
     case 'SET_EXCHANGE':
       return { ...state, exchangeId: action.payload };
     case 'SET_RISK':
@@ -2232,7 +2237,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
     'ZIGZAG_PRO': {
       leverage: 1, maxDailyLoss: 1, positionSizePct: 3.0,
       tradingHours: { start: '09:00', end: '17:00', use24h: true }, aiProvider: 'MOCK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: 'AUTO',
-      depth: 12, deviation: 5, backstep: 3
+      depth: 12, deviation: 5, backstep: 3, tradeStyle: 'SWING', marketType: 'CRYPTO', liquidityFilter: true, volatilityFilter: true, minVolumeRatio: 0.5, minVolatility: 0.3
     },
     'MATRIX_SCALP': {
       leverage: 10, maxDailyLoss: 1, stopLossPct: 0.3, takeProfitPct: 1.0, maxTradesPerDay: 50, positionSizePct: 5.0,
@@ -2293,7 +2298,11 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
         riskPerTrade: wizard.riskPerTrade,
         stopLossPct: wizard.stopLoss,
         takeProfitPct: wizard.takeProfit,
-        aiProvider: wizard.aiProvider
+        aiProvider: wizard.aiProvider,
+        tradeStyle: wizard.tradeStyle,
+        marketType: wizard.marketType,
+        liquidityFilter: wizard.liquidityFilter,
+        volatilityFilter: wizard.volatilityFilter
       } as any,
       performance: {
         totalPnl: 0,
@@ -2610,6 +2619,47 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-bold text-purple-400 outline-none"
                         />
                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-6">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Trading Style</label>
+                        <select
+                          value={wizard.tradeStyle || 'SWING'}
+                          onChange={(e) => dispatch({ type: 'SET_RISK', field: 'tradeStyle' as any, value: e.target.value as any })}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-bold text-purple-400 outline-none"
+                        >
+                          <option value="SCALP">Scalping</option>
+                          <option value="DAY">Day Trade</option>
+                          <option value="SWING">Swing Trade</option>
+                          <option value="POSITION">Position</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Market Type</label>
+                        <select
+                          value={wizard.marketType || 'CRYPTO'}
+                          onChange={(e) => dispatch({ type: 'SET_RISK', field: 'marketType' as any, value: e.target.value as any })}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-bold text-purple-400 outline-none"
+                        >
+                          <option value="AUTO">Auto Detect</option>
+                          <option value="CRYPTO">Cryptocurrencies</option>
+                          <option value="STOCKS_BR">B3 (Brazil)</option>
+                          <option value="STOCKS_US">NYSE/Nasdaq (US)</option>
+                          <option value="FOREX">Forex</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <ToggleRow 
+                        label="Liquidity Filter" 
+                        active={!!wizard.liquidityFilter} 
+                        onClick={() => dispatch({ type: 'SET_RISK', field: 'liquidityFilter' as any, value: !wizard.liquidityFilter as any })} 
+                      />
+                      <ToggleRow 
+                        label="Volatility Filter" 
+                        active={!!wizard.volatilityFilter} 
+                        onClick={() => dispatch({ type: 'SET_RISK', field: 'volatilityFilter' as any, value: !wizard.volatilityFilter as any })} 
+                      />
                     </div>
                   </div>
                 </div>
@@ -3280,6 +3330,75 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                             Momentum + MeanRev + SmartMoney + OF
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {editingBot.strategyId === 'ZIGZAG_PRO' && (
+                    <div className="col-span-2 p-4 bg-purple-500/5 rounded-xl border border-purple-500/20 space-y-4 animate-in fade-in slide-in-from-top-2">
+                       <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-widest flex items-center gap-2">
+                        <GitMerge className="w-3 h-3" /> ZigZag Pro Configuration
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">Trading Style</label>
+                          <select
+                            value={(editingBot.config as any).tradeStyle || 'SWING'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const updated = { ...editingBot, config: { ...editingBot.config, tradeStyle: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-purple-400 outline-none focus:border-purple-500/50"
+                          >
+                            <option value="SCALP">Scalping</option>
+                            <option value="DAY">Day Trade</option>
+                            <option value="SWING">Swing Trade</option>
+                            <option value="POSITION">Position</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400">Market Type</label>
+                          <select
+                            value={(editingBot.config as any).marketType || 'CRYPTO'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const updated = { ...editingBot, config: { ...editingBot.config, marketType: val } };
+                              setEditingBot(updated);
+                              setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-purple-400 outline-none focus:border-purple-500/50"
+                          >
+                            <option value="AUTO">Auto Detect</option>
+                            <option value="CRYPTO">Cryptocurrencies</option>
+                            <option value="STOCKS_BR">B3 (Brazil)</option>
+                            <option value="STOCKS_US">NYSE/Nasdaq (US)</option>
+                            <option value="FOREX">Forex</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <ToggleRow 
+                          label="Liquidity Filter" 
+                          active={!!(editingBot.config as any).liquidityFilter} 
+                          onClick={() => {
+                            const val = !(editingBot.config as any).liquidityFilter;
+                            const updated = { ...editingBot, config: { ...editingBot.config, liquidityFilter: val } };
+                            setEditingBot(updated);
+                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                          }} 
+                        />
+                        <ToggleRow 
+                          label="Volatility Filter" 
+                          active={!!(editingBot.config as any).volatilityFilter} 
+                          onClick={() => {
+                            const val = !(editingBot.config as any).volatilityFilter;
+                            const updated = { ...editingBot, config: { ...editingBot.config, volatilityFilter: val } };
+                            setEditingBot(updated);
+                            setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                          }} 
+                        />
                       </div>
                     </div>
                   )}

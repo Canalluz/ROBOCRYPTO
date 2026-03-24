@@ -20,14 +20,13 @@
         },
         "aiProvider": "DEEPSEEK",
         "marginMode": "CROSS",
-        "marketMode": "FUTURES",
+        "marketMode": "SPOT",
         "timeframe": "1h",
         "exchangeId": "mexc",
         "assets": [
-          "BTCUSDT",
-          "ETHUSDT"
+          "TAIUSDT"
         ],
-        "riskPerTrade": 1
+        "riskPerTrade": 100
       },
       "apiKey": "mx0vglx73gnNfwgSE7",
       "secret": "6e19dfc6a212425883a5cb5676edb10c",

@@ -779,17 +779,48 @@ const App: React.FC = () => {
     botService.onSync((syncedBots) => {
       console.log('[Frontend] Syncing bots from backend:', syncedBots.length);
       setBots(prev => {
-        // Merge synced bots with local ones, preferring backend for stats
+        // Merge synced bots with local ones: PRESERVE local config (assets, marginMode, marketMode)
+        // Only update performance metrics and status from server
         const merged = [...prev];
         syncedBots.forEach(sb => {
           const idx = merged.findIndex(b => b.id === sb.id);
           if (idx >= 0) {
-            merged[idx] = sb;
+            // Keep the local bot config (user's saved assets, marginMode, marketMode, etc.)
+            // Only update runtime performance data from server
+            merged[idx] = {
+              ...merged[idx],
+              status: sb.status || merged[idx].status,
+              lastActivity: sb.lastActivity || merged[idx].lastActivity,
+              performance: sb.performance || merged[idx].performance
+            };
           } else {
             merged.push(sb);
           }
         });
         return merged;
+      });
+    });
+
+    botService.onConnect(() => {
+      // After server restarts (Zeabur ephemeral FS), re-deploy all locally-saved active/test bots
+      // so the server recovers the user's full configuration (assets, marginMode, marketMode, etc.)
+      console.log('[Frontend] WS connected — re-deploying locally saved active bots to backend...');
+      const currentBots = botsRef.current;
+      currentBots.forEach(bot => {
+        if (bot.status === 'ACTIVE' || bot.status === 'TEST') {
+          const ex = exchangesRef.current.find(e => e.id === bot.config?.exchangeId)
+                     || exchangesRef.current.find(e => e.status === 'CONNECTED');
+          if (ex) {
+            console.log(`[Frontend] Re-deploying bot "${bot.name}" to backend (assets: ${bot.config?.assets?.join(', ')})`);
+            botService.deployBot({
+              id: bot.id,
+              name: bot.name,
+              strategyId: bot.strategyId,
+              status: bot.status,
+              ...bot.config
+            }, ex);
+          }
+        }
       });
     });
 
@@ -3311,10 +3342,26 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
 
                 <div className="flex gap-6">
                   <button
-                    onClick={() => { setEditingBot(null); }}
+                    onClick={() => {
+                      // Fix: Re-deploy bot to backend with updated config so server stores
+                      // the user's assets, marginMode, marketMode, etc. (not just localStorage)
+                      const ex = exchanges.find(e => e.id === editingBot.config.exchangeId)
+                                 || exchanges.find(e => e.status === 'CONNECTED');
+                      if (ex) {
+                        console.log(`[Frontend] Saving config for "${editingBot.name}" → assets: ${editingBot.config.assets?.join(', ')}, market: ${editingBot.config.marketMode}, margin: ${editingBot.config.marginMode}`);
+                        botService.deployBot({
+                          id: editingBot.id,
+                          name: editingBot.name,
+                          strategyId: editingBot.strategyId,
+                          status: editingBot.status,
+                          ...editingBot.config
+                        }, ex);
+                      }
+                      setEditingBot(null);
+                    }}
                     className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 group"
                   >
-                    <Save className="w-5 h-5 group-hover:rotate-12 transition-transform" /> {t('save')}
+                    <Save className="w-5 h-5 group-hover:rotate-12 transition-transform" /> {t('save_params')}
                   </button>
                   <button
                     onClick={() => {

@@ -4118,7 +4118,7 @@ const BotMonitoringView: React.FC<{
   const filteredBots = selectedBotId === 'all' ? bots : bots.filter(b => b.id === selectedBotId);
   const filteredTrades = selectedBotId === 'all' ? trades : trades.filter(tr => tr.botId === selectedBotId);
 
-  // Timeframe filtering for equity chart
+  // Timeframe filtering and aggregation for equity chart
   const filteredEquity = useMemo(() => {
     if (!equityData || equityData.length === 0) return [];
     
@@ -4132,7 +4132,19 @@ const BotMonitoringView: React.FC<{
     else if (timeframe === 'D') cutoff = now - 24 * 60 * 60 * 1000; // 24 hours
     else if (timeframe === 'M') cutoff = now - 30 * 24 * 60 * 60 * 1000; // 30 days
     
-    return equityData.filter(p => p.timestamp! >= cutoff);
+    const filtered = equityData.filter(p => p.timestamp! >= cutoff);
+
+    if (timeframe === 'M') {
+      // Aggregate by day for better monthly overview (take the last value of each day)
+      const dailyMap = new Map<string, EquityPoint>();
+      filtered.forEach(p => {
+        const dateKey = new Date(p.timestamp!).toLocaleDateString('pt-BR');
+        dailyMap.set(dateKey, p);
+      });
+      return Array.from(dailyMap.values()).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    }
+
+    return filtered;
   }, [equityData, timeframe]);
 
   const activeBotsCount = filteredBots.filter(b => b.status === 'ACTIVE').length;
@@ -4247,9 +4259,19 @@ const BotMonitoringView: React.FC<{
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filteredEquity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="time" stroke="#64748b" fontSize={10} />
+                <XAxis 
+                  dataKey="timestamp" 
+                  stroke="#64748b" 
+                  fontSize={10} 
+                  tickFormatter={(ts) => {
+                    const d = new Date(ts);
+                    if (timeframe === 'M') return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  }}
+                />
                 <YAxis stroke="#64748b" fontSize={10} domain={['auto', 'auto']} hide />
                 <Tooltip
+                  labelFormatter={(ts) => new Date(ts).toLocaleString('pt-BR')}
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
                   itemStyle={{ color: '#22d3ee', fontWeight: 'bold' }}
                   formatter={(v: number) => [`$${v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, 'Equity']}

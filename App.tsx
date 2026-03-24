@@ -4122,29 +4122,43 @@ const BotMonitoringView: React.FC<{
   const filteredEquity = useMemo(() => {
     if (!equityData || equityData.length === 0) return [];
     
-    // If we have legacy data (no timestamp), we show everything
-    const hasTimestamps = equityData.every(p => p.timestamp && p.timestamp > 0);
-    if (!hasTimestamps) return equityData;
-
     const now = Date.now();
     let cutoff = 0;
     if (timeframe === 'H') cutoff = now - 60 * 60 * 1000; // 1 hour
     else if (timeframe === 'D') cutoff = now - 24 * 60 * 60 * 1000; // 24 hours
     else if (timeframe === 'M') cutoff = now - 30 * 24 * 60 * 60 * 1000; // 30 days
     
-    const filtered = equityData.filter(p => p.timestamp! >= cutoff);
+    // Filter by timestamp if available, otherwise show all (legacy)
+    const hasTimestamps = equityData.some(p => p.timestamp && p.timestamp > 0);
+    const filtered = hasTimestamps 
+      ? equityData.filter(p => p.timestamp! >= cutoff)
+      : equityData;
 
-    if (timeframe === 'M') {
+    if (timeframe === 'M' && hasTimestamps) {
       // Aggregate by day for better monthly overview (take the last value of each day)
       const dailyMap = new Map<string, EquityPoint>();
       filtered.forEach(p => {
-        const dateKey = new Date(p.timestamp!).toLocaleDateString('pt-BR');
-        dailyMap.set(dateKey, p);
+        const d = new Date(p.timestamp!);
+        const dateKey = d.toLocaleDateString('pt-BR');
+        dailyMap.set(dateKey, {
+          ...p,
+          time: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+        });
       });
       return Array.from(dailyMap.values()).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     }
 
-    return filtered;
+    // Ensure 'time' is formatted correctly if timestamp exists
+    return filtered.map(p => {
+      if (p.timestamp) {
+        const d = new Date(p.timestamp);
+        return {
+          ...p,
+          time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+      }
+      return p;
+    });
   }, [equityData, timeframe]);
 
   const activeBotsCount = filteredBots.filter(b => b.status === 'ACTIVE').length;
@@ -4260,18 +4274,17 @@ const BotMonitoringView: React.FC<{
               <BarChart data={filteredEquity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis 
-                  dataKey="timestamp" 
+                  dataKey="time" 
                   stroke="#64748b" 
                   fontSize={10} 
-                  tickFormatter={(ts) => {
-                    const d = new Date(ts);
-                    if (timeframe === 'M') return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                  }}
                 />
                 <YAxis stroke="#64748b" fontSize={10} domain={['auto', 'auto']} hide />
                 <Tooltip
-                  labelFormatter={(ts) => new Date(ts).toLocaleString('pt-BR')}
+                  labelFormatter={(val, items) => {
+                    const item = items?.[0]?.payload;
+                    if (item && item.timestamp) return new Date(item.timestamp).toLocaleString('pt-BR');
+                    return val;
+                  }}
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
                   itemStyle={{ color: '#22d3ee', fontWeight: 'bold' }}
                   formatter={(v: number) => [`$${v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, 'Equity']}

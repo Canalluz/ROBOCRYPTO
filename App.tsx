@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef, useReducer } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useReducer, useMemo } from 'react';
 import { ethers } from 'ethers';
 // import { createChart } from 'lightweight-charts';
 import {
@@ -4071,6 +4071,23 @@ const BotMonitoringView: React.FC<{
   const filteredBots = selectedBotId === 'all' ? bots : bots.filter(b => b.id === selectedBotId);
   const filteredTrades = selectedBotId === 'all' ? trades : trades.filter(tr => tr.botId === selectedBotId);
 
+  // Timeframe filtering for equity chart
+  const filteredEquity = useMemo(() => {
+    if (!equityData || equityData.length === 0) return [];
+    
+    // If we have legacy data (no timestamp), we show everything
+    const hasTimestamps = equityData.every(p => p.timestamp && p.timestamp > 0);
+    if (!hasTimestamps) return equityData;
+
+    const now = Date.now();
+    let cutoff = 0;
+    if (timeframe === 'H') cutoff = now - 60 * 60 * 1000; // 1 hour
+    else if (timeframe === 'D') cutoff = now - 24 * 60 * 60 * 1000; // 24 hours
+    else if (timeframe === 'M') cutoff = now - 30 * 24 * 60 * 60 * 1000; // 30 days
+    
+    return equityData.filter(p => p.timestamp! >= cutoff);
+  }, [equityData, timeframe]);
+
   const activeBotsCount = filteredBots.filter(b => b.status === 'ACTIVE').length;
   const totalPnl = filteredBots.reduce((acc, b) => acc + (b.performance?.totalPnl || 0), 0);
   const totalTrades = filteredBots.reduce((acc, b) => acc + (b.performance?.trades || 0), 0);
@@ -4181,7 +4198,7 @@ const BotMonitoringView: React.FC<{
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={equityData}>
+              <BarChart data={filteredEquity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="time" stroke="#64748b" fontSize={10} />
                 <YAxis stroke="#64748b" fontSize={10} domain={['auto', 'auto']} hide />
@@ -4191,10 +4208,10 @@ const BotMonitoringView: React.FC<{
                   formatter={(v: number) => [`$${v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, 'Equity']}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {equityData.map((entry, index) => {
-                    const prev = equityData[index - 1]?.value ?? entry.value;
+                  {filteredEquity.map((entry, index) => {
+                    const prev = filteredEquity[index - 1]?.value ?? entry.value;
                     const isUp = entry.value >= prev;
-                    const isLast = index === equityData.length - 1;
+                    const isLast = index === filteredEquity.length - 1;
                     return (
                       <Cell
                         key={`cell-${index}`}

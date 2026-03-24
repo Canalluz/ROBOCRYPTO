@@ -213,10 +213,14 @@ export async function recordEquityPoint() {
         equityHistory = [];
     }
 
-    equityHistory.push({ time: timeStr, value });
+    equityHistory.push({ 
+        time: timeStr, 
+        value, 
+        timestamp: Date.now() 
+    });
     
-    // Keep last 48 points (e.g., 2 days of hourly data)
-    if (equityHistory.length > 48) {
+    // Keep last 3000 points (e.g., ~1 month of 15-min data)
+    if (equityHistory.length > 3000) {
         equityHistory.shift();
     }
 

@@ -546,4 +546,5 @@ export interface Trade {
 export interface EquityPoint {
   time: string;
   value: number;
+  timestamp?: number;
 }

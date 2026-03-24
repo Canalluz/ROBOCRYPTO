@@ -157,12 +157,12 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`🚀 Robô Crypto Backend Engine running on port ${PORT}`);
     loadBots();
+    recordEquityPoint(); 
 
-    // Record equity point every 1 hour (3600000ms)
-    // For testing/initial results, let's also do one every 5 minutes if it's empty
+    // Record equity point every 15 minutes (900000ms)
     setInterval(() => {
         recordEquityPoint();
-    }, 3600000);
+    }, 900000);
 
     // Initial record if empty
     setTimeout(() => {

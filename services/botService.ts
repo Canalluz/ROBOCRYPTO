@@ -4,6 +4,7 @@ export class BotService {
     private onStatusCb?: (botId: string, status: any) => void;
     private onSyncCb?: (bots: any[]) => void;
     private onEquitySyncCb?: (history: any[]) => void;
+    private onTradeSyncCb?: (trades: any[]) => void;
     private onConnectCb?: () => void;
     private pendingQueue: string[] = []; // Messages waiting for WS to open
 
@@ -40,6 +41,8 @@ export class BotService {
                         this.onSyncCb(data.payload);
                     } else if (data.type === 'SYNC_EQUITY' && this.onEquitySyncCb) {
                         this.onEquitySyncCb(data.payload);
+                    } else if (data.type === 'SYNC_TRADES' && this.onTradeSyncCb) {
+                        this.onTradeSyncCb(data.payload);
                     }
                 } catch (e) {
                     console.error('[Frontend] Error parsing WS message', e);
@@ -76,6 +79,7 @@ export class BotService {
     onStatus(cb: (botId: string, status: any) => void) { this.onStatusCb = cb; }
     onSync(cb: (bots: any[]) => void) { this.onSyncCb = cb; }
     onEquitySync(cb: (history: any[]) => void) { this.onEquitySyncCb = cb; }
+    onTradeSync(cb: (trades: any[]) => void) { this.onTradeSyncCb = cb; }
     onConnect(cb: () => void) { this.onConnectCb = cb; }
 
     deployBot(bot: any, exchange: any) {

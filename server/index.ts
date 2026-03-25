@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots, getEquityHistory, recordEquityPoint, updateExternalBalance } from './bot-engine.js';
+import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots, getEquityHistory, getTradeHistory, recordEquityPoint, updateExternalBalance } from './bot-engine.js';
 
 import { getUsdtBalance, getBalance, getAccountTotalValue, placeOrder } from './exchanges/mexc.js';
 import { getUsdtBalance as getBinanceUsdtBalance, getAccountTotalValue as getBinanceTotalValue } from './exchanges/binance.js';
@@ -30,6 +30,10 @@ wss.on('connection', (ws) => {
     // Sync equity history
     const history = getEquityHistory();
     ws.send(JSON.stringify({ type: 'SYNC_EQUITY', payload: history }));
+
+    // Sync trade history
+    const trades = getTradeHistory();
+    ws.send(JSON.stringify({ type: 'SYNC_TRADES', payload: trades }));
 
     ws.on('message', (message) => {
         try {

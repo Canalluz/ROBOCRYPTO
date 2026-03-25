@@ -828,6 +828,27 @@ const App: React.FC = () => {
       console.log('[Frontend] Syncing equity history from backend:', history.length);
       setEquityHistory(history);
     });
+
+    botService.onTradeSync((backendTrades) => {
+      if (!backendTrades || backendTrades.length === 0) return;
+      console.log('[Frontend] Syncing trade history from backend:', backendTrades.length);
+      setTradeHistory(prev => {
+        // Merge: combine backend trades with local ones, deduplicate by id
+        const merged = [...backendTrades];
+        prev.forEach(local => {
+          if (!merged.find(t => t.id === local.id)) {
+            merged.push(local);
+          }
+        });
+        // Sort by most recent (assuming id contains ordering or timestamp)
+        merged.sort((a, b) => {
+          const tA = a.timestamp_ms || a.id || 0;
+          const tB = b.timestamp_ms || b.id || 0;
+          return tB > tA ? 1 : -1;
+        });
+        return merged.slice(0, 200);
+      });
+    });
   }, []);
 
   // Bot persistence is now handled by backend state loading on startup.
@@ -4240,24 +4261,30 @@ const BotMonitoringView: React.FC<{
   // Timeframe filtering and aggregation for equity chart
   const filteredEquity = useMemo(() => {
     if (!equityData || equityData.length === 0) return [];
-    
-    const now = Date.now();
-    let cutoff = 0;
-    if (timeframe === 'H') cutoff = now - 60 * 60 * 1000; // 1 hour
-    else if (timeframe === 'D') cutoff = now - 24 * 60 * 60 * 1000; // 24 hours
-    else if (timeframe === 'M') cutoff = now - 30 * 24 * 60 * 60 * 1000; // 30 days
-    
-    // Filter by timestamp if available, otherwise show all (legacy)
-    const hasTimestamps = equityData.some(p => p.timestamp && p.timestamp > 0);
-    const filtered = hasTimestamps 
-      ? equityData.filter(p => p.timestamp! >= cutoff)
-      : equityData;
 
-    if (timeframe === 'M' && hasTimestamps) {
-      // Aggregate by day for better monthly overview (take the last value of each day)
+    const now = Date.now();
+    let cutoffMs = 0;
+    if (timeframe === 'H') cutoffMs = now - 60 * 60 * 1000;          // last 1 hour
+    else if (timeframe === 'D') cutoffMs = now - 24 * 60 * 60 * 1000; // last 24 hours
+    else if (timeframe === 'M') cutoffMs = now - 30 * 24 * 60 * 60 * 1000; // last 30 days
+
+    // Determine if timestamps are valid ms (> year 2000 epoch)
+    const hasValidTimestamps = equityData.some(p => p.timestamp && p.timestamp > 1_000_000_000_000);
+
+    let filtered: EquityPoint[];
+    if (hasValidTimestamps) {
+      filtered = equityData.filter(p => p.timestamp! >= cutoffMs);
+    } else {
+      // No valid timestamps: slice last N points based on timeframe
+      const maxPoints = timeframe === 'H' ? 12 : timeframe === 'D' ? 48 : equityData.length;
+      filtered = equityData.slice(-maxPoints);
+    }
+
+    // Aggregate by day for 1M view
+    if (timeframe === 'M') {
       const dailyMap = new Map<string, EquityPoint>();
       filtered.forEach(p => {
-        const d = new Date(p.timestamp!);
+        const d = p.timestamp ? new Date(p.timestamp) : new Date();
         const dateKey = d.toLocaleDateString('pt-BR');
         dailyMap.set(dateKey, {
           ...p,
@@ -4267,9 +4294,16 @@ const BotMonitoringView: React.FC<{
       return Array.from(dailyMap.values()).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     }
 
-    // Ensure 'time' is formatted correctly if timestamp exists
-    return filtered.map(p => {
-      if (p.timestamp) {
+    // Downsample for 1D: keep at most 48 points (one per 30min)
+    let result = filtered;
+    if (timeframe === 'D' && result.length > 48) {
+      const step = Math.ceil(result.length / 48);
+      result = result.filter((_, i) => i % step === 0 || i === result.length - 1);
+    }
+
+    // Format time label
+    return result.map(p => {
+      if (p.timestamp && p.timestamp > 1_000_000_000_000) {
         const d = new Date(p.timestamp);
         return {
           ...p,
@@ -4390,14 +4424,26 @@ const BotMonitoringView: React.FC<{
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredEquity}>
+              <BarChart data={filteredEquity} margin={{ left: 10, right: 10, top: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis 
-                  dataKey="time" 
-                  stroke="#64748b" 
-                  fontSize={10} 
+                <XAxis
+                  dataKey="time"
+                  stroke="#64748b"
+                  fontSize={9}
+                  interval={filteredEquity.length > 20 ? Math.floor(filteredEquity.length / 10) : 0}
+                  tick={{ fill: '#64748b' }}
                 />
-                <YAxis stroke="#64748b" fontSize={10} domain={['auto', 'auto']} hide />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={9}
+                  width={52}
+                  domain={[
+                    (dataMin: number) => Math.max(0, dataMin * 0.995),
+                    (dataMax: number) => dataMax * 1.005
+                  ]}
+                  tickFormatter={(v: number) => v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${v.toFixed(0)}`}
+                  tick={{ fill: '#64748b' }}
+                />
                 <Tooltip
                   labelFormatter={(val, items) => {
                     const item = items?.[0]?.payload;

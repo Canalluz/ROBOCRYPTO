@@ -36,6 +36,7 @@ type BotState = {
 
 const bots = new Map<string, BotState>();
 let equityHistory: EquityPoint[] = [];
+let tradeHistory: any[] = [];
 let externalBalance = 0;
 
 export function updateExternalBalance(bal: number) {
@@ -52,6 +53,10 @@ export function registerWsBroadcaster(tradeCb: any, statusCb: any, equityCb?: an
     onTradeExecuted = tradeCb;
     onBotStatus = statusCb;
     if (equityCb) onEquityUpdate = equityCb;
+}
+
+export function getTradeHistory() {
+    return tradeHistory;
 }
 
 export function deployBot(config: BotConfig, apiKey: string, secret: string) {
@@ -92,7 +97,8 @@ function saveBots() {
         }));
         const fullState = {
             bots: botData,
-            equityHistory
+            equityHistory,
+            tradeHistory: tradeHistory.slice(-200) // Keep last 200
         };
         fs.writeFileSync(STORAGE_PATH, JSON.stringify(fullState, null, 2));
     } catch (e) {
@@ -112,6 +118,7 @@ export function loadBots() {
         } else {
             botData = parsed.bots || [];
             equityHistory = parsed.equityHistory || [];
+            tradeHistory = parsed.tradeHistory || [];
             
             // Auto-cleanup for legacy example data (10k baseline or 1k initial paper balance)
             const hasLegacyData = equityHistory.some(p => (p.value >= 9000 && p.value <= 11000) || (p.value >= 900 && p.value <= 1100));
@@ -479,6 +486,10 @@ async function tickEngine(id: string) {
             // For now, we clear it after the simulated move so the next tick can fire again.
             // (If we wanted persistent multi-candle trades, we'd keep it until a reversal signal)
             // bot.activePositions.delete(asset); // REMOVED for persistent tracking
+
+            // Persist trade in history (max 200 entries)
+            tradeHistory.unshift(tradeData);
+            if (tradeHistory.length > 200) tradeHistory.pop();
 
             onTradeExecuted(bot.config.id, tradeData);
             onBotStatus(id, {

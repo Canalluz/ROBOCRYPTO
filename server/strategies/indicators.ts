@@ -22,9 +22,10 @@ export class Indicators {
         for (let i = period; i < prices.length; i++) {
             emaArray[i] = (prices[i] * k) + (emaArray[i - 1] * (1 - k));
         }
-        // Pad the beginning with the first calculated value or 0
-        for (let i = 0; i < period - 1; i++) {
-            emaArray[i] = emaArray[period - 1] || prices[i];
+        // Pad the beginning with the first calculated value or first price
+        const padValue = emaArray[Math.min(period - 1, prices.length - 1)] || (prices.length > 0 ? prices[0] : 0);
+        for (let i = 0; i < Math.min(period - 1, prices.length); i++) {
+            emaArray[i] = padValue;
         }
         return emaArray;
     }
@@ -206,7 +207,9 @@ export class Indicators {
             }
 
             const meanRet = retornos.length > 0 ? retornos.reduce((a, b) => a + b, 0) / retornos.length : 0;
-            const stdRet = Math.sqrt(retornos.reduce((sq, n) => sq + Math.pow(n - meanRet, 2), 0) / (retornos.length - 1)) || 0;
+            // Guard against division by zero if we only have 1 return point
+            const sumSq = retornos.reduce((sq, n) => sq + Math.pow(n - meanRet, 2), 0);
+            const stdRet = retornos.length > 1 ? Math.sqrt(sumSq / (retornos.length - 1)) : 0;
             const volatilidade = stdRet * Math.sqrt(24);
 
             const desvioAjustado = desvioPonderado * (1 + volatilidade);
@@ -214,11 +217,11 @@ export class Indicators {
             lowerA[i] = mediaA[i] - (desvioAjustado * deviation);
         }
 
-        // Pad beginning
-        for (let i = 0; i < 19; i++) {
+        // Pad beginning correctly - only up to 19 or the actual length of candles
+        for (let i = 0; i < Math.min(19, candles.length); i++) {
             mediaA[i] = typicalPrices[i];
-            upperA[i] = typicalPrices[i] * 1.01;
-            lowerA[i] = typicalPrices[i] * 0.99;
+            upperA[i] = typicalPrices[i] * 1.05; // Slightly wider for uncalculated start
+            lowerA[i] = typicalPrices[i] * 0.95;
         }
 
         return { media: mediaA, upper: upperA, lower: lowerA };

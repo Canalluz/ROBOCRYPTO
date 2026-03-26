@@ -24,7 +24,7 @@ export class AnatomiaFluxoStrategy {
     painel1_estrutura_macro(ativo: string): any {
         try {
             const df = this.dados[ativo] && this.dados[ativo]['1d'];
-            if (!df || df.length === 0) throw new Error("Sem dados 1d");
+            if (!df || df.length < 200) throw new Error("Sem dados 1d suficientes (mínimo 200)");
 
             const closePrices = df.map(c => c.close);
             const ema_21 = Indicators.ema(closePrices, this.config.ema_curta);
@@ -32,6 +32,8 @@ export class AnatomiaFluxoStrategy {
             const ema_200 = Indicators.ema(closePrices, this.config.ema_longa);
 
             const atualIdx = df.length - 1;
+            if (!df[atualIdx]) throw new Error("Último candle indefinido");
+            
             const preco = df[atualIdx].close;
             const val_ema_200 = ema_200[atualIdx];
 
@@ -66,13 +68,15 @@ export class AnatomiaFluxoStrategy {
     painel2_fluxo_institucional(ativo: string): any {
         try {
             const df = this.dados[ativo] && this.dados[ativo]['4h'];
-            if (!df || df.length < 2) throw new Error("Sem dados 4h");
+            if (!df || df.length < 20) throw new Error("Sem dados 4h suficientes (mínimo 20)");
 
             const smiArray = Indicators.smartMoneyIndex(df, this.config.smi_periodo_acum, this.config.smi_periodo_dist);
             const cvdArray = Indicators.cumulativeVolumeDelta(df, this.config.cvd_suavizacao);
             const bands = Indicators.liquitidyBands(df, this.config.bandas_desvio);
 
             const idx = df.length - 1;
+            if (!df[idx] || !df[idx - 1]) throw new Error("Dados de candles incompletos para cálculos de fluxo");
+
             const ultimo = { close: df[idx].close, smi: smiArray[idx], cvd: cvdArray[idx] };
             const anterior = { close: df[idx - 1].close, smi: smiArray[idx - 1] };
 
@@ -114,6 +118,8 @@ export class AnatomiaFluxoStrategy {
             const { fvg_suporte, fvg_resistencia } = Indicators.fairValueGaps(df);
 
             const idx = df.length - 1;
+            if (!df[idx] || !df[idx - 1]) throw new Error("Dados 1h insuficientes para gatilhos");
+
             const ultimo = { close: df[idx].close, low: df[idx].low, rsi: rsiArray[idx], stoch_k: stoch_k[idx], stoch_d: stoch_d[idx] };
 
             const sobrevendido = ultimo.rsi < this.config.rsi_sobrevendido;
@@ -156,7 +162,7 @@ export class AnatomiaFluxoStrategy {
     painel4_micro_estrutura(ativo: string): any {
         try {
             const df = this.dados[ativo] && this.dados[ativo]['15m'];
-            if (!df || df.length < 5) throw new Error("Sem dados 15m");
+            if (!df || df.length < 20) throw new Error("Sem dados 15m suficientes (mínimo 20)");
 
             const df_24h = df.slice(Math.max(0, df.length - 96));
             const vp = Indicators.volumeProfile(df_24h);
@@ -178,7 +184,10 @@ export class AnatomiaFluxoStrategy {
                 }
             }
 
-            const preco = df[df.length - 1].close;
+            const idx = df.length - 1;
+            if (!df[idx]) throw new Error("Dados 15m incompletos");
+
+            const preco = df[idx].close;
             const dist_poc = ((preco / vp.poc) - 1) * 100;
 
             return {

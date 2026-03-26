@@ -99,7 +99,7 @@ const TRANSLATIONS = {
     trading_core: "Trading Core",
     ai_mode: "AI MODE",
     nav_robots: "Trading Bots",
-    nav_assets: "Emisso de Ativos",
+    nav_assets: "Gerador Crypto",
     nav_monitoring: "Data Analysis",
     nav_settings: "Settings",
     nav_logout: "Log Out",
@@ -145,6 +145,8 @@ const TRANSLATIONS = {
     prov_openai: "OpenAI (GPT-4o)",
     prov_anthropic: "Anthropic (Claude 3.5)",
     prov_mock: "MOCK (Experimental/Free)",
+    market_conviction: "Market Conviction",
+    limit: "Limit",
     lang_sel: "Language / Idioma",
     tv_chart: "TradingView Chart",
     exec_desk: "Execution Desk",
@@ -314,13 +316,13 @@ const TRANSLATIONS = {
     inst_terminal: "Terminal Institucional",
     trading_core: "Ncleo de Trading",
     ai_mode: "MODO IA",
-    nav_robots: "Robs de Trading",
-    nav_assets: "Emisso de Ativos",
-    nav_monitoring: "Anlise de dados",
-    nav_settings: "Configuraes",
+    nav_robots: "Bots de trade",
+    nav_assets: "Gerador Crypto",
+    nav_monitoring: "Indicadores",
+    nav_settings: "Configurações",
     sys_health: "Sade do Sistema",
     header_robots: "Hub de Trading Automatizado",
-    header_monitoring: "Dashboard de Monitoramento Institucional",
+    header_monitoring: "Dashboard de Monitoramento",
     header_assets: "Fbrica de Ativos e Lab de Contratos",
     header_settings: "Gesto de Corretoras",
     workspace: "Espao de Trabalho",
@@ -351,7 +353,9 @@ const TRANSLATIONS = {
     update_safety: "Atualizar Protocolos de Segurana",
     prov_openai: "OpenAI (GPT-4o)",
     prov_anthropic: "Anthropic (Claude 3.5)",
-    prov_mock: "MOCK (Experimental/Grtis)",
+    prov_mock: "MOCK (Experimental/Livre)",
+    market_conviction: "Convicção do Mercado",
+    limit: "Limite",
     lang_sel: "Idioma / Language",
     tv_chart: "Grfico TradingView",
     exec_desk: "Painel de Execuo",
@@ -411,7 +415,7 @@ const TRANSLATIONS = {
     ma_cross_logic: "Lgica de Cruzamento MA",
     ma_cross_desc: "Sistema clssico de seguimento de tendncia usando mdias mveis duplas.",
     zz_pivots: "Reverses de Piv ZigZag",
-    zz_pivots_desc: "Opera pivs confirmados baseados em configuraes de Profundidade/Desvio.",
+    zz_pivots_desc: "Opera pivs confirmados baseados em configurações de Profundidade/Desvio.",
     market_filters: "Filtros de Mercado",
     ex_target: "Corretora Alvo",
     trading_pairs: "Pares de Trading",
@@ -903,6 +907,13 @@ const App: React.FC = () => {
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [lastAnalysisTimestamp, setLastAnalysisTimestamp] = useState<number>(0);
   const [lastAttemptTimestamp, setLastAttemptTimestamp] = useState<number>(0);
+  const [isEngineConnected, setIsEngineConnected] = useState(botService.connected);
+
+  useEffect(() => {
+    botService.onConnectionChange((connected) => {
+      setIsEngineConnected(connected);
+    });
+  }, []);
 
   // 🔧 FIX: Reusable balance fetcher — called on save AND on periodic sync
   const fetchBalanceForExchange = useCallback((exId: string, apiKey: string, secret: string) => {
@@ -1056,7 +1067,7 @@ const App: React.FC = () => {
     if (config.provider === 'GEMINI' && (!config.geminiKey || config.geminiKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do Gemini no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do Gemini no configurada. Acesse Configurações > IA Core para adicionar."
           : "Gemini API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -1064,7 +1075,7 @@ const App: React.FC = () => {
     if (config.provider === 'DEEPSEEK' && (!config.deepseekKey || config.deepseekKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do DeepSeek no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do DeepSeek no configurada. Acesse Configurações > IA Core para adicionar."
           : "DeepSeek API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -1072,7 +1083,7 @@ const App: React.FC = () => {
     if (config.provider === 'OPENAI' && (!config.openaiKey || config.openaiKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do OpenAI no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do OpenAI no configurada. Acesse Configurações > IA Core para adicionar."
           : "OpenAI API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -1080,7 +1091,7 @@ const App: React.FC = () => {
     if (config.provider === 'ANTHROPIC' && (!config.anthropicKey || config.anthropicKey.trim() === '')) {
       if (force) {
         setError(language === 'pt'
-          ? "Chave de API do Anthropic no configurada. Acesse Configuraes > IA Core para adicionar."
+          ? "Chave de API do Anthropic no configurada. Acesse Configurações > IA Core para adicionar."
           : "Anthropic API Key not configured. Go to Settings > AI Core to add it.");
       }
       return;
@@ -1245,6 +1256,13 @@ const App: React.FC = () => {
                 <Clock className="w-4 h-4" />
                 <span>{t('last_scan')}: {lastUpdated.toLocaleTimeString()}</span>
               </div>
+              <span className="text-xs opacity-50">|</span>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+                <Server className={`w-3.5 h-3.5 ${isEngineConnected ? 'text-emerald-400' : 'text-rose-500'}`} />
+                <span className={isEngineConnected ? 'text-emerald-400' : 'text-rose-500'}>
+                  ENGINE: {isEngineConnected ? 'ONLINE' : 'OFFLINE'}
+                </span>
+              </div>
             </div>
           </div>
         </header>
@@ -1266,6 +1284,8 @@ const App: React.FC = () => {
             exchanges={exchanges}
             onToggleBot={onToggleBot}
             onClearHistory={onClearHistory}
+            globalConfidenceThreshold={data.neural_core.confidence_threshold}
+            analysis={analysis}
           />
         )}
 
@@ -1289,6 +1309,7 @@ const App: React.FC = () => {
             setData={setData}
             exchanges={exchanges}
             setExchanges={setExchanges}
+            bots={bots}
             language={language}
             setLanguage={setLanguage}
             t={t}
@@ -1320,8 +1341,9 @@ const SettingsView: React.FC<{
   language: 'en' | 'pt';
   setLanguage: (l: 'en' | 'pt') => void;
   t: (key: any) => string;
+  bots: any[];
   onTradeExecuted: (trade: any) => void;
-}> = ({ data, setData, exchanges, setExchanges, language, setLanguage, t, onTradeExecuted }) => {
+}> = ({ data, setData, exchanges, setExchanges, language, setLanguage, t, bots, onTradeExecuted }) => {
   const [activeTab, setActiveTab] = useState<'exchanges' | 'ai' | 'execution'>('exchanges');
   const [isAddingExchange, setIsAddingExchange] = useState(false);
   const [newExchangeName, setNewExchangeName] = useState('');
@@ -1679,6 +1701,7 @@ const SettingsView: React.FC<{
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-3xl space-y-8 shadow-2xl">
           <ManualTradePanel
             exchanges={exchanges}
+            bots={bots}
             onTradeExecuted={onTradeExecuted}
           />
         </div>
@@ -1688,10 +1711,15 @@ const SettingsView: React.FC<{
 };
 
 
-const ManualTradePanel: React.FC<{ exchanges: any[], onTradeExecuted?: (trade: any) => void }> = ({ exchanges, onTradeExecuted }) => {
+const ManualTradePanel: React.FC<{ 
+  exchanges: any[], 
+  bots: any[], 
+  onTradeExecuted?: (trade: any) => void 
+}> = ({ exchanges, bots, onTradeExecuted }) => {
   const [mtSymbol, setMtSymbol] = useState('LOBOUSDT');
   const [mtQty, setMtQty] = useState('10');
   const [mtExchange, setMtExchange] = useState(() => exchanges.find(e => e.apiKey)?.id ?? exchanges[0]?.id ?? '');
+  const [mtBotId, setMtBotId] = useState('MANUAL');
   const [mtResult, setMtResult] = useState<any>(null);
   const [mtLoading, setMtLoading] = useState(false);
   const [mtError, setMtError] = useState<string | null>(null);
@@ -1713,7 +1741,8 @@ const ManualTradePanel: React.FC<{ exchanges: any[], onTradeExecuted?: (trade: a
           apiKey: connectedEx?.apiKey ?? '',
           secret: connectedEx?.apiSecret ?? '',
           paperTrade: false,
-          marketMode: 'SPOT'
+          marketMode: 'SPOT',
+          botId: mtBotId
         })
       });
 
@@ -1733,10 +1762,10 @@ const ManualTradePanel: React.FC<{ exchanges: any[], onTradeExecuted?: (trade: a
         const orderData = { ...data.order, side };
         setMtResult(orderData);
         // Add to history
-        if (onTradeExecuted) {
+          if (onTradeExecuted) {
           onTradeExecuted({
             id: orderData.orderId || Math.random().toString(36).substring(7),
-            botId: 'MANUAL',
+            botId: mtBotId,
             asset: mtSymbol.toUpperCase().includes('USDT') ? mtSymbol.toUpperCase() : mtSymbol.toUpperCase() + 'USDT',
             type: side,
             amount: Number(orderData.qty) || Number(mtQty) / Number(orderData.price),
@@ -1784,6 +1813,15 @@ const ManualTradePanel: React.FC<{ exchanges: any[], onTradeExecuted?: (trade: a
         <div className="space-y-1">
           <label className="text-[10px] font-bold text-slate-500 uppercase">Valor (USDT)</label>
           <input type="number" value={mtQty} onChange={e => setMtQty(e.target.value)} min="1" step="1" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-bold text-slate-200 outline-none" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Vincular a Robô</label>
+          <select value={mtBotId} onChange={e => setMtBotId(e.target.value)} className="w-full bg-slate-950 border border-indigo-500/30 rounded-lg p-2.5 text-[11px] font-black text-indigo-400 outline-none focus:border-indigo-500">
+            <option value="MANUAL">Manual (Sem Robô)</option>
+            {bots.map(b => (
+              <option key={b.id} value={b.id}>{b.name} ({b.strategyId})</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -2134,6 +2172,7 @@ type WizardState = {
   stopLoss: number;
   takeProfit: number;
   riskPerTrade: number;
+  minConfidence?: number;
   isValid: boolean;
   error?: string;
   dryRunResult?: { winRate: number; expectedProfit: number };
@@ -2162,6 +2201,7 @@ const initialWizardState: WizardState = {
   stopLoss: 0.5,
   takeProfit: 1.5,
   riskPerTrade: 1.0,
+  minConfidence: 60,
   isValid: true,
   aiProvider: 'GEMINI'
 };
@@ -2177,7 +2217,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
                   { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'QUANTUM_EDGE') ? 'DEEPSEEK' : 'GEMINI';
       const zzDefaults = action.payload === 'ZIGZAG_PRO' ? { tradeStyle: 'SWING' as const, marketType: 'CRYPTO' as const, liquidityFilter: true, volatilityFilter: true } : {};
-      return { ...state, strategy: action.payload, ...defaults, ...zzDefaults, aiProvider };
+      const confDefault = (action.payload === 'QUANTUM_EDGE') ? 60 : (action.payload === 'MATRIX_NEURAL') ? 85 : undefined;
+      return { ...state, strategy: action.payload, ...defaults, ...zzDefaults, minConfidence: confDefault, aiProvider };
     case 'SET_EXCHANGE':
       return { ...state, exchangeId: action.payload };
     case 'SET_RISK':
@@ -2271,7 +2312,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
     },
     'QUANTUM_EDGE': {
       leverage: 3, maxDailyLoss: 1, stopLossPct: 1.0, takeProfitPct: 3.0, maxTradesPerDay: 15, positionSizePct: 100.0,
-      minConfidence: 75, tradingHours: { start: '00:00', end: '23:59', use24h: true }, aiProvider: 'DEEPSEEK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: '1h'
+      minConfidence: 60, tradingHours: { start: '00:00', end: '23:59', use24h: true }, aiProvider: 'DEEPSEEK', marginMode: 'CROSS', marketMode: 'FUTURES', timeframe: '1h'
     }
   };
 
@@ -2323,7 +2364,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
         tradeStyle: wizard.tradeStyle,
         marketType: wizard.marketType,
         liquidityFilter: wizard.liquidityFilter,
-        volatilityFilter: wizard.volatilityFilter
+        volatilityFilter: wizard.volatilityFilter,
+        minConfidence: wizard.minConfidence
       } as any,
       performance: {
         totalPnl: 0,
@@ -2732,11 +2774,16 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-[10px] font-bold text-blue-400 uppercase">Min Confidence</span>
-                            <span className="text-xs font-bold text-white">85%</span>
+                            <span className="text-xs font-bold text-white">{wizard.minConfidence || 85}%</span>
                           </div>
-                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-blue-500 h-full w-[85%]" />
-                          </div>
+                          <input 
+                            type="range"
+                            min="20"
+                            max="95"
+                            value={wizard.minConfidence || 85}
+                            onChange={(e) => dispatch({ type: 'SET_RISK', field: 'minConfidence', value: parseInt(e.target.value) })}
+                            className="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                          />
                         </div>
                       </div>
                     </div>
@@ -2762,11 +2809,16 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-[10px] font-bold text-emerald-400 uppercase">Min Confidence</span>
-                            <span className="text-xs font-bold text-white">75%</span>
+                            <span className="text-xs font-bold text-white">{wizard.minConfidence || 60}%</span>
                           </div>
-                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-emerald-500 h-full w-[75%]" />
-                          </div>
+                          <input 
+                            type="range"
+                            min="20"
+                            max="95"
+                            value={wizard.minConfidence || 60}
+                            onChange={(e) => dispatch({ type: 'SET_RISK', field: 'minConfidence', value: parseInt(e.target.value) })}
+                            className="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                          />
                         </div>
                       </div>
                     </div>
@@ -3076,11 +3128,34 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         </div>
                       )}
                       {(editingBot.strategyId === 'ZIGZAG_PRO' || editingBot.strategyId === 'MATRIX_NEURAL' || editingBot.strategyId === 'QUANTUM_EDGE') && (
-                        <div className="col-span-1 p-3 bg-cyan-500/5 rounded-xl border border-cyan-500/20 flex flex-col justify-center">
-                          <span className="text-[9px] font-bold text-cyan-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                            <Zap className="w-3 h-3" /> Autonomous Engine
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium leading-tight">Logic determines optimal exits based on market structure.</span>
+                        <div className="col-span-1 p-3 bg-cyan-500/5 rounded-xl border border-cyan-500/20 flex flex-col justify-center gap-3">
+                          <div>
+                            <span className="text-[9px] font-bold text-cyan-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                              <Zap className="w-3 h-3" /> Autonomous Engine
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium leading-tight">Logic determines optimal exits based on market structure.</span>
+                          </div>
+                          {(editingBot.strategyId === 'QUANTUM_EDGE' || editingBot.strategyId === 'MATRIX_NEURAL') && (
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Confidence Limit</label>
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="range"
+                                  min="20"
+                                  max="95"
+                                  value={editingBot.config.minConfidence || 60}
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    const updated = { ...editingBot, config: { ...editingBot.config, minConfidence: val } };
+                                    setEditingBot(updated);
+                                    setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                                  }}
+                                  className="flex-1 accent-cyan-500 h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-xs font-bold text-cyan-400 mono w-8">{editingBot.config.minConfidence || 60}%</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                       {editingBot.strategyId !== 'QUANTUM_EDGE' && (
@@ -3473,10 +3548,6 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                 </div>
               </div>
 
-              {/* Quick Manual Trade inside modal */}
-              <div className="px-8 pb-4">
-                <ManualTradePanel exchanges={exchanges} />
-              </div>
 
               <div className="p-8 bg-slate-900/50 backdrop-blur-md rounded-b-3xl border-t border-slate-800 shrink-0">
 
@@ -4251,7 +4322,9 @@ const BotMonitoringView: React.FC<{
   exchanges: ExchangeConfig[];
   onToggleBot?: (id: string, newStatus: 'ACTIVE' | 'PAUSED') => void;
   onClearHistory?: () => void;
-}> = ({ t, formatCurrency, bots, trades, equityData, exchanges, onToggleBot, onClearHistory }) => {
+  globalConfidenceThreshold?: number;
+  analysis?: AnalysisResponse | null;
+}> = ({ t, formatCurrency, bots, trades, equityData, exchanges, onToggleBot, onClearHistory, globalConfidenceThreshold, analysis }) => {
   const [selectedBotId, setSelectedBotId] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<'H' | 'D' | 'M'>('D');
 
@@ -4301,13 +4374,15 @@ const BotMonitoringView: React.FC<{
       result = result.filter((_, i) => i % step === 0 || i === result.length - 1);
     }
 
-    // Format time label
+    // Format time label based on timeframe
     return result.map(p => {
       if (p.timestamp && p.timestamp > 1_000_000_000_000) {
         const d = new Date(p.timestamp);
         return {
           ...p,
-          time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          time: timeframe === 'M' 
+            ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+            : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         };
       }
       return p;
@@ -4339,7 +4414,7 @@ const BotMonitoringView: React.FC<{
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <MetricCard
           label={t('total_equity') || 'Patrimônio Total'}
           value={formatCurrency(currentEquity)}
@@ -4371,9 +4446,26 @@ const BotMonitoringView: React.FC<{
         <MetricCard
           label={t('mon_active_bots')}
           value={activeBotsCount.toString()}
-          icon={<Cpu className="text-blue-400" />}
-          trend={`${totalTrades} Total Trades`}
+          icon={<Bot className="text-blue-400" />}
+          trend="Engine Ready"
           positive={activeBotsCount > 0}
+        />
+        <MetricCard
+          label={t('market_conviction')}
+          value={`${(() => {
+            if (selectedBotId !== 'all' && filteredBots[0]) {
+              const botAsset = filteredBots[0].config.assets?.[0];
+              const rec = analysis?.recommendations.find(r => r.asset === botAsset || `${r.asset}USDT` === botAsset);
+              return rec ? rec.confidence : (analysis?.recommendations[0]?.confidence || 57);
+            }
+            const avg = analysis?.recommendations && analysis.recommendations.length > 0
+              ? analysis.recommendations.reduce((acc, r) => acc + r.confidence, 0) / analysis.recommendations.length
+              : 57.3;
+            return avg.toFixed(1);
+          })()}%`}
+          icon={<Crosshair className="text-amber-500" />}
+          trend={`${t('limit')}: ${selectedBotId !== 'all' && filteredBots[0] ? (filteredBots[0].config as any).minConfidence || 60 : globalConfidenceThreshold || 85}%`}
+          positive={true}
         />
       </div>
 

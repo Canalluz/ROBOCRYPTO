@@ -6,7 +6,10 @@ export class BotService {
     private onEquitySyncCb?: (history: any[]) => void;
     private onTradeSyncCb?: (trades: any[]) => void;
     private onConnectCb?: () => void;
+    private onDisconnectCb?: () => void;
+    private onConnectionChangeCb?: (connected: boolean) => void;
     private pendingQueue: string[] = []; // Messages waiting for WS to open
+    public connected = false;
 
     connect() {
         try {
@@ -20,6 +23,8 @@ export class BotService {
 
             this.ws.onopen = () => {
                 console.log('[Frontend] Connected to Bot Engine');
+                this.connected = true;
+                if (this.onConnectionChangeCb) this.onConnectionChangeCb(true);
                 // Flush any queued messages
                 while (this.pendingQueue.length > 0) {
                     const msg = this.pendingQueue.shift();
@@ -51,6 +56,9 @@ export class BotService {
 
             this.ws.onclose = () => {
                 console.log('[Frontend] Disconnected from Bot Engine. Reconnecting in 5s...');
+                this.connected = false;
+                if (this.onConnectionChangeCb) this.onConnectionChangeCb(false);
+                if (this.onDisconnectCb) this.onDisconnectCb();
                 setTimeout(() => this.connect(), 5000);
             };
 
@@ -81,6 +89,8 @@ export class BotService {
     onEquitySync(cb: (history: any[]) => void) { this.onEquitySyncCb = cb; }
     onTradeSync(cb: (trades: any[]) => void) { this.onTradeSyncCb = cb; }
     onConnect(cb: () => void) { this.onConnectCb = cb; }
+    onDisconnect(cb: () => void) { this.onDisconnectCb = cb; }
+    onConnectionChange(cb: (connected: boolean) => void) { this.onConnectionChangeCb = cb; }
 
     deployBot(bot: any, exchange: any) {
         this.send({ type: 'DEPLOY_BOT', payload: { bot, apiKey: exchange.apiKey, secret: exchange.apiSecret } });

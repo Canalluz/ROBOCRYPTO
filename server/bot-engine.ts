@@ -106,6 +106,24 @@ function saveBots() {
     }
 }
 
+export function recordManualTrade(botId: string, trade: any) {
+    if (botId && botId !== 'MANUAL') {
+        const bot = bots.get(botId);
+        if (bot) {
+            bot.trades += 1;
+            // For manual trades, we don't have a reliable way to calculate PnL 
+            // without knowing the corresponding BUY order, so we just increment count.
+            console.log(`[ENGINE] Manual trade recorded for bot "${bot.config.name}"`);
+        }
+    }
+
+    tradeHistory.unshift(trade);
+    if (tradeHistory.length > 200) tradeHistory.pop();
+
+    onTradeExecuted(botId, trade);
+    saveBots();
+}
+
 export function loadBots() {
     try {
         if (!fs.existsSync(STORAGE_PATH)) return;

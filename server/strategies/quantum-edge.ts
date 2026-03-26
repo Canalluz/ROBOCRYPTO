@@ -6,7 +6,7 @@ import { Indicators } from './indicators.js';
  * Institutional-grade ensemble using 5 hybrid strategies.
  */
 export const quantumEdge = ({ candles, symbol, config }: StrategyContext): TradeSignal => {
-    const minConfidence = (config as any).minConfidence || 75;
+    const minConfidence = (config as any).minConfidence || 60;
     
     if (candles.length < 200) {
         return { symbol, action: 'HOLD', reason: 'Not enough history for Quantum Core (200+ candles required)' };

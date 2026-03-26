@@ -118,7 +118,7 @@ app.post('/api/balance/binance', async (req, res) => {
 // Manual Trade endpoint — for testing buy/sell directly from the UI
 app.post('/api/manual-trade', async (req, res) => {
     try {
-        const { symbol, side, quoteQty, apiKey, secret, paperTrade, marketMode } = req.body;
+        const { symbol, side, quoteQty, apiKey, secret, paperTrade, marketMode, botId } = req.body;
         if (!symbol || !side || !quoteQty) {
             return res.status(400).json({ error: 'Missing required fields: symbol, side, quoteQty' });
         }
@@ -126,7 +126,7 @@ app.post('/api/manual-trade', async (req, res) => {
             return res.status(400).json({ error: 'API Key and Secret required for live orders' });
         }
 
-        console.log(`[MANUAL] ${paperTrade ? '[PAPER]' : '[LIVE]'} ${side} ${symbol} ${quoteQty} USDT`);
+        console.log(`[MANUAL] ${paperTrade ? '[PAPER]' : '[LIVE]'} ${side} ${symbol} ${quoteQty} USDT ${botId ? `(Bot: ${botId})` : ''}`);
 
         const result = await placeOrder(
             symbol,
@@ -140,6 +140,23 @@ app.post('/api/manual-trade', async (req, res) => {
         );
 
         console.log(`[MANUAL] Order result:`, result);
+
+        // Record the trade in the engine history and bot stats
+        const { recordManualTrade } = await import('./bot-engine.js');
+        recordManualTrade(botId || 'MANUAL', {
+            id: result.orderId,
+            botId: botId || 'MANUAL',
+            asset: symbol.toUpperCase().includes('USDT') ? symbol.toUpperCase() : symbol.toUpperCase() + 'USDT',
+            type: side,
+            price: Number(result.price.toFixed(4)),
+            amount: Number(result.qty).toFixed(6),
+            result_usd: 0, // Manual trades don't have simulated exit PnL
+            profit: false,
+            timestamp: new Date().toLocaleTimeString('pt-BR'),
+            paper: !!paperTrade,
+            reason: 'Manual Execution'
+        });
+
         res.json({ success: true, order: result });
     } catch (e: any) {
         console.error('[MANUAL] Trade error:', e.response?.data || e.message);

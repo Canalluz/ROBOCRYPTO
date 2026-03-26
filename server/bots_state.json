@@ -12,7 +12,7 @@
         "takeProfitPct": 3,
         "maxTradesPerDay": 15,
         "positionSizePct": 100,
-        "minConfidence": 75,
+        "minConfidence": 60,
         "tradingHours": {
           "start": "00:00",
           "end": "23:59",

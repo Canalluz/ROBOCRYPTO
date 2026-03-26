@@ -2217,7 +2217,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
                   { leverage: 1, stopLoss: 2.0, takeProfit: 5.0 };
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'QUANTUM_EDGE') ? 'DEEPSEEK' : 'GEMINI';
       const zzDefaults = action.payload === 'ZIGZAG_PRO' ? { tradeStyle: 'SWING' as const, marketType: 'CRYPTO' as const, liquidityFilter: true, volatilityFilter: true } : {};
-      const confDefault = (action.payload === 'QUANTUM_EDGE') ? 60 : (action.payload === 'MATRIX_NEURAL') ? 85 : undefined;
+      const confDefault = (action.payload === 'QUANTUM_EDGE') ? 60 : (action.payload === 'MATRIX_NEURAL') ? 85 : (action.payload === 'ZIGZAG_PRO') ? 70 : undefined;
       return { ...state, strategy: action.payload, ...defaults, ...zzDefaults, minConfidence: confDefault, aiProvider };
     case 'SET_EXCHANGE':
       return { ...state, exchangeId: action.payload };
@@ -2724,6 +2724,20 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         onClick={() => dispatch({ type: 'SET_RISK', field: 'volatilityFilter' as any, value: !wizard.volatilityFilter as any })} 
                       />
                     </div>
+                    <div className="mt-4 space-y-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] font-bold text-purple-400 uppercase">Min Confidence</span>
+                        <span className="text-xs font-bold text-white">{wizard.minConfidence || 70}%</span>
+                      </div>
+                      <input 
+                        type="range"
+                        min="20"
+                        max="95"
+                        value={wizard.minConfidence || 70}
+                        onChange={(e) => dispatch({ type: 'SET_RISK', field: 'minConfidence', value: parseInt(e.target.value) })}
+                        className="w-full accent-purple-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -3135,7 +3149,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                             </span>
                             <span className="text-[10px] text-slate-400 font-medium leading-tight">Logic determines optimal exits based on market structure.</span>
                           </div>
-                          {(editingBot.strategyId === 'QUANTUM_EDGE' || editingBot.strategyId === 'MATRIX_NEURAL') && (
+                          {(editingBot.strategyId === 'QUANTUM_EDGE' || editingBot.strategyId === 'MATRIX_NEURAL' || editingBot.strategyId === 'ZIGZAG_PRO') && (
                             <div className="space-y-1">
                               <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Confidence Limit</label>
                               <div className="flex items-center gap-3">
@@ -3143,16 +3157,16 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                                   type="range"
                                   min="20"
                                   max="95"
-                                  value={editingBot.config.minConfidence || 60}
+                                  value={editingBot.config.minConfidence || 70}
                                   onChange={(e) => {
                                     const val = Number(e.target.value);
                                     const updated = { ...editingBot, config: { ...editingBot.config, minConfidence: val } };
                                     setEditingBot(updated);
                                     setBots(bots.map(b => b.id === editingBot.id ? updated : b));
                                   }}
-                                  className="flex-1 accent-cyan-500 h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer"
+                                  className={`flex-1 ${editingBot.strategyId === 'ZIGZAG_PRO' ? 'accent-purple-500' : 'accent-cyan-500'} h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer`}
                                 />
-                                <span className="text-xs font-bold text-cyan-400 mono w-8">{editingBot.config.minConfidence || 60}%</span>
+                                <span className={`text-xs font-bold ${editingBot.strategyId === 'ZIGZAG_PRO' ? 'text-purple-400' : 'text-cyan-400'} mono w-8`}>{editingBot.config.minConfidence || 70}%</span>
                               </div>
                             </div>
                           )}

@@ -353,6 +353,7 @@ export interface ZigZagConfig {
   volatilityFilter?: boolean;
   minVolatility?: number;
   riskReward?: number;
+  minConfidence?: number;
 }
 
 export interface MatrixScalpConfig {

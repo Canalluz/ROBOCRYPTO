@@ -200,26 +200,40 @@ export const zigzagPro = ({ candles, symbol, config }: StrategyContext): TradeSi
     const directionChanged = lastDirection !== prevDirection;
     const lastLabel = classifyPivot(pivots, pivots.length - 1);
 
-    // Filter signals by trade style (optional logic)
-    // Scalp might require higher confidence or specific labels like HH/LL
-    if (tradeStyle === 'SCALP' && lastLabel === '') {
-        // Only trade strong pivots in scalp
-        // return { symbol, action: 'HOLD', reason: 'Scalp: waiting for confirmed strong pivot' };
-    }
+    const calculateConfidence = (): number => {
+        let score = 40; // Base score for a pivot detection
+        
+        if (directionChanged) score += 20;
+        if (lastLabel !== '') score += 20; // Confirmed HH, LL, HL, or LH
+        
+        // Volume confirmation
+        const avgVolume = getSMA(volumes, 20);
+        if (volumes[volumes.length - 1] > avgVolume) score += 10;
+        
+        // Volatility confirmation
+        const atr14 = getATR(highs, lows, closes, 14);
+        const avgAtr = getSMA(candles.map((_, i) => getATR(highs.slice(0, i+1), lows.slice(0, i+1), closes.slice(0, i+1), 14)), 20);
+        if (atr14 > avgAtr) score += 10;
 
-    if (directionChanged) {
+        return Math.min(score, 100);
+    };
+
+    const confidenceScore = calculateConfidence();
+    const minConf = cfg.minConfidence ?? 70;
+
+    if (directionChanged && confidenceScore >= minConf) {
         const action = lastDirection > 0 ? 'BUY' : 'SELL';
         return {
             symbol,
             action,
             price: currentPrice,
-            reason: `ZigZag++ ${tradeStyle} | Reversal ${action === 'BUY' ? 'Bullish' : 'Bearish'} | pivot: ${lastLabel || 'HL'} @ ${last.price.toFixed(4)}`
+            reason: `ZigZag++ ${tradeStyle} | Reversal ${action === 'BUY' ? 'Bullish' : 'Bearish'} | pivot: ${lastLabel || 'HL'} (${confidenceScore.toFixed(0)}%)`
         };
     }
 
     return {
         symbol,
         action: 'HOLD',
-        reason: `ZigZag++ ${tradeStyle} | direction: ${lastDirection > 0 ? '▲UP' : '▼DOWN'} | pivots: ${pivots.length}`
+        reason: `ZigZag++ ${tradeStyle} | direction: ${lastDirection > 0 ? '▲UP' : '▼DOWN'} | score: ${confidenceScore.toFixed(0)}% (min: ${minConf}%)`
     };
 };

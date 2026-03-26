@@ -8,7 +8,7 @@ import { roboEnsaio } from './strategies/robo-ensaio.js';
 import { AnatomiaFluxoStrategy, Sinal as FluxoSinal } from './strategies/anatomia-fluxo.js';
 import { matrixNeural } from './strategies/matrix-neural.js';
 import { quantumEdge } from './strategies/quantum-edge.js';
-import { getCandles, placeOrder, getUsdtBalance, getPrice } from './exchanges/mexc.js';
+import { getCandles, placeOrder, getUsdtBalance, getPrice, getBalance } from './exchanges/mexc.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -277,7 +277,6 @@ async function tickEngine(id: string) {
             // ------ Wallet Sync: Sync activePositions with real wallet balance ------
             // If the user already has the asset in their wallet, the bot should know so it can SELL if signaled
             if (!bot.config.paperTrade) {
-                const { getBalance } = await import('./exchanges/mexc.js');
                 const balances = await getBalance(bot.apiKey, bot.secret);
                 const assetQty = balances[asset] || 0;
                 
@@ -349,11 +348,10 @@ async function tickEngine(id: string) {
                 }
             }
 
+            // ------ Order Execution Logic ------
             console.log(`[ENGINE] "${bot.config.name}" | ${asset} | SIGNAL: ${signal.action}${signal.reason ? ` (${signal.reason})` : ''}`);
 
-            if (signal.action === 'HOLD') {
-                continue;
-            }
+            if (signal.action === 'HOLD') continue;
 
             // Skip BUY if already in position, skip SELL if no position
             if (signal.action === 'BUY' && hasPosition) {
@@ -365,30 +363,46 @@ async function tickEngine(id: string) {
                 continue;
             }
 
-            // ------ Determine position size ------
-            let availableBalance: number;
-
-            if (bot.config.paperTrade) {
-                // Use simulated paper balance — no API call needed
-                availableBalance = bot.paperBalance;
-                console.log(`[ENGINE] [PAPER] Using simulated balance: $${availableBalance.toFixed(2)}`);
-            } else {
-                // Real mode: fetch actual balance
-                availableBalance = await getUsdtBalance(bot.apiKey, bot.secret);
-                console.log(`[ENGINE] [LIVE] Exchange balance: $${availableBalance.toFixed(2)}`);
-            }
-
-            const riskPct = bot.config.positionSizePct ?? bot.config.riskPerTrade ?? 2; // prioritize positionSizePct then riskPerTrade, default 2%
-            // In Spot mode, no leverage for position sizing (leverage=1)
+            // ------ Determine position size dynamically ------
+            let tradeAmount = 0; // quoteOrderQty for BUY, quantity for SELL
+            const riskPct = bot.config.positionSizePct ?? bot.config.riskPerTrade ?? 2;
             const leverage = bot.config.marketMode === 'SPOT' ? 1 : (bot.config.leverage ?? 1);
-            let positionSizeUsdt = availableBalance * (riskPct / 100) * leverage;
 
-            // MEXC generally requires a minimum $5 order for SPOT. Let's guarantee at least $6 if balance allows.
-            if (!bot.config.paperTrade && positionSizeUsdt < 6 && availableBalance >= 6) {
-                positionSizeUsdt = 6;
+            if (signal.action === 'BUY') {
+                let availableStable: number;
+                if (bot.config.paperTrade) {
+                    availableStable = bot.paperBalance;
+                } else {
+                    const balances = await getBalance(bot.apiKey, bot.secret);
+                    availableStable = (balances['USDT'] || 0) + (balances['USDC'] || 0) + (balances['BUSD'] || 0);
+                }
+                tradeAmount = availableStable * (riskPct / 100) * leverage;
+                
+                // Minimum order limit
+                if (!bot.config.paperTrade && tradeAmount < 6 && availableStable >= 6) tradeAmount = 6;
+                if (availableStable < 6) {
+                    console.log(`[ENGINE] "${bot.config.name}" | Insufficient stablecoin balance ($${availableStable.toFixed(2)}) for BUY.`);
+                    continue;
+                }
+            } else if (signal.action === 'SELL') {
+                let assetBalance: number;
+                if (bot.config.paperTrade) {
+                    // For paper trade, calculate quantity from notional
+                    const currentPrice = await getPrice(asset);
+                    assetBalance = bot.paperBalance / currentPrice; // Approximation
+                } else {
+                    const balances = await getBalance(bot.apiKey, bot.secret);
+                    assetBalance = balances[asset] || 0;
+                }
+                tradeAmount = assetBalance * (riskPct / 100);
+                
+                if (tradeAmount <= 0) {
+                    console.log(`[ENGINE] "${bot.config.name}" | No ${asset} balance to SELL.`);
+                    continue;
+                }
             }
 
-            console.log(`[ENGINE] "${bot.config.name}" | ${signal.action} ${asset} | size: $${positionSizeUsdt.toFixed(2)} | SL: ${signal.stopLoss?.toFixed(4)} | TP: ${signal.takeProfit?.toFixed(4)}`);
+            console.log(`[ENGINE] "${bot.config.name}" | ${signal.action} ${asset} | amount: ${tradeAmount.toFixed(6)} | SL: ${signal.stopLoss?.toFixed(4)} | TP: ${signal.takeProfit?.toFixed(4)}`);
 
             // ------ Place order ------
             let result;
@@ -399,7 +413,7 @@ async function tickEngine(id: string) {
                 result = await placeOrder(
                     asset,
                     signal.action as 'BUY' | 'SELL',
-                    positionSizeUsdt,
+                    tradeAmount,
                     bot.apiKey,
                     bot.secret,
                     bot.config.paperTrade,
@@ -412,11 +426,12 @@ async function tickEngine(id: string) {
                 console.error(`[ENGINE] ⚠️ ORDER FAILED for "${bot.config.name}" | ${asset}: ${failureReason}`);
             }
 
-            // If order failed, log the error but do NOT record it in "Historico de Trades" as per user request
-            if (orderFailed || !result) {
-                console.error(`[ENGINE] Skipping trade history for "${bot.config.name}" due to failure.`);
-                continue; // Move to the next asset
-            }
+            if (orderFailed || !result) continue;
+
+            // Compute actual trade notional for history tracking
+            const price = result.price || await getPrice(asset);
+            const notional = signal.action === 'BUY' ? tradeAmount : (tradeAmount * price);
+            const profitUsd = signal.action === 'BUY' ? 0 : (tradeAmount * (price - (signal.price || price))); // VERY simple PnL for logs
 
             // Update internal position tracking
             if (signal.action === 'BUY') {
@@ -424,16 +439,6 @@ async function tickEngine(id: string) {
             } else if (signal.action === 'SELL') {
                 bot.activePositions.delete(asset);
             }
-
-            // ------ Simulate outcome (for paper trades) ------
-            // In real mode, actual PnL comes from subsequent monitoring
-            const priceMoved = signal.action === 'BUY'
-                ? Math.random() > 0.45  // 55% chance of profitable move
-                : Math.random() > 0.45;
-            const movePct = priceMoved
-                ? (bot.config.takeProfitPct ?? 1.5) / 100
-                : -(bot.config.stopLossPct ?? 1) / 100;
-            const profitUsd = positionSizeUsdt * movePct;
 
             // Update paper balance
             if (bot.config.paperTrade) {
@@ -452,7 +457,7 @@ async function tickEngine(id: string) {
             }
 
             const finalPrice = result.price > 0 ? result.price : (signal.price || 1);
-            const finalQty = result.qty > 0 ? result.qty : (positionSizeUsdt / finalPrice);
+            const finalQty = result.qty > 0 ? result.qty : (tradeAmount / finalPrice);
 
             if (finalQty <= 0) {
                 console.warn(`[ENGINE] Skipping trade history for "${bot.config.name}": Zero quantity calculated.`);
@@ -489,7 +494,8 @@ async function tickEngine(id: string) {
             }
 
             if (maxDailyLossPct > 0) {
-                const initialBalance = bot.config.paperTrade ? 1000 : availableBalance + Math.abs(bot.todayPnl);
+                const currentAvailable = bot.config.paperTrade ? bot.paperBalance : await getUsdtBalance(bot.apiKey, bot.secret);
+                const initialBalance = currentAvailable + Math.abs(bot.todayPnl);
                 const dailyLossPct = (Math.abs(bot.todayPnl) / initialBalance) * 100;
                 if (bot.todayPnl < 0 && dailyLossPct >= maxDailyLossPct) {
                     console.warn(`[ENGINE] ⚠️ Bot "${bot.config.name}" PAUSED: daily loss ${dailyLossPct.toFixed(2)}% ≥ ${maxDailyLossPct}%`);

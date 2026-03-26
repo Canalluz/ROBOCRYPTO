@@ -37,14 +37,13 @@ export async function getBalance(apiKey: string, secret: string): Promise<Record
 
 export async function getUsdtBalance(apiKey: string, secret: string): Promise<number> {
     const balances = await getBalance(apiKey, secret);
-    return balances['USDT'] ?? 0;
+    return balances['USDT'] ?? balances['USDC'] ?? balances['BUSD'] ?? 0;
 }
 
 /** Get total account value in USDT (Stablecoins + positions) */
 export async function getAccountTotalValue(apiKey: string, secret: string): Promise<number> {
     try {
         const balances = await getBalance(apiKey, secret);
-        // Binance also supports fetching all prices at once
         const allPricesRes = await axios.get(`${BASE_URL}/api/v3/ticker/price`);
         const priceMap: Record<string, number> = {};
         for (const p of allPricesRes.data as any[]) {
@@ -65,4 +64,41 @@ export async function getAccountTotalValue(apiKey: string, secret: string): Prom
         console.error('[BINANCE] Error calculating total value:', e);
         return getUsdtBalance(apiKey, secret);
     }
+}
+
+/** Place a market order on Binance */
+export async function placeOrder(
+    symbol: string,
+    side: 'BUY' | 'SELL',
+    amount: number, // USDT for BUY, Asset quantity for SELL
+    apiKey: string,
+    secret: string,
+    paperTrade = true
+): Promise<any> {
+    if (paperTrade) {
+        return { orderId: 'paper-' + Date.now(), symbol, side, status: 'FILLED' };
+    }
+
+    const timestamp = await getServerTime();
+    const params: Record<string, any> = {
+        symbol,
+        side,
+        type: 'MARKET',
+        timestamp
+    };
+
+    if (side === 'BUY') {
+        params.quoteOrderQty = amount.toFixed(2);
+    } else {
+        params.quantity = amount.toFixed(6);
+    }
+
+    const queryString = Object.keys(params).map(k => `${k}=${params[k]}`).join('&');
+    const signature = sign(queryString, secret);
+
+    const res = await axios.post(`${BASE_URL}/api/v3/order?${queryString}&signature=${signature}`, null, {
+        headers: { 'X-MBX-APIKEY': apiKey }
+    });
+
+    return res.data;
 }

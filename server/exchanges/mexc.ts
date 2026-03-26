@@ -132,7 +132,7 @@ export async function getAccountTotalValue(apiKey: string, secret: string): Prom
 export async function placeOrder(
     symbol: string,
     side: 'BUY' | 'SELL',
-    quoteQty: number, // in USDT
+    amount: number, // USDT for BUY, Asset quantity for SELL
     apiKey: string,
     secret: string,
     paperTrade = true,
@@ -141,34 +141,40 @@ export async function placeOrder(
 ): Promise<OrderResult> {
     if (paperTrade) {
         const price = await getPrice(symbol);
-        console.log(`[MEXC][PAPER][${marketMode}] ${side} ${symbol} | notional: $${quoteQty.toFixed(2)} | price: ${price}`);
+        console.log(`[MEXC][PAPER][${marketMode}] ${side} ${symbol} | amount: ${amount.toFixed(4)} | price: ${price}`);
         return {
             orderId: 'paper-' + Date.now(),
             symbol,
             side,
             price,
-            qty: quoteQty / price,
+            qty: side === 'BUY' ? amount / price : amount,
             status: 'FILLED'
         };
     }
 
     if (marketMode === 'FUTURES') {
-        return placeFuturesOrder(symbol, side, quoteQty, apiKey, secret, leverage);
+        return placeFuturesOrder(symbol, side, amount, apiKey, secret, leverage);
     }
 
     // --- SPOT order ---
     const timestamp = await getServerTime();
 
-    // The MEXC API is very strict about signature payloads
-    // We add recvWindow to prevent timestamp drifting errors
+    // MEXC Spot Market Order:
+    // BUY: uses quoteOrderQty (USDT amount)
+    // SELL: uses quantity (Asset amount)
     const paramsMap: Record<string, string> = {
-        quoteOrderQty: quoteQty.toFixed(2),
         recvWindow: '10000',
         side,
         symbol,
         timestamp: timestamp.toString(),
         type: 'MARKET'
     };
+
+    if (side === 'BUY') {
+        paramsMap.quoteOrderQty = amount.toFixed(2);
+    } else {
+        paramsMap.quantity = amount.toFixed(6);
+    }
 
     const queryString = Object.keys(paramsMap)
         .sort()
@@ -178,14 +184,13 @@ export async function placeOrder(
     const signature = sign(queryString, secret);
     const finalUrl = `${BASE_URL}/api/v3/order?${queryString}&signature=${signature}`;
 
-    // Some environments strip POST headers if body is null/empty. We use application/json with {} body
     const res = await fetch(finalUrl, {
         method: 'POST',
         headers: {
             'X-MEXC-APIKEY': apiKey,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({}) // Force a body payload to ensure POST integrity on strict proxies
+        body: JSON.stringify({})
     });
 
     if (!res.ok) {

@@ -4340,7 +4340,7 @@ const BotMonitoringView: React.FC<{
   analysis?: AnalysisResponse | null;
 }> = ({ t, formatCurrency, bots, trades, equityData, exchanges, onToggleBot, onClearHistory, globalConfidenceThreshold, analysis }) => {
   const [selectedBotId, setSelectedBotId] = useState<string>('all');
-  const [timeframe, setTimeframe] = useState<'H' | 'D' | 'M'>('D');
+  const [timeframe, setTimeframe] = useState<'D' | 'M'>('D');
 
   const filteredBots = selectedBotId === 'all' ? bots : bots.filter(b => b.id === selectedBotId);
   const filteredTrades = selectedBotId === 'all' ? trades : trades.filter(tr => tr.botId === selectedBotId);
@@ -4367,15 +4367,18 @@ const BotMonitoringView: React.FC<{
       filtered = equityData.slice(-maxPoints);
     }
 
-    // Aggregate by day for 1M view
-    if (timeframe === 'M') {
+    if (timeframe === 'D' || timeframe === 'M') {
       const dailyMap = new Map<string, EquityPoint>();
       filtered.forEach(p => {
         const d = p.timestamp ? new Date(p.timestamp) : new Date();
-        const dateKey = d.toLocaleDateString('pt-BR');
+        const dateKey = timeframe === 'M' ? `${d.getFullYear()}-${d.getMonth() + 1}` : d.toLocaleDateString('pt-BR');
+        
+        // For monthly view, we take the last point of the month. For daily, the last point of the day.
         dailyMap.set(dateKey, {
           ...p,
-          time: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          time: timeframe === 'M'
+            ? d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+            : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
         });
       });
       return Array.from(dailyMap.values()).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -4388,15 +4391,13 @@ const BotMonitoringView: React.FC<{
       result = result.filter((_, i) => i % step === 0 || i === result.length - 1);
     }
 
-    // Format time label based on timeframe
+    // Format time label based on timeframe (for remaining cases if any, though M and D are covered above)
     return result.map(p => {
       if (p.timestamp && p.timestamp > 1_000_000_000_000) {
         const d = new Date(p.timestamp);
         return {
           ...p,
-          time: timeframe === 'M' 
-            ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-            : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         };
       }
       return p;
@@ -4515,13 +4516,13 @@ const BotMonitoringView: React.FC<{
             </h3>
             <div className="flex items-center gap-4">
               <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-                {(['H', 'D', 'M'] as const).map(tf => (
+                {(['D', 'M'] as const).map(tf => (
                   <button
                     key={tf}
                     onClick={() => setTimeframe(tf)}
                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${timeframe === tf ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                   >
-                    {tf === 'H' ? '1H' : tf === 'D' ? '1D' : '1M'}
+                    {tf === 'D' ? 'DIA' : 'MÊS'}
                   </button>
                 ))}
               </div>

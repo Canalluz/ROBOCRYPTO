@@ -50,23 +50,23 @@ export const matrixNeural = ({ candles, symbol, config }: StrategyContext): Trad
     const buyThreshold = minConfidence;
     const sellThreshold = 100 - minConfidence;
 
-    if (score >= buyThreshold) {
+    if (score >= buyThreshold || (config as any).ignoreConfidence) {
         return {
             symbol,
             action: 'BUY',
             price: currentPrice,
-            reason: `Neural Matrix Cluster: High Confidence (${score.toFixed(1)}%) | Institutional Confluence: ${smi > 0 ? 'Positive' : 'Fading'}`,
+            reason: `Neural Matrix Cluster: High Confidence (${score.toFixed(1)}%) | Institutional Confluence: ${smi > 0 ? 'Positive' : 'Fading'} ${(config as any).ignoreConfidence ? '[BYPASS]' : ''}`,
             stopLoss: currentPrice * (1 - (config.stopLossPct ?? 1) / 100),
             takeProfit: currentPrice * (1 + (config.takeProfitPct ?? 2) / 100)
         };
     }
 
-    if (score <= sellThreshold) {
+    if (score <= sellThreshold || (config as any).ignoreConfidence) {
         return {
             symbol,
             action: 'SELL',
             price: currentPrice,
-            reason: `Neural Matrix Cluster: Bearish Pattern (${score.toFixed(1)}%) | RSI: ${rsi.toFixed(1)}`,
+            reason: `Neural Matrix Cluster: Bearish Pattern (${score.toFixed(1)}%) | RSI: ${rsi.toFixed(1)} ${(config as any).ignoreConfidence ? '[BYPASS]' : ''}`,
             stopLoss: currentPrice * (1 + (config.stopLossPct ?? 1) / 100),
             takeProfit: currentPrice * (1 - (config.takeProfitPct ?? 2) / 100)
         };

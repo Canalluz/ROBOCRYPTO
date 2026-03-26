@@ -90,6 +90,15 @@ export const quantumEdge = ({ candles, symbol, config }: StrategyContext): Trade
     const atr = totalRange / 14;
 
     // --- Final Signal ---
+    // Final check against minimum confidence threshold
+    if (ensembleScore < minConfidence && !(config as any).ignoreConfidence) {
+        return {
+            symbol,
+            action: 'HOLD',
+            reason: `Confidence (${ensembleScore.toFixed(1)}%) below threshold (${minConfidence}%)`
+        };
+    }
+
     if (ensembleScore >= minConfidence) {
         return {
             symbol,

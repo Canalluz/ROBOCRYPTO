@@ -221,13 +221,13 @@ export const zigzagPro = ({ candles, symbol, config }: StrategyContext): TradeSi
     const confidenceScore = calculateConfidence();
     const minConf = cfg.minConfidence ?? 70;
 
-    if (directionChanged && confidenceScore >= minConf) {
+    if (directionChanged && (confidenceScore >= minConf || cfg.ignoreConfidence)) {
         const action = lastDirection > 0 ? 'BUY' : 'SELL';
         return {
             symbol,
             action,
             price: currentPrice,
-            reason: `ZigZag++ ${tradeStyle} | Reversal ${action === 'BUY' ? 'Bullish' : 'Bearish'} | pivot: ${lastLabel || 'HL'} (${confidenceScore.toFixed(0)}%)`
+            reason: `ZigZag++ ${tradeStyle} | Reversal ${action === 'BUY' ? 'Bullish' : 'Bearish'} | pivot: ${lastLabel || 'HL'} (${confidenceScore.toFixed(0)}%) ${cfg.ignoreConfidence ? '[BYPASS]' : ''}`
         };
     }
 

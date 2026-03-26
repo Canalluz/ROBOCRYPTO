@@ -2736,7 +2736,18 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                         value={wizard.minConfidence || 70}
                         onChange={(e) => dispatch({ type: 'SET_RISK', field: 'minConfidence', value: parseInt(e.target.value) })}
                         className="w-full accent-purple-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                        disabled={!!wizard.ignoreConfidence}
                       />
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800/50">
+                        <input 
+                          type="checkbox"
+                          id="ignoreConfidence"
+                          checked={!!wizard.ignoreConfidence}
+                          onChange={(e) => dispatch({ type: 'SET_RISK', field: 'ignoreConfidence' as any, value: e.target.checked as any })}
+                          className="w-3.5 h-3.5 rounded border-slate-700 bg-slate-800 text-purple-500 focus:ring-purple-500/20 focus:ring-offset-0"
+                        />
+                        <label htmlFor="ignoreConfidence" className="text-[9px] font-bold text-slate-400 uppercase tracking-tight cursor-pointer">Anular limite do mercado (Trade Forçado)</label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3165,8 +3176,23 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                                     setBots(bots.map(b => b.id === editingBot.id ? updated : b));
                                   }}
                                   className={`flex-1 ${editingBot.strategyId === 'ZIGZAG_PRO' ? 'accent-purple-500' : 'accent-cyan-500'} h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer`}
+                                  disabled={!!editingBot.config.ignoreConfidence}
                                 />
                                 <span className={`text-xs font-bold ${editingBot.strategyId === 'ZIGZAG_PRO' ? 'text-purple-400' : 'text-cyan-400'} mono w-8`}>{editingBot.config.minConfidence || 70}%</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <input 
+                                  type="checkbox"
+                                  id="editIgnoreConfidence"
+                                  checked={!!editingBot.config.ignoreConfidence}
+                                  onChange={(e) => {
+                                    const updated = { ...editingBot, config: { ...editingBot.config, ignoreConfidence: e.target.checked } };
+                                    setEditingBot(updated);
+                                    setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                                  }}
+                                  className={`w-3 h-3 rounded border-slate-700 bg-slate-800 ${editingBot.strategyId === 'ZIGZAG_PRO' ? 'text-purple-500' : 'text-cyan-500'} focus:ring-0 focus:ring-offset-0`}
+                                />
+                                <label htmlFor="editIgnoreConfidence" className="text-[8px] font-bold text-slate-500 uppercase tracking-tight cursor-pointer">Anular limite AI</label>
                               </div>
                             </div>
                           )}

@@ -354,6 +354,7 @@ export interface ZigZagConfig {
   minVolatility?: number;
   riskReward?: number;
   minConfidence?: number;
+  ignoreConfidence?: boolean;
 }
 
 export interface MatrixScalpConfig {
@@ -430,6 +431,7 @@ export interface MatrixNeuralConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  ignoreConfidence?: boolean;
 }
 
 export interface QuantumEdgeConfig {
@@ -448,6 +450,7 @@ export interface QuantumEdgeConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  ignoreConfidence?: boolean;
 }
 
 export interface AnatomiaFluxoConfig {

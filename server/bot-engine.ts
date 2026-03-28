@@ -416,7 +416,7 @@ async function tickEngine(id: string) {
                     tradeAmount,
                     bot.apiKey,
                     bot.secret,
-                    bot.config.paperTrade,
+                    bot.config.paperTrade ?? false,
                     bot.config.marketMode ?? 'SPOT',
                     bot.config.leverage ?? 1
                 );

@@ -5,7 +5,7 @@
         "id": "invsa2a2h",
         "name": "SUPERBOT 3V 1",
         "strategyId": "QUANTUM_EDGE",
-        "status": "ACTIVE",
+        "status": "PAUSED",
         "leverage": 3,
         "maxDailyLoss": 1,
         "stopLossPct": 1,
@@ -30,12 +30,14 @@
       },
       "apiKey": "mx0vglx73gnNfwgSE7",
       "secret": "6e19dfc6a212425883a5cb5676edb10c",
-      "trades": 0,
+      "trades": 3,
       "winRate": 0,
       "todayPnl": 0,
-      "consecutiveLosses": 0,
+      "consecutiveLosses": 3,
       "paperBalance": 1000,
-      "activePositions": []
+      "activePositions": [
+        "TAIUSDT"
+      ]
     }
   ],
   "equityHistory": [
@@ -54,6 +56,60 @@
     {
       "time": "19:54",
       "value": 210.2838618066339
+    },
+    {
+      "time": "17:36",
+      "value": 0,
+      "timestamp": 1774719393696
+    },
+    {
+      "time": "17:36",
+      "value": 0,
+      "timestamp": 1774719399101
+    }
+  ],
+  "tradeHistory": [
+    {
+      "id": "paper-1774719460816",
+      "botId": "invsa2a2h",
+      "asset": "TAIUSDT",
+      "type": "BUY",
+      "price": 0.018,
+      "amount": "12766.700599",
+      "result_usd": 0,
+      "profit": false,
+      "timestamp": "17:37:40",
+      "stopLoss": 0.016774285714285714,
+      "takeProfit": 0.020451428571428572,
+      "reason": "Quantum Ensemble: High Confidence (67.3%) | SM Index: 0.00 | Momentum: Positive"
+    },
+    {
+      "id": "paper-1774719401204",
+      "botId": "invsa2a2h",
+      "asset": "TAIUSDT",
+      "type": "BUY",
+      "price": 0.0181,
+      "amount": "12661.190677",
+      "result_usd": 0,
+      "profit": false,
+      "timestamp": "17:36:41",
+      "stopLoss": 0.016924285714285715,
+      "takeProfit": 0.020601428571428573,
+      "reason": "Quantum Ensemble: High Confidence (64.3%) | SM Index: 0.00 | Momentum: Positive"
+    },
+    {
+      "id": "paper-1774719395459",
+      "botId": "invsa2a2h",
+      "asset": "TAIUSDT",
+      "type": "BUY",
+      "price": 0.0181,
+      "amount": "12661.190677",
+      "result_usd": 0,
+      "profit": false,
+      "timestamp": "17:36:35",
+      "stopLoss": 0.016924285714285715,
+      "takeProfit": 0.020601428571428573,
+      "reason": "Quantum Ensemble: High Confidence (64.3%) | SM Index: 0.00 | Momentum: Positive"
     }
   ]
 }

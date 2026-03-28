@@ -365,8 +365,10 @@ async function tickEngine(id: string) {
 
             // ------ Determine position size dynamically ------
             let tradeAmount = 0; // quoteOrderQty for BUY, quantity for SELL
-            const riskPct = bot.config.positionSizePct ?? bot.config.riskPerTrade ?? 2;
+            let riskPct = bot.config.positionSizePct ?? bot.config.riskPerTrade ?? 2;
             const leverage = bot.config.marketMode === 'SPOT' ? 1 : (bot.config.leverage ?? 1);
+
+            console.log(`[ENGINE] "${bot.config.name}" | Position Size: ${riskPct}% | Leverage: ${leverage}x | Market: ${bot.config.marketMode || 'SPOT'}`);
 
             if (signal.action === 'BUY') {
                 let availableStable: number;
@@ -375,11 +377,21 @@ async function tickEngine(id: string) {
                 } else {
                     const balances = await getBalance(bot.apiKey, bot.secret);
                     availableStable = (balances['USDT'] || 0) + (balances['USDC'] || 0) + (balances['BUSD'] || 0);
+                    console.log(`[ENGINE] "${bot.config.name}" | Balances detected: USDT: ${balances['USDT']?.toFixed(2) || '0'}, USDC: ${balances['USDC']?.toFixed(2) || '0'}, BUSD: ${balances['BUSD']?.toFixed(2) || '0'}`);
                 }
-                tradeAmount = availableStable * (riskPct / 100) * leverage;
                 
+                // If 100% position size, use 99.5% for BUY to avoid Insufficient Balance due to exchange fees/slippage
+                const effectiveRisk = riskPct >= 100 ? 99.5 : riskPct;
+                tradeAmount = availableStable * (effectiveRisk / 100) * leverage;
+                
+                console.log(`[ENGINE] "${bot.config.name}" | Available $: ${availableStable.toFixed(2)} | Calculated Trade Amount: $${tradeAmount.toFixed(2)}`);
+
                 // Minimum order limit
-                if (!bot.config.paperTrade && tradeAmount < 6 && availableStable >= 6) tradeAmount = 6;
+                if (!bot.config.paperTrade && tradeAmount < 6 && availableStable >= 6) {
+                    tradeAmount = 6;
+                    console.log(`[ENGINE] "${bot.config.name}" | Adjusting to minimum order: $6`);
+                }
+
                 if (availableStable < 6) {
                     console.log(`[ENGINE] "${bot.config.name}" | Insufficient stablecoin balance ($${availableStable.toFixed(2)}) for BUY.`);
                     continue;
@@ -393,8 +405,11 @@ async function tickEngine(id: string) {
                 } else {
                     const balances = await getBalance(bot.apiKey, bot.secret);
                     assetBalance = balances[asset] || 0;
+                    console.log(`[ENGINE] "${bot.config.name}" | Asset balance detected: ${assetBalance.toFixed(6)} ${asset}`);
                 }
+                
                 tradeAmount = assetBalance * (riskPct / 100);
+                console.log(`[ENGINE] "${bot.config.name}" | Available Asset: ${assetBalance.toFixed(6)} | Calculated Trade Quantity: ${tradeAmount.toFixed(6)}`);
                 
                 if (tradeAmount <= 0) {
                     console.log(`[ENGINE] "${bot.config.name}" | No ${asset} balance to SELL.`);

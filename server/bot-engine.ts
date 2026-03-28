@@ -324,7 +324,7 @@ async function tickEngine(id: string) {
 
                 console.log(`[AF] "${bot.config.name}" | ${asset} | COMPRA_SCORE: ${res.score_compra}/30 | VENDA_SCORE: ${res.score_venda}/30`);
             } else {
-                const tf = (bot.config.timeframe || '15m') as '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
+                const tf = (bot.config.timeframe === 'AUTO' || !bot.config.timeframe ? '15m' : bot.config.timeframe) as '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
                 const candles = await getCandles(asset, tf, 200);
                 console.log(`[ENGINE] "${bot.config.name}" | ${asset} (${tf}) | ${candles.length} candles | last close: ${candles[candles.length - 1]?.close}`);
                 const ctx: StrategyContext = { candles, config: bot.config, symbol: asset };

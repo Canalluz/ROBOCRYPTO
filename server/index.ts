@@ -143,12 +143,14 @@ app.post('/api/manual-trade', async (req, res) => {
 
         // Record the trade in the engine history and bot stats
         const { recordManualTrade } = await import('./bot-engine.js');
+        const { getPrice } = await import('./exchanges/mexc.js');
+        
         recordManualTrade(botId || 'MANUAL', {
             id: result.orderId,
             botId: botId || 'MANUAL',
             asset: symbol.toUpperCase().includes('USDT') ? symbol.toUpperCase() : symbol.toUpperCase() + 'USDT',
             type: side,
-            price: Number(result.price.toFixed(4)),
+            price: Number((result.price > 0 ? result.price : (await getPrice(symbol))).toFixed(4)),
             amount: Number(result.qty).toFixed(6),
             result_usd: 0, // Manual trades don't have simulated exit PnL
             profit: false,

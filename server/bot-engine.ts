@@ -471,7 +471,7 @@ async function tickEngine(id: string) {
                 bot.winRate = (bot.winRate * (bot.trades - 1)) / bot.trades;
             }
 
-            const finalPrice = result.price > 0 ? result.price : (signal.price || 1);
+            const finalPrice = price > 0 ? price : (signal.price || 1);
             const finalQty = result.qty > 0 ? result.qty : (tradeAmount / finalPrice);
 
             if (finalQty <= 0) {

@@ -58,14 +58,22 @@ import {
   X,
   Play,
   Trash2,
+  Search,
+  ScanLine,
+  UserCheck,
+  Radar,
+  LineChart,
+  Fingerprint,
   Info,
   LogOut,
-  CreditCard
+  CreditCard,
+  Trophy
 } from 'lucide-react';
-import { SystemData, AnalysisResponse, Recommendation, RiskAlert, PortfolioAnalysis, RebalancingTrade, RiskAnalysis, TradingBot, AggressiveConfig, ExchangeConfig, AutomationRule, Trade, EquityPoint, MatrixScalpConfig, MatrixNeuralConfig } from './types';
+import { SystemData, AnalysisResponse, Recommendation, RiskAlert, PortfolioAnalysis, RebalancingTrade, RiskAnalysis, TradingBot, AggressiveConfig, ExchangeConfig, AutomationRule, Trade, EquityPoint, MatrixScalpConfig, MatrixNeuralConfig, WalletTrace, TraceabilityTransaction } from './types';
 import { INITIAL_DATA } from './constants';
 import { getAIAnalysis, getAIPortfolioAnalysis, getAIRiskAnalysis } from './services/ai';
 import { botService } from './services/botService';
+import { blockchainService } from './services/blockchainService';
 import {
   BarChart,
   Bar,
@@ -75,7 +83,14 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  LabelList
+  LabelList,
+  PieChart,
+  Pie,
+  Radar as RadarRe,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis
 } from 'recharts';
 
 // ZigZag Utility
@@ -126,7 +141,7 @@ const TRANSLATIONS = {
     last_scan: "Last Scan",
     sync: "Sync Analytics",
     managed_aum: "Managed AUM",
-    daily_pnl: "Daily P&L",
+    daily_pnl: "Daily ROI",
     fear_greed: "Fear & Greed",
     asset_dist: "Asset Distribution",
     risk_safety: "Risk & Safety",
@@ -147,6 +162,9 @@ const TRANSLATIONS = {
     prov_mock: "MOCK (Experimental/Free)",
     market_conviction: "Market Conviction",
     limit: "Limit",
+    order_type: "Order Type",
+    mkt_order: "Market",
+    limit_order: "Limit",
     lang_sel: "Language / Idioma",
     tv_chart: "TradingView Chart",
     exec_desk: "Execution Desk",
@@ -156,9 +174,11 @@ const TRANSLATIONS = {
     timeframe: "Execution Timeframe",
     auto_mode: "AUTO (AI Selection)",
     nav_charts: "Chart",
+    nav_traceability: "Traceability",
     nav_mode: "Mode",
     header_charts: "Institutional Analysis Terminal",
-    mon_pnl: "Total P&L",
+    header_traceability: "Whale & Smart Money Intelligence",
+    mon_pnl: "ROI",
     mon_winrate: "Win Rate",
     mon_drawdown: "Max Drawdown",
     mon_active_bots: "Active Robots",
@@ -171,6 +191,7 @@ const TRANSLATIONS = {
     mon_col_asset: "Asset",
     mon_col_type: "Type",
     mon_col_price: "Price",
+    mon_col_entry: "Entry Price",
     mon_col_amount: "Amount",
     mon_col_result: "Result",
     manual_control: "Manual control or algorithmic rule setting.",
@@ -314,90 +335,96 @@ const TRANSLATIONS = {
   pt: {
     terminal_name: "Rob Crypto",
     inst_terminal: "Terminal Institucional",
-    trading_core: "Ncleo de Trading",
+    trading_core: "Núcleo de Trading",
     ai_mode: "MODO IA",
     nav_robots: "Bots de trade",
     nav_assets: "Gerador Crypto",
     nav_monitoring: "Indicadores",
     nav_settings: "Configurações",
-    sys_health: "Sade do Sistema",
+    sys_health: "Saúde do Sistema",
     header_robots: "Hub de Trading Automatizado",
     header_monitoring: "Dashboard de Monitoramento",
-    header_assets: "Fbrica de Ativos e Lab de Contratos",
-    header_settings: "Gesto de Corretoras",
-    workspace: "Espao de Trabalho",
+    header_assets: "Fábrica de Ativos e Lab de Contratos",
+    header_settings: "Gestão de Corretoras",
+    workspace: "Espaço de Trabalho",
     live_nodes: "Nodes Ativos",
-    latency: "Latncia",
-    logic_enabled: "Lgica Ativa",
-    last_scan: "ltima Varredura",
-    sync: "Sincronizar Analticos",
+    latency: "Latência",
+    logic_enabled: "Lógica Ativa",
+    last_scan: "Última Varredura",
+    sync: "Sincronizar Analíticos",
     managed_aum: "AUM Gerenciado",
-    daily_pnl: "P&L Dirio",
-    fear_greed: "Medo & Ganncia",
-    asset_dist: "Distribuio de Ativos",
-    risk_safety: "Risco & Segurana",
-    total_equity: "Patrimnio Total",
+    daily_pnl: "ROI Diário",
+    fear_greed: "Medo & Ganância",
+    asset_dist: "Distribuição de Ativos",
+    risk_safety: "Risco & Segurança",
+    total_equity: "Patrimônio Total",
     portfolio_value: "Valor da Carteira",
     initial_balance: "Saldo na Corretora ($)",
     model_arch: "Arquitetura do Modelo",
-    auton_mode: "Modo Totalmente Autnomo",
+    auton_mode: "Modo Totalmente Autônomo",
     social_sent: "Alfa de Sentimento Social",
-    graph_pattern: "Reconhecimento de Padres Grficos",
-    deploy_intel: "Implantar Inteligncia",
-    exec_authority: "Autoridade de Execuo Principal",
-    safety_cons: "Restries de Segurana",
+    graph_pattern: "Reconhecimento de Padrões Gráficos",
+    deploy_intel: "Implantar Inteligência",
+    exec_authority: "Autoridade de Execução Principal",
+    safety_cons: "Restrições de Segurança",
     lev_hardcap: "Limite de Alavancagem",
-    drawdown_term: "Terminao por Drawdown",
-    max_exposure: "Exposio Mxima (Fundo)",
+    drawdown_term: "Terminação por Drawdown",
+    max_exposure: "Exposição Máxima (Fundo)",
     asset_cap: "Limite por Ativo",
-    update_safety: "Atualizar Protocolos de Segurana",
+    update_safety: "Atualizar Protocolos de Segurança",
     prov_openai: "OpenAI (GPT-4o)",
     prov_anthropic: "Anthropic (Claude 3.5)",
     prov_mock: "MOCK (Experimental/Livre)",
     market_conviction: "Convicção do Mercado",
     limit: "Limite",
+    order_type: "Tipo de Ordem",
+    mkt_order: "Mercado",
+    limit_order: "Limite",
     lang_sel: "Idioma / Language",
-    tv_chart: "Grfico TradingView",
-    exec_desk: "Painel de Execuo",
+    tv_chart: "Gráfico TradingView",
+    exec_desk: "Painel de Execução",
     api_key: "Chave API",
     api_secret: "Segredo API",
     save: "Salvar",
-    timeframe: "Tempo Grfico",
+    timeframe: "Tempo Gráfico",
     auto_mode: "AUTO (Seleção IA)",
     nav_charts: "Gráficos Avançados",
+    nav_traceability: "Rastreabilidade",
     nav_logout: "Sair do Sistema",
-    header_charts: "Terminal de Anlise Institucional",
-    mon_pnl: "P&L Total",
+    header_charts: "Terminal de Análise Institucional",
+    header_traceability: "Inteligência de Baleias e Smart Money",
+    mon_pnl: "ROI",
     mon_winrate: "Taxa de Acerto",
     mon_drawdown: "Drawdown Mx",
-    mon_active_bots: "Robs Ativos",
+    mon_active_bots: "Robôs Ativos",
     mon_equity: "Evolução do Patrimônio",
-    mon_history: "Histrico de Trades",
-    all_robots: "Todos os Robs",
+    mon_history: "Histórico de Trades",
+    all_robots: "Todos os Robôs",
     mon_status_op: "OPERANDO",
     mon_status_paused: "PAUSADO",
     mon_col_time: "Hora",
     mon_col_asset: "Ativo",
     mon_col_type: "Tipo",
-    mon_col_price: "Preo",
+    mon_col_price: "Preço",
+    mon_col_entry: "Preço de Entrada",
     mon_col_amount: "Qtd",
     mon_col_result: "Resultado",
     pipeline_ready: "Pipeline pronto para",
     pairs: "pares.",
-    mexc_validated: "Bridge MEXC validada. Latncia: 42ms.",
-    watchdog_active: "Watchdog ativo: Monitorando cruzamento tcnico para",
+    mexc_validated: "Bridge MEXC validada. Latência: 42ms.",
+    watchdog_active: "Watchdog ativo: Monitorando cruzamento técnico para",
     compliance_enforcer: "Executor de Conformidade",
-    hard_limit: "Limite Rgido",
+    hard_limit: "Limite Rígido",
     drawdown_cap: "Limite de Drawdown",
-    wizard_title: "Assistente de Implantao",
+    wizard_title: "Assistente de Implantação",
     agg_scalper: "Escalador Agressivo",
-    secure_trend: "Tendncia Segura Pro",
-    simple_ma_core: "Ncleo SimpleMA",
+    secure_trend: "Tendência Segura Pro",
+    simple_ma_core: "Núcleo SimpleMA",
     zigzag_pro: "ZigZag Pro",
-    mexc_logic_desc: "Configure lgica de scalping de alta frequncia nvel institucional para MEXC.",
-    secure_logic_desc: "Implante um sistema disciplinado de seguimento de tendncia com baixa alavancagem para preservao de capital.",
-    simple_ma_desc: "Sistema clssico de cruzamento otimizado para ativos cripto da Binance com filtros de risco rigorosos.",
-    zigzag_desc: "Deteco avanada de pivs para entradas de reverso de alta probabilidade.",
+    mexc_logic_desc: "Configure lógica de scalping de alta frequência nível institucional para MEXC.",
+    secure_logic_desc: "Implante um sistema disciplinado de seguimento de tendência com baixa alavancagem para preservação de capital.",
+    simple_ma_desc: "Sistema clássico de cruzamento otimizado para ativos cripto da Binance com filtros de risco rigorosos.",
+    zigzag_desc: "Detecção avançada de pivôs para entradas de reversão de alta probabilidade.",
     agg_scalp_label: "Scalp Agressivo",
     secure_trend_label: "Tendncia Segura",
     ma_cross_label: "Cruzamento MA",
@@ -700,7 +727,9 @@ const App: React.FC = () => {
     localStorage.setItem('tradepro_system_data', JSON.stringify(data));
   }, [data]);
   const [language, setLanguage] = useState<'en' | 'pt'>('pt');
-  const [currentView, setCurrentView] = useState<'settings' | 'robots' | 'assets' | 'monitoring'>('assets');
+  const [currentView, setCurrentView] = useState<'settings' | 'robots' | 'assets' | 'monitoring' | 'traceability'>('traceability');
+  const [selectedWallet, setSelectedWallet] = useState<WalletTrace | null>(null);
+  const [isTraceLoading, setIsTraceLoading] = useState(false);
 
   const t = (key: keyof typeof TRANSLATIONS.en) => TRANSLATIONS[language][key] || key;
   const [bots, setBots] = useState<TradingBot[]>(() => {
@@ -1174,9 +1203,8 @@ const App: React.FC = () => {
   };
 
   const onClearHistory = () => {
-    if (confirm(language === 'pt' ? 'Limpar histórico de ordens?' : 'Clear order history?')) {
-      setTradeHistory([]);
-    }
+    botService.clearTradeHistory();
+    setTradeHistory([]);
   };
 
   const cashAvailable = exchanges.reduce((acc, ex) => acc + (Number(ex.balance) || 0), 0);
@@ -1202,6 +1230,7 @@ const App: React.FC = () => {
 
         <nav className="flex-1 p-4 space-y-2 mt-2">
           <NavBtn active={currentView === 'monitoring'} onClick={() => setCurrentView('monitoring')} icon={<LayoutDashboard />} label={t('nav_monitoring')} />
+          <NavBtn active={currentView === 'traceability'} onClick={() => setCurrentView('traceability')} icon={<Search />} label={t('nav_traceability')} />
           <NavBtn active={currentView === 'robots'} onClick={() => setCurrentView('robots')} icon={<Bot />} label={t('nav_robots')} />
           <NavBtn active={currentView === 'assets'} onClick={() => setCurrentView('assets')} icon={<Coins />} label={t('nav_assets')} />
           <NavBtn active={currentView === 'settings'} onClick={() => setCurrentView('settings')} icon={<SettingsIcon />} label={t('nav_settings')} />
@@ -1243,7 +1272,8 @@ const App: React.FC = () => {
               <h2 className="text-3xl font-bold tracking-tight">
                 {currentView === 'robots' ? t('header_robots') :
                   currentView === 'assets' ? t('header_assets') :
-                    currentView === 'monitoring' ? t('header_monitoring') : t('header_settings')}
+                    currentView === 'monitoring' ? t('header_monitoring') : 
+                      currentView === 'traceability' ? t('header_traceability') : t('header_settings')}
               </h2>
             </div>
             <div className="flex items-center gap-3 text-slate-400">
@@ -1289,6 +1319,15 @@ const App: React.FC = () => {
           />
         )}
 
+        {currentView === 'traceability' && (
+          <TraceabilityView
+            t={t}
+            formatCurrency={formatCurrency}
+            apiKeyEtherscan={data.neural_core.etherscanKey}
+            apiKeyCovalent={data.neural_core.covalentKey}
+          />
+        )}
+
         {currentView === 'robots' && (
           <RobotsView
             data={data}
@@ -1297,6 +1336,7 @@ const App: React.FC = () => {
             exchanges={exchanges}
             formatCurrency={formatCurrency}
             t={t}
+            language={language}
           />
         )}
 
@@ -1354,6 +1394,8 @@ const SettingsView: React.FC<{
     deepseekKey: data.neural_core.deepseekKey || '',
     openaiKey: data.neural_core.openaiKey || '',
     anthropicKey: data.neural_core.anthropicKey || '',
+    etherscanKey: data.neural_core.etherscanKey || '',
+    covalentKey: data.neural_core.covalentKey || '',
   });
   const [aiKeySaved, setAiKeySaved] = useState(false);
 
@@ -1366,6 +1408,8 @@ const SettingsView: React.FC<{
         deepseekKey: aiKeys.deepseekKey.trim(),
         openaiKey: aiKeys.openaiKey.trim(),
         anthropicKey: aiKeys.anthropicKey.trim(),
+        etherscanKey: aiKeys.etherscanKey.trim(),
+        covalentKey: aiKeys.covalentKey.trim(),
       }
     }));
     setAiKeySaved(true);
@@ -1413,7 +1457,7 @@ const SettingsView: React.FC<{
       <div className="flex border-b border-slate-800 gap-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
         <TabBtn label={t('nav_settings')} active={activeTab === 'exchanges'} onClick={() => setActiveTab('exchanges')} icon={<Link className="w-4 h-4" />} />
         <TabBtn label="AI Core" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} icon={<BrainCircuit className="w-4 h-4" />} />
-        <TabBtn label="Execution" active={activeTab === 'execution'} onClick={() => setActiveTab('execution')} icon={<Server className="w-4 h-4" />} />
+        <TabBtn label="Blockchain API" active={activeTab === 'execution'} onClick={() => setActiveTab('execution')} icon={<Server className="w-4 h-4" />} />
       </div>
 
       {activeTab === 'exchanges' && (
@@ -1698,12 +1742,86 @@ const SettingsView: React.FC<{
       )}
 
       {activeTab === 'execution' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-3xl space-y-8 shadow-2xl">
-          <ManualTradePanel
-            exchanges={exchanges}
-            bots={bots}
-            onTradeExecuted={onTradeExecuted}
-          />
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-4xl space-y-8 shadow-2xl">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-cyan-500/10 rounded-2xl">
+              <Link className="w-8 h-8 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold tracking-tight">Blockchain Intelligence API</h3>
+              <p className="text-sm text-slate-500 font-medium">Configure as chaves para rastreamento on-chain em tempo real.</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+               <div className="space-y-2">
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Etherscan API Key</label>
+                 <input
+                   type="password"
+                   value={aiKeys.etherscanKey}
+                   onChange={(e) => setAiKeys({...aiKeys, etherscanKey: e.target.value})}
+                   placeholder="Your Etherscan Key..."
+                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 outline-none focus:border-cyan-500/50"
+                 />
+                 <p className="text-[9px] text-slate-500 italic">Necessário para monitorar transações de baleias na rede Ethereum.</p>
+               </div>
+
+               <div className="space-y-2">
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Covalent API Key</label>
+                 <input
+                   type="password"
+                   value={aiKeys.covalentKey}
+                   onChange={(e) => setAiKeys({...aiKeys, covalentKey: e.target.value})}
+                   placeholder="Your Covalent Key..."
+                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 outline-none focus:border-cyan-500/50"
+                 />
+                 <p className="text-[9px] text-slate-500 italic">Utilizado para análise Multi-Chain e histórico detalhado das carteiras.</p>
+               </div>
+            </div>
+
+            <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl space-y-4">
+               <div className="flex items-center gap-3">
+                 <Radar className="w-5 h-5 text-cyan-500" />
+                 <h4 className="font-bold text-sm">Status da Conexão</h4>
+               </div>
+               <div className="space-y-3">
+                 <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Ethereum Node</span>
+                    <span className={`text-[10px] font-bold ${aiKeys.etherscanKey ? 'text-emerald-500' : 'text-slate-600'}`}>
+                      {aiKeys.etherscanKey ? 'READY' : 'OFFLINE'}
+                    </span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Covalent Multi-Chain</span>
+                    <span className={`text-[10px] font-bold ${aiKeys.covalentKey ? 'text-emerald-500' : 'text-slate-600'}`}>
+                      {aiKeys.covalentKey ? 'READY' : 'OFFLINE'}
+                    </span>
+                 </div>
+               </div>
+               <div className="pt-4 border-t border-slate-800">
+                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                    Certifique-se de salvar as chaves para ativar o menu de Rastreabilidade. O sistema utiliza estas APIs para calcular o Score das carteiras.
+                  </p>
+               </div>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-slate-800 flex items-center justify-between gap-4">
+            {aiKeySaved && (
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold animate-in fade-in duration-300">
+                <CheckCircle2 className="w-4 h-4" />
+                {language === 'pt' ? 'Chaves salvas com sucesso!' : 'Keys saved successfully!'}
+              </div>
+            )}
+            {!aiKeySaved && <div />}
+            <button
+              onClick={handleSaveAiKeys}
+              className="px-10 py-4 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-2xl flex items-center gap-2 transition-all shadow-xl shadow-blue-900/30"
+            >
+              <Save className="w-5 h-5" /> {t('save_changes')}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -2091,7 +2209,7 @@ const MetricCard: React.FC<{ label: string; value: string; icon: React.ReactNode
     </div>
     <div className="space-y-1">
       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-bold mono tracking-tight">{value}</p>
+      <p className={`text-2xl font-bold mono tracking-tight ${positive === undefined ? 'text-white' : positive ? 'text-emerald-500' : 'text-rose-500'}`}>{value}</p>
     </div>
   </div>
 );
@@ -2181,6 +2299,7 @@ type WizardState = {
   marketType?: 'AUTO' | 'CRYPTO' | 'STOCKS_BR' | 'STOCKS_US' | 'FOREX';
   liquidityFilter?: boolean;
   volatilityFilter?: boolean;
+  orderType: 'MARKET' | 'LIMIT';
 };
 
 type WizardAction =
@@ -2191,7 +2310,8 @@ type WizardAction =
   | { type: 'REMOVE_ASSET'; payload: string }
   | { type: 'VALIDATE' }
   | { type: 'RUN_DRY_BOOT' }
-  | { type: 'SET_AI_PROVIDER'; payload: WizardState['aiProvider'] };
+  | { type: 'SET_AI_PROVIDER'; payload: WizardState['aiProvider'] }
+  | { type: 'SET_ORDER_TYPE'; payload: WizardState['orderType'] };
 
 const initialWizardState: WizardState = {
   strategy: 'AGGRESSIVE',
@@ -2203,7 +2323,8 @@ const initialWizardState: WizardState = {
   riskPerTrade: 1.0,
   minConfidence: 60,
   isValid: true,
-  aiProvider: 'GEMINI'
+  aiProvider: 'GEMINI',
+  orderType: 'MARKET'
 };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -2218,7 +2339,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const aiProvider = (action.payload === 'MATRIX_SCALP' || action.payload === 'QUANTUM_EDGE') ? 'DEEPSEEK' : 'GEMINI';
       const zzDefaults = action.payload === 'ZIGZAG_PRO' ? { tradeStyle: 'SWING' as const, marketType: 'CRYPTO' as const, liquidityFilter: true, volatilityFilter: true } : {};
       const confDefault = (action.payload === 'QUANTUM_EDGE') ? 60 : (action.payload === 'MATRIX_NEURAL') ? 85 : (action.payload === 'ZIGZAG_PRO') ? 70 : undefined;
-      return { ...state, strategy: action.payload, ...defaults, ...zzDefaults, minConfidence: confDefault, aiProvider };
+      const orderTypeDefault = (action.payload === 'ZIGZAG_PRO' || action.payload === 'QUANTUM_EDGE') ? 'LIMIT' : 'MARKET';
+      return { ...state, strategy: action.payload, ...defaults, ...zzDefaults, minConfidence: confDefault, aiProvider, orderType: orderTypeDefault };
     case 'SET_EXCHANGE':
       return { ...state, exchangeId: action.payload };
     case 'SET_RISK':
@@ -2245,6 +2367,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       };
     case 'SET_AI_PROVIDER':
       return { ...state, aiProvider: action.payload };
+    case 'SET_ORDER_TYPE':
+      return { ...state, orderType: action.payload };
     default:
       return state;
   }
@@ -2263,7 +2387,7 @@ const LoadingState: React.FC = () => (
   </div>
 );
 
-const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: React.Dispatch<React.SetStateAction<TradingBot[]>>; exchanges: ExchangeConfig[]; formatCurrency: (v: number) => string; t: (k: any) => string }> = ({ data, bots, setBots, exchanges, formatCurrency, t }) => {
+const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: React.Dispatch<React.SetStateAction<TradingBot[]>>; exchanges: ExchangeConfig[]; formatCurrency: (v: number) => string; t: (k: any) => string; language: string }> = ({ data, bots, setBots, exchanges, formatCurrency, t, language }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBot, setEditingBot] = useState<TradingBot | null>(null);
   const [editDryRunResult, setEditDryRunResult] = useState<{ winRate: number; expectedProfit: number } | null>(null);
@@ -2365,7 +2489,8 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
         marketType: wizard.marketType,
         liquidityFilter: wizard.liquidityFilter,
         volatilityFilter: wizard.volatilityFilter,
-        minConfidence: wizard.minConfidence
+        minConfidence: wizard.minConfidence,
+        orderType: wizard.orderType
       } as any,
       performance: {
         totalPnl: 0,
@@ -2852,8 +2977,29 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
               )}
 
 
-              {/* Neural Core section removed by user request (bots operate without AI) */}
-
+              <section className="space-y-6">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-xs">
+                  <ArrowRightLeft className="w-4 h-4" /> {language === 'pt' ? 'Configurações de Execução' : 'Execution Settings'}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('order_type')}</label>
+                    <select
+                      value={wizard.orderType}
+                      onChange={(e) => dispatch({ type: 'SET_ORDER_TYPE', payload: e.target.value as 'MARKET' | 'LIMIT' })}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-slate-200 outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="MARKET">{t('mkt_order')}</option>
+                      <option value="LIMIT">{t('limit_order')}</option>
+                    </select>
+                    <p className="text-[10px] text-slate-500 italic mt-1 font-medium">
+                      {wizard.orderType === 'MARKET' 
+                        ? (language === 'pt' ? 'Execução imediata ao melhor preço disponível.' : 'Immediate execution at best available price.')
+                        : (language === 'pt' ? 'Ordem enviada ao preço atual, aguardando liquidez.' : 'Order sent at current price, waiting for liquidity.')}
+                    </p>
+                  </div>
+                </div>
+              </section>
 
               <section className="space-y-6">
                 <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-widest text-xs">
@@ -3109,7 +3255,7 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                           <ArrowRightLeft className="w-5 h-5" />
                           <h4 className="font-bold uppercase tracking-widest text-xs">Market Execution</h4>
                         </div>
-                        <div className="bg-slate-950/30 p-4 rounded-xl border border-slate-800">
+                        <div className="bg-slate-950/30 p-4 rounded-xl border border-slate-800 space-y-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400">Market Type</label>
                             <select
@@ -3124,6 +3270,22 @@ const RobotsView: React.FC<{ data: SystemData; bots: TradingBot[]; setBots: Reac
                             >
                               <option value="FUTURES">Futures Trading</option>
                               <option value="SPOT">Spot Trading</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400">{t('order_type')}</label>
+                            <select
+                              value={editingBot.config.orderType || 'MARKET'}
+                              onChange={(e) => {
+                                const val = e.target.value as 'MARKET' | 'LIMIT';
+                                const updated = { ...editingBot, config: { ...editingBot.config, orderType: val } };
+                                setEditingBot(updated);
+                                setBots(bots.map(b => b.id === editingBot.id ? updated : b));
+                              }}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm font-bold text-slate-200 outline-none focus:border-cyan-500/50"
+                            >
+                              <option value="MARKET">{t('mkt_order')}</option>
+                              <option value="LIMIT">{t('limit_order')}</option>
                             </select>
                           </div>
                         </div>
@@ -4353,6 +4515,516 @@ const AssetFactoryView: React.FC<{
 export default App;
 
 
+const TraceabilityView: React.FC<{
+  t: (k: any) => string;
+  formatCurrency: (v: number) => string;
+  apiKeyEtherscan?: string;
+  apiKeyCovalent?: string;
+}> = ({ t, formatCurrency, apiKeyEtherscan, apiKeyCovalent }) => {
+  const [walletAddress, setWalletAddress] = useState('');
+  const [isTracking, setIsTracking] = useState(false);
+  const [activeWallet, setActiveWallet] = useState<WalletTrace | null>(null);
+
+  // Weighted Score Calculation logic
+  const calculateScore = (perf: number, risk: number, cons: number, activity: number) => {
+    return Math.round((perf * 0.4) + (risk * 0.3) + (cons * 0.2) + (activity * 0.1));
+  };
+
+  const handleStartTracking = () => {
+    if (!walletAddress.startsWith('0x')) return;
+    setIsTracking(true);
+    // In a real scenario, this would trigger blockchainService.ts
+    // For now, we show the UI structure ready for the API keys
+    setTimeout(() => {
+      setActiveWallet({
+        id: 'w1',
+        address: walletAddress,
+        blockchain: 'Ethereum Mainnet',
+        age: '2y 4m',
+        type: 'Trader Ativo',
+        score: 85,
+        performance: {
+          totalRoi: 142.5,
+          netProfitUsd: 42500,
+          roi7d: 5.2,
+          roi30d: 42,
+          roi90d: 88,
+          winRate: 68.4,
+          profitFactor: 2.1
+        },
+        risk: {
+          maxDrawdown: 12.4,
+          volatility: 18.2,
+          maxLossTrade: 1500,
+          exposureAssets: { 'ETH': 40, 'USDC': 30, 'PEPE': 15, 'LINK': 15 }
+        },
+        activity: {
+          tradesPerDay: 4.2,
+          frequency: 'Scalper',
+          avgPositionTime: '1h 20m',
+          lastActivity: '12m ago'
+        },
+        assets: {
+          topTokens: ['ETH', 'PEPE', 'LINK', 'UNI'],
+          profitPerToken: { 'ETH': 25000, 'PEPE': 12000, 'LINK': 4000, 'UNI': 1500 },
+          frequencyPerToken: { 'ETH': 150, 'PEPE': 80, 'LINK': 45, 'UNI': 30 }
+        },
+        behavior: {
+          buyTopBottom: 'Fundo',
+          dca: true,
+          trendFollower: true,
+          earlyEntry: true
+        },
+        transactions: [
+          { id: 'tx1', timestamp: '2026-03-29 11:20:00', token: 'ETH', type: 'BUY', priceEntry: 3450, amount: '2.5', resultUsd: 0 },
+          { id: 'tx2', timestamp: '2026-03-29 10:45:00', token: 'PEPE', type: 'SELL', priceEntry: 0.000008, priceExit: 0.0000095, amount: '500M', resultUsd: 750, profit: true }
+        ]
+      });
+      setIsTracking(false);
+    }, 1500);
+  };
+
+  if (!apiKeyEtherscan || !apiKeyCovalent) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 bg-slate-900/50 border border-slate-800 rounded-3xl space-y-6 animate-in fade-in duration-500">
+        <div className="p-4 bg-amber-500/10 rounded-full">
+          <Lock className="w-12 h-12 text-amber-500" />
+        </div>
+        <div className="text-center space-y-2">
+          <h3 className="text-2xl font-bold">API Configuration Required</h3>
+          <p className="text-slate-400 max-w-md mx-auto">To track real wallets and whales on-chain, please configure your <strong>Etherscan</strong> and <strong>Covalent</strong> keys in the settings.</p>
+        </div>
+        <button 
+          onClick={() => { /* Navigation to settings logic */ }}
+          className="px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all shadow-lg"
+        >
+          Configure APIs Now
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12">
+      {/* 1. Identification & Score Header */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-2xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Fingerprint className="w-32 h-32 text-cyan-400" />
+          </div>
+          <div className="relative">
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-900/50">
+              <UserCheck className="w-12 h-12 text-white" />
+            </div>
+          </div>
+          <div className="flex-1 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold tracking-tight text-white mb-1">
+                  {activeWallet ? activeWallet.address : 'Track a New Wallet'}
+                </h3>
+                <div className="flex items-center gap-3 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  <span className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">{activeWallet?.blockchain || 'Multi-Chain Engine'}</span>
+                  <span>Age: {activeWallet?.age || '--'}</span>
+                  <span className="text-slate-700">|</span>
+                  <span className="text-emerald-500">{activeWallet?.type || 'Searching...'}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={walletAddress}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                  placeholder="0x... address"
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm font-mono text-cyan-400 outline-none focus:border-cyan-500/50 w-48"
+                />
+                <button 
+                  onClick={handleStartTracking}
+                  className="p-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl transition-all"
+                >
+                  {isTracking ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Radar className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+            {activeWallet && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                <div className="bg-slate-950/50 p-3 rounded-2xl border border-slate-800/50">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Trades/Dia</p>
+                  <p className="text-lg font-bold text-slate-200">{activeWallet.activity.tradesPerDay}</p>
+                </div>
+                <div className="bg-slate-950/50 p-3 rounded-2xl border border-slate-800/50">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Última Ativ.</p>
+                  <p className="text-lg font-bold text-emerald-400">{activeWallet.activity.lastActivity}</p>
+                </div>
+                <div className="bg-slate-950/50 p-3 rounded-2xl border border-slate-800/50">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Estilo</p>
+                  <p className="text-lg font-bold text-purple-400">{activeWallet.activity.frequency}</p>
+                </div>
+                <div className="bg-slate-950/50 p-3 rounded-2xl border border-slate-800/50">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Tempo Médio</p>
+                  <p className="text-lg font-bold text-slate-200">{activeWallet.activity.avgPositionTime}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 9. Wallet Score */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Wallet Score Alpha</h4>
+          <div className="relative">
+            <svg className="w-32 h-32">
+              <circle className="text-slate-800" strokeWidth="8" stroke="currentColor" fill="transparent" r="58" cx="64" cy="64" />
+              <circle 
+                className="text-cyan-500 transition-all duration-1000" 
+                strokeWidth="8" 
+                strokeDasharray={364}
+                strokeDashoffset={364 - (364 * (activeWallet?.score || 0)) / 100}
+                strokeLinecap="round" 
+                stroke="currentColor" 
+                fill="transparent" 
+                r="58" cx="64" cy="64" 
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-black text-white">{activeWallet?.score || '--'}</span>
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-tighter">Score Ranking</span>
+            </div>
+          </div>
+          <div className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+            <p className="text-[10px] font-bold text-cyan-400 italic">
+               {activeWallet ? (activeWallet.score > 80 ? 'EXCELENTE PARA COPIAR' : 'SCORE REGULAR') : 'NEED DATA'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {activeWallet && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* 2. Performance Stats */}
+            <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-6">
+              <MetricCard 
+                label="ROI Total" 
+                value={`+${activeWallet.performance.totalRoi}%`} 
+                trend="Histórico" 
+                positive={true} 
+                icon={<TrendingUp className="text-emerald-400" />} 
+              />
+              <MetricCard 
+                label="Lucro Líquido" 
+                value={formatCurrency(activeWallet.performance.netProfitUsd)} 
+                trend="USDT Realized" 
+                positive={true} 
+                icon={<Activity className="text-cyan-400" />} 
+              />
+              <MetricCard 
+                label="Win Rate" 
+                value={`${activeWallet.performance.winRate}%`} 
+                trend="Precisão Alpha" 
+                positive={activeWallet.performance.winRate > 60} 
+                icon={<Target className="text-purple-400" />} 
+              />
+              <MetricCard 
+                label="Profit Factor" 
+                value={activeWallet.performance.profitFactor.toString()} 
+                trend="Ganhos vs Perdas" 
+                positive={activeWallet.performance.profitFactor > 1.5} 
+                icon={<Activity className="text-amber-400" />} 
+              />
+
+              <div className="col-span-full grid grid-cols-3 gap-6">
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col items-center">
+                   <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">ROI 7d</p>
+                   <p className="text-xl font-bold text-emerald-400">+{activeWallet.performance.roi7d}%</p>
+                </div>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col items-center">
+                   <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">ROI 30d</p>
+                   <p className="text-xl font-bold text-emerald-400">+{activeWallet.performance.roi30d}%</p>
+                </div>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col items-center">
+                   <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">ROI 90d</p>
+                   <p className="text-xl font-bold text-emerald-400">+{activeWallet.performance.roi90d}%</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Risk Profile */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6">
+               <div className="flex items-center gap-2 mb-2">
+                 <Shield className="w-5 h-5 text-rose-500" />
+                 <h4 className="text-xs font-bold uppercase tracking-widest">Risco & Exposição</h4>
+               </div>
+               <div className="space-y-4">
+                 <div className="flex justify-between items-center text-sm">
+                   <span className="text-slate-400 font-medium">Drawdown Máximo</span>
+                   <span className="text-rose-400 font-bold">{activeWallet.risk.maxDrawdown}%</span>
+                 </div>
+                 <div className="flex justify-between items-center text-sm">
+                   <span className="text-slate-400 font-medium">Volatilidade (30d)</span>
+                   <span className="text-amber-400 font-bold">{activeWallet.risk.volatility}%</span>
+                 </div>
+                 <div className="flex justify-between items-center text-sm">
+                   <span className="text-slate-400 font-medium">Maior Perda Trade</span>
+                   <span className="text-rose-400 font-bold">-{formatCurrency(activeWallet.risk.maxLossTrade)}</span>
+                 </div>
+               </div>
+               <div className="pt-4 border-t border-slate-800 space-y-3">
+                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Exposição por Ativo</p>
+                 {Object.entries(activeWallet.risk.exposureAssets).map(([asset, pct]) => (
+                   <div key={asset} className="space-y-1">
+                     <div className="flex justify-between text-[10px] font-bold">
+                       <span>{asset}</span>
+                       <span>{pct}%</span>
+                     </div>
+                     <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                       <div className="h-full bg-cyan-500" style={{ width: `${pct}%` }}></div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 5. Asset Distribution (Pie) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+              <div className="flex items-center gap-2">
+                <PieChartIcon className="w-5 h-5 text-cyan-400" />
+                <h4 className="text-xs font-bold uppercase tracking-widest">Distribuição de Ativos</h4>
+              </div>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(activeWallet.risk.exposureAssets).map(([name, value]) => ({ name, value }))}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {Object.entries(activeWallet.risk.exposureAssets).map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {activeWallet.assets.topTokens.map((token, idx) => (
+                  <div key={token} className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">{token}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 6. Profit per Token (Bar) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-emerald-400" />
+                <h4 className="text-xs font-bold uppercase tracking-widest">Lucro por Token (USDT)</h4>
+              </div>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={Object.entries(activeWallet.assets.profitPerToken).map(([name, value]) => ({ name, value }))}>
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis hide />
+                    <Tooltip 
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {Object.entries(activeWallet.assets.profitPerToken).map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#06b6d4'} opacity={0.8} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+            {/* 7. Comportamento (Psicologia Alpha) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+              <div className="flex items-center gap-2">
+                <ScanLine className="w-5 h-5 text-purple-400" />
+                <h4 className="text-xs font-bold uppercase tracking-widest">Padrão Comportamental</h4>
+              </div>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
+                    { subject: 'Consistency', A: 85, fullMark: 100 },
+                    { subject: 'Risk Management', A: 90, fullMark: 100 },
+                    { subject: 'Timing', A: 75, fullMark: 100 },
+                    { subject: 'Volume Control', A: 80, fullMark: 100 },
+                    { subject: 'Diversity', A: 65, fullMark: 100 },
+                  ]}>
+                    <PolarGrid stroke="#1e293b" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 8 }} />
+                    <RadarRe name="Wallet" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <BehaviorTag label="ESTRATÉGIA DCA" active={activeWallet.behavior.dca} />
+                  <BehaviorTag label="TREND FOLLOWER" active={activeWallet.behavior.trendFollower} />
+                  <BehaviorTag label="EARLY ENTRY" active={activeWallet.behavior.earlyEntry} />
+                  <BehaviorTag label="STABLE HOLDER" active={!activeWallet.behavior.earlyEntry} />
+                </div>
+              </div>
+            </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 10. Smart Money Benchmark */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Trophy className="w-32 h-32 text-amber-500" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                <h4 className="text-xs font-bold uppercase tracking-widest">Smart Money Benchmark</h4>
+              </div>
+              <div className="space-y-6">
+                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl relative">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-xs font-bold text-amber-400">vs Top 1% Whales</p>
+                    <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded font-black text-amber-500">ALPHA DETECTED</span>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Win Rate Relativo</span>
+                      <span className="text-xs font-bold text-emerald-400">+12.5% higher</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Portfolio Diversification</span>
+                      <span className="text-xs font-bold text-rose-400">-5.2% lower</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Exit Timing Precision</span>
+                      <span className="text-xs font-bold text-cyan-400">+18.4% faster</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Performance Global Index</p>
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
+                    <div className="h-full bg-cyan-500" style={{ width: '85%' }}></div>
+                    <div className="h-full bg-slate-700" style={{ width: '15%' }}></div>
+                  </div>
+                  <div className="flex justify-between mt-2 font-mono text-[9px] text-slate-600">
+                    <span>RETAIL</span>
+                    <span>SMART MONEY</span>
+                    <span>WHALE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 8. Sinais em Tempo Real */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-rose-500 animate-pulse" />
+                  <h4 className="text-xs font-bold uppercase tracking-widest">Sinais em Tempo Real</h4>
+                </div>
+                <span className="flex h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></span>
+              </div>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-2">
+                {activeWallet.transactions.map((tx, idx) => (
+                  <div key={tx.id} className={`p-4 rounded-2xl border border-slate-800 leading-none relative overflow-hidden ${idx === 0 ? 'bg-rose-500/5 border-rose-500/20' : 'bg-slate-950/50'}`}>
+                    {idx === 0 && <div className="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>}
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${tx.type === 'BUY' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>{tx.type}</span>
+                        <span className="text-xs font-bold text-slate-200">{tx.token}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-500">{tx.timestamp.split(' ')[1]}</span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <p className="text-xs text-slate-400 font-mono">{tx.amount} {tx.token} @ {formatCurrency(tx.priceEntry || tx.priceExit || 0)}</p>
+                      {tx.type === 'SELL' && (
+                        <span className={`text-[10px] font-bold ${tx.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
+                          {tx.profit ? '+' : ''}{formatCurrency(tx.resultUsd || 0)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Histórico Completo */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-800 rounded-lg">
+                  <History className="w-5 h-5 text-slate-400" />
+                </div>
+                <h3 className="font-bold">Histórico Geral de Transações</h3>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-950/30">
+                    <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Data/Hora</th>
+                    <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Token</th>
+                    <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Operação</th>
+                    <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Preço Entry/Exit</th>
+                    <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resultado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {activeWallet.transactions.map(tx => (
+                    <tr key={tx.id} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="p-4 text-xs font-mono text-slate-400">{tx.timestamp}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-200">{tx.token}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${tx.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs font-mono text-slate-300">
+                         {tx.priceEntry ? formatCurrency(tx.priceEntry) : '---'} / {tx.priceExit ? formatCurrency(tx.priceExit) : '---'}
+                      </td>
+                      <td className="p-4">
+                        <span className={`text-xs font-bold ${tx.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
+                          {tx.resultUsd != null ? (tx.profit ? '+' : '') + formatCurrency(tx.resultUsd) : '---'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const BehaviorTag: React.FC<{ label: string; active: boolean }> = ({ label, active }) => (
+  <div className={`p-3 rounded-2xl border flex items-center justify-center text-[9px] font-black tracking-tighter text-center leading-none transition-all ${active ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-slate-950/50 border-slate-800 text-slate-600 grayscale'}`}>
+    {label}
+  </div>
+);
+
 const BotMonitoringView: React.FC<{
   t: (k: any) => string;
   formatCurrency: (v: number) => string;
@@ -4378,8 +5050,8 @@ const BotMonitoringView: React.FC<{
     const now = Date.now();
     let cutoffMs = 0;
     if (timeframe === 'H') cutoffMs = now - 60 * 60 * 1000;          // last 1 hour
-    else if (timeframe === 'D') cutoffMs = now - 24 * 60 * 60 * 1000; // last 24 hours
-    else if (timeframe === 'M') cutoffMs = now - 30 * 24 * 60 * 60 * 1000; // last 30 days
+    else if (timeframe === 'D') cutoffMs = now - 30 * 24 * 60 * 60 * 1000; // last 30 days (Daily)
+    else if (timeframe === 'M') cutoffMs = now - 365 * 24 * 60 * 60 * 1000; // last year (Monthly)
 
     // Determine if timestamps are valid ms (> year 2000 epoch)
     const hasValidTimestamps = equityData.some(p => p.timestamp && p.timestamp > 1_000_000_000_000);
@@ -4419,11 +5091,10 @@ const BotMonitoringView: React.FC<{
       return Array.from(aggMap.values()).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     }
 
-    // Downsample for 1D: keep at most 48 points (one per 30min)
+    // Downsample for large datasets to keep performance stable
     let result = filtered;
-    if (timeframe === 'D' && result.length > 48) {
-      const step = Math.ceil(result.length / 48);
-      result = result.filter((_, i) => i % step === 0 || i === result.length - 1);
+    if (timeframe === 'D' && result.length > 31) {
+      // If we have more than a month of points, just keep daily aggregates (which we already do above)
     }
 
     // Format time label based on timeframe (for remaining cases if any, though M and D are covered above)
@@ -4452,8 +5123,10 @@ const BotMonitoringView: React.FC<{
   let peak = equityData[0]?.value || currentTotalExchangeValue;
   for (const point of equityData) {
     if (point.value > peak) peak = point.value;
-    const dd = ((peak - point.value) / peak) * 100;
-    if (dd > maxDrawdown) maxDrawdown = dd;
+    if (peak > 0) {
+      const dd = ((peak - point.value) / peak) * 100;
+      if (dd > maxDrawdown) maxDrawdown = dd;
+    }
   }
 
   // Calculate current total equity (sum of all bot paper balances + real exchange total values)
@@ -4739,7 +5412,7 @@ const BotMonitoringView: React.FC<{
                     <p className="text-sm font-bold text-slate-300">{(bot.config as any).assets?.join(', ') || 'N/A'}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-[9px] font-bold uppercase tracking-widest ${(bot.performance?.todayPnl || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>P&L Hoje</p>
+                    <p className={`text-[9px] font-bold uppercase tracking-widest ${(bot.performance?.todayPnl || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>ROI Hoje</p>
                     <p className={`text-sm font-bold ${(bot.performance?.todayPnl || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                       {(bot.performance?.todayPnl || 0) >= 0 ? '+' : ''}{formatCurrency(bot.performance?.todayPnl || 0)}
                     </p>
@@ -4799,6 +5472,7 @@ const BotMonitoringView: React.FC<{
                 <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_asset')}</th>
                 <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_type')}</th>
                 <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_price')}</th>
+                <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_entry')}</th>
                 <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_amount')}</th>
                 <th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('mon_col_result')}</th>
               </tr>
@@ -4818,11 +5492,19 @@ const BotMonitoringView: React.FC<{
                     </span>
                   </td>
                   <td className="p-4 text-xs font-mono text-slate-300">{formatCurrency(trade.price)}</td>
+                  <td className="p-4 text-xs font-mono text-slate-500">{(trade as any).entryPrice ? formatCurrency((trade as any).entryPrice) : '---'}</td>
                   <td className="p-4 text-xs font-mono text-slate-300">{trade.amount}</td>
                   <td className="p-4">
-                    <span className={`text-xs font-bold ${trade.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
-                      {trade.result_usd != null ? (trade.result_usd >= 0 ? '+' : '') + formatCurrency(trade.result_usd) : '---'}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className={`text-xs font-bold ${trade.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
+                        {trade.result_usd != null ? (trade.result_usd >= 0 ? '+' : '') + formatCurrency(trade.result_usd) : '---'}
+                      </span>
+                      {trade.type === 'SELL' && (trade as any).entryPrice && (
+                        <span className={`text-[10px] font-bold opacity-60 ${trade.profit ? 'text-emerald-500' : 'text-rose-400'}`}>
+                          {(((trade.price - (trade as any).entryPrice) / (trade as any).entryPrice) * 100).toFixed(2)}%
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

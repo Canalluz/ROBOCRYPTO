@@ -85,10 +85,66 @@ export interface NeuralCoreConfig {
   deepseekKey: string;
   openaiKey: string;
   anthropicKey: string;
-
+  etherscanKey: string;
+  covalentKey: string;
+  
   temperature: number;
   max_tokens: number;
   confidence_threshold: number;
+}
+
+export interface WalletTrace {
+  id: string;
+  address: string;
+  blockchain: string;
+  age: string;
+  type: 'Trader Ativo' | 'Holder' | 'Arbitragem' | 'Bot' | 'Whale' | 'Institutional';
+  score: number;
+  performance: {
+    totalRoi: number;
+    netProfitUsd: number;
+    roi7d: number;
+    roi30d: number;
+    roi90d: number;
+    winRate: number;
+    profitFactor: number;
+  };
+  risk: {
+    maxDrawdown: number;
+    volatility: number;
+    maxLossTrade: number;
+    exposureAssets: Record<string, number>;
+  };
+  activity: {
+    tradesPerDay: number;
+    frequency: 'Scalper' | 'Swing' | 'Position';
+    avgPositionTime: string;
+    lastActivity: string;
+  };
+  assets: {
+    topTokens: string[];
+    profitPerToken: Record<string, number>;
+    frequencyPerToken: Record<string, number>;
+  };
+  behavior: {
+    buyTopBottom: 'Fundo' | 'Topo' | 'Neutro';
+    dca: boolean;
+    trendFollower: boolean;
+    earlyEntry: boolean;
+  };
+  transactions: TraceabilityTransaction[];
+}
+
+export interface TraceabilityTransaction {
+  id: string;
+  timestamp: string;
+  token: string;
+  type: 'BUY' | 'SELL';
+  priceEntry?: number;
+  priceExit?: number;
+  amount: string;
+  resultUsd?: number;
+  profit?: boolean;
 }
 
 export interface Recommendation {
@@ -258,6 +314,7 @@ export interface AggressiveConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 
@@ -292,6 +349,7 @@ export interface ConservativeConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 
@@ -323,6 +381,7 @@ export interface SimpleMAConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 export interface ZigZagConfig {
@@ -355,6 +414,7 @@ export interface ZigZagConfig {
   riskReward?: number;
   minConfidence?: number;
   ignoreConfidence?: boolean;
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 export interface MatrixScalpConfig {
@@ -399,6 +459,7 @@ export interface MatrixScalpConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 export interface MatrixNeuralConfig {
@@ -432,6 +493,7 @@ export interface MatrixNeuralConfig {
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
   ignoreConfidence?: boolean;
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 export interface QuantumEdgeConfig {
@@ -451,6 +513,7 @@ export interface QuantumEdgeConfig {
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
   ignoreConfidence?: boolean;
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 export interface AnatomiaFluxoConfig {
@@ -489,6 +552,7 @@ export interface AnatomiaFluxoConfig {
   marginMode?: 'CROSS' | 'ISOLATED';
   marketMode?: 'SPOT' | 'FUTURES';
   timeframe?: '5m' | '15m' | '1h' | '2h' | '4h' | '1D' | 'AUTO';
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 
@@ -509,6 +573,7 @@ export interface RoboEnsaioConfig {
   marketMode: 'SPOT' | 'FUTURES';
   timeframe: '1m' | '5m' | '15m' | '1h' | 'AUTO';
   cooldown: number;
+  orderType?: 'MARKET' | 'LIMIT';
 }
 
 export interface AutomationRule {

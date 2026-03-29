@@ -132,48 +132,60 @@ export async function getAccountTotalValue(apiKey: string, secret: string): Prom
 export async function placeOrder(
     symbol: string,
     side: 'BUY' | 'SELL',
-    amount: number, // USDT for BUY, Asset quantity for SELL
+    amount: number, // USDT for BUY, Asset quantity for SELL (MARKET) or Quantity (LIMIT)
     apiKey: string,
     secret: string,
     paperTrade = true,
     marketMode: 'SPOT' | 'FUTURES' = 'SPOT',
-    leverage = 1
+    leverage = 1,
+    orderType: 'MARKET' | 'LIMIT' = 'MARKET',
+    price?: number
 ): Promise<OrderResult> {
     if (paperTrade) {
-        const price = await getPrice(symbol);
-        console.log(`[MEXC][PAPER][${marketMode}] ${side} ${symbol} | amount: ${amount.toFixed(4)} | price: ${price}`);
+        const currentPrice = price || await getPrice(symbol);
+        console.log(`[MEXC][PAPER][${marketMode}][${orderType}] ${side} ${symbol} | amount: ${amount.toFixed(4)} | price: ${currentPrice}`);
         return {
             orderId: 'paper-' + Date.now(),
             symbol,
             side,
-            price,
-            qty: side === 'BUY' ? amount / price : amount,
+            price: currentPrice,
+            qty: side === 'BUY' && orderType === 'MARKET' ? amount / currentPrice : amount,
             status: 'FILLED'
         };
     }
 
     if (marketMode === 'FUTURES') {
-        return placeFuturesOrder(symbol, side, amount, apiKey, secret, leverage);
+        return placeFuturesOrder(symbol, side, amount, apiKey, secret, leverage, orderType, price);
     }
 
     // --- SPOT order ---
     const timestamp = await getServerTime();
 
-    // MEXC Spot Market Order:
-    // BUY: uses quoteOrderQty (USDT amount)
-    // SELL: uses quantity (Asset amount)
+    // MEXC Spot Order Params
     const paramsMap: Record<string, string> = {
         recvWindow: '10000',
         side,
         symbol,
         timestamp: timestamp.toString(),
-        type: 'MARKET'
+        type: orderType
     };
 
-    if (side === 'BUY') {
-        paramsMap.quoteOrderQty = amount.toFixed(2);
+    if (orderType === 'LIMIT') {
+        if (!price) throw new Error("Price is required for LIMIT orders");
+        const currentPrice = await getPrice(symbol);
+        // For LIMIT, we use quantity for both BUY and SELL
+        // If BUY was passed as USDT amount, convert to quantity
+        const qty = side === 'BUY' ? (amount / price) : amount;
+        paramsMap.quantity = qty.toFixed(6);
+        paramsMap.price = price.toFixed(8); // Precision depends on symbol, but 8 is usually safe for crypto
+        paramsMap.timeInForce = 'GTC';
     } else {
-        paramsMap.quantity = amount.toFixed(6);
+        // MARKET order logic
+        if (side === 'BUY') {
+            paramsMap.quoteOrderQty = amount.toFixed(2);
+        } else {
+            paramsMap.quantity = amount.toFixed(6);
+        }
     }
 
     const queryString = Object.keys(paramsMap)
@@ -222,7 +234,9 @@ async function placeFuturesOrder(
     quoteQty: number,
     apiKey: string,
     secret: string,
-    leverage = 1
+    leverage = 1,
+    orderType: 'MARKET' | 'LIMIT' = 'MARKET',
+    price?: number
 ): Promise<OrderResult> {
     // MEXC Futures uses _USDT suffix and different side codes: 1=open long, 2=close short, 3=open short, 4=close long
     const futuresSymbol = symbol.endsWith('_USDT') ? symbol : symbol.replace('USDT', '_USDT');
@@ -230,18 +244,23 @@ async function placeFuturesOrder(
     const orderSide = side === 'BUY' ? 1 : 3; // 1=open long, 3=open short
 
     const timestamp = await getServerTime();
-    const price = await getPrice(symbol); // needed to compute vol
-    const vol = Math.floor((quoteQty * leverage) / price * 10000) / 10000; // contracts
+    const currentPrice = price || await getPrice(symbol); 
+    const vol = Math.floor((quoteQty * leverage) / currentPrice * 10000) / 10000; // contracts
 
     const body: Record<string, any> = {
         symbol: futuresSymbol,
         side: orderSide,
         openType,
-        type: 5, // 5 = market order in MEXC futures
+        type: orderType === 'LIMIT' ? 1 : 5, // 1=Limit, 5=Market
         vol,
         leverage,
         timestamp
     };
+
+    if (orderType === 'LIMIT') {
+        if (!currentPrice) throw new Error("Price required for LIMIT futures order");
+        body.price = currentPrice;
+    }
 
     const bodyStr = JSON.stringify(body);
     const signStr = apiKey + timestamp + bodyStr;
@@ -267,7 +286,7 @@ async function placeFuturesOrder(
         orderId: String(orderId),
         symbol: futuresSymbol,
         side,
-        price,
+        price: currentPrice,
         qty: vol,
         status: d?.success ? 'FILLED' : 'REJECTED'
     };

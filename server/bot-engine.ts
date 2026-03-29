@@ -29,9 +29,11 @@ type BotState = {
     trades: number;
     winRate: number;
     todayPnl: number;
+    closedTrades: number; // Only SELL trades for win rate
     consecutiveLosses: number;
     paperBalance: number; // Simulated USDT balance for paper trade mode
     activePositions: Set<string>; // Tracks symbols where bot is currently IN a trade
+    entryPrices: Record<string, number>; // Tracks entry price per symbol for ROI calculation
 };
 
 const bots = new Map<string, BotState>();
@@ -59,6 +61,12 @@ export function getTradeHistory() {
     return tradeHistory;
 }
 
+export function clearTradeHistory() {
+    console.log('[ENGINE] Clearing trade history...');
+    tradeHistory = [];
+    saveBots();
+}
+
 export function deployBot(config: BotConfig, apiKey: string, secret: string) {
     if (bots.has(config.id)) pauseBot(config.id);
 
@@ -71,9 +79,11 @@ export function deployBot(config: BotConfig, apiKey: string, secret: string) {
         trades: 0,
         winRate: 0,
         todayPnl: 0,
+        closedTrades: 0,
         consecutiveLosses: 0,
         paperBalance: 1000,
         activePositions: new Set<string>(),
+        entryPrices: {},
     };
     
     bots.set(config.id, state);
@@ -91,9 +101,11 @@ function saveBots() {
             trades: b.trades,
             winRate: b.winRate,
             todayPnl: b.todayPnl,
+            closedTrades: b.closedTrades || 0,
             consecutiveLosses: b.consecutiveLosses,
             paperBalance: b.paperBalance,
-            activePositions: Array.from(b.activePositions)
+            activePositions: Array.from(b.activePositions),
+            entryPrices: b.entryPrices || {}
         }));
         const fullState = {
             bots: botData,
@@ -156,9 +168,11 @@ export function loadBots() {
                 trades: b.trades || 0,
                 winRate: b.winRate || 0,
                 todayPnl: b.todayPnl || 0,
+                closedTrades: b.closedTrades || 0,
                 consecutiveLosses: b.consecutiveLosses || 0,
                 paperBalance: b.paperBalance || (b.config.paperTrade ? 1000 : 0),
                 activePositions: new Set(b.activePositions || []),
+                entryPrices: b.entryPrices || {},
             };
             bots.set(b.config.id, state);
             
@@ -425,6 +439,9 @@ async function tickEngine(id: string) {
             let failureReason = '';
 
             try {
+                const orderType = (bot.config as any).orderType || 'MARKET';
+                const currentPrice = await getPrice(asset);
+
                 result = await placeOrder(
                     asset,
                     signal.action as 'BUY' | 'SELL',
@@ -433,7 +450,9 @@ async function tickEngine(id: string) {
                     bot.secret,
                     bot.config.paperTrade ?? false,
                     bot.config.marketMode ?? 'SPOT',
-                    bot.config.leverage ?? 1
+                    bot.config.leverage ?? 1,
+                    orderType,
+                    currentPrice
                 );
             } catch (orderError: any) {
                 orderFailed = true;
@@ -445,30 +464,38 @@ async function tickEngine(id: string) {
 
             // Compute actual trade notional for history tracking
             const price = result.price || await getPrice(asset);
-            const notional = signal.action === 'BUY' ? tradeAmount : (tradeAmount * price);
-            const profitUsd = signal.action === 'BUY' ? 0 : (tradeAmount * (price - (signal.price || price))); // VERY simple PnL for logs
-
-            // Update internal position tracking
+            
+            // Update internal position tracking & Entry Price
             if (signal.action === 'BUY') {
                 bot.activePositions.add(asset);
+                bot.entryPrices[asset] = price; // Record the entry price
+                console.log(`[ENGINE] "${bot.config.name}" | BUY Entry Recorded: ${asset} @ $${price.toFixed(4)}`);
             } else if (signal.action === 'SELL') {
                 bot.activePositions.delete(asset);
-            }
-
-            // Update paper balance
-            if (bot.config.paperTrade) {
-                bot.paperBalance += profitUsd;
+                delete bot.entryPrices[asset];
             }
 
             // Update stats
-            bot.todayPnl += profitUsd;
-            bot.trades += 1;
-            if (profitUsd > 0) {
-                bot.consecutiveLosses = 0;
-                bot.winRate = ((bot.winRate * (bot.trades - 1)) + 100) / bot.trades;
-            } else {
-                bot.consecutiveLosses += 1;
-                bot.winRate = (bot.winRate * (bot.trades - 1)) / bot.trades;
+            const entryPrice = bot.entryPrices[asset] || signal.price || price;
+            const tradeProfitUsd = signal.action === 'SELL' ? (tradeAmount * (price - entryPrice)) : 0;
+            
+            // Update paper balance
+            if (bot.config.paperTrade) {
+                bot.paperBalance += tradeProfitUsd;
+            }
+
+            bot.todayPnl += tradeProfitUsd;
+            bot.trades += 1; // Total operations count
+
+            if (signal.action === 'SELL') {
+                bot.closedTrades += 1;
+                if (tradeProfitUsd > 0) {
+                    bot.consecutiveLosses = 0;
+                    bot.winRate = ((bot.winRate * (bot.closedTrades - 1)) + 100) / bot.closedTrades;
+                } else {
+                    bot.consecutiveLosses += 1;
+                    bot.winRate = (bot.winRate * (bot.closedTrades - 1)) / bot.closedTrades;
+                }
             }
 
             const finalPrice = price > 0 ? price : (signal.price || 1);
@@ -486,9 +513,10 @@ async function tickEngine(id: string) {
                 asset,
                 type: result.side,
                 price: Number(finalPrice.toFixed(4)),
+                entryPrice: entryPrice ? Number(entryPrice.toFixed(4)) : undefined,
                 amount: finalQty.toFixed(6),
-                result_usd: Number(profitUsd.toFixed(2)),
-                profit: profitUsd > 0,
+                result_usd: Number(tradeProfitUsd.toFixed(2)),
+                profit: tradeProfitUsd > 0,
                 timestamp: new Date().toLocaleTimeString('pt-BR'),
                 paper: bot.config.paperTrade,
                 stopLoss: signal.stopLoss,
@@ -540,7 +568,7 @@ async function tickEngine(id: string) {
                 activePositions: Array.from(bot.activePositions)
             });
 
-            console.log(`[ENGINE] Trade recorded: ${signal.action} ${asset} | P&L: $${profitUsd.toFixed(2)} | Total hoje: $${bot.todayPnl.toFixed(2)}`);
+            console.log(`[ENGINE] Trade recorded: ${signal.action} ${asset} | P&L: $${tradeProfitUsd.toFixed(2)} | Total hoje: $${bot.todayPnl.toFixed(2)}`);
             saveBots(); // Update persistence with new stats
 
         } catch (err: any) {

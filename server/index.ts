@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots, getEquityHistory, getTradeHistory, recordEquityPoint, updateExternalBalance } from './bot-engine.js';
+import { deployBot, pauseBot, stopBot, registerWsBroadcaster, loadBots, getAllBots, getEquityHistory, getTradeHistory, recordEquityPoint, updateExternalBalance, clearTradeHistory } from './bot-engine.js';
 
 import { getUsdtBalance, getBalance, getAccountTotalValue, placeOrder } from './exchanges/mexc.js';
 import { getUsdtBalance as getBinanceUsdtBalance, getAccountTotalValue as getBinanceTotalValue } from './exchanges/binance.js';
@@ -52,6 +52,10 @@ wss.on('connection', (ws) => {
             } else if (data.type === 'SYNC_BALANCE') {
                 const { balance } = data.payload;
                 updateExternalBalance(Number(balance) || 0);
+            } else if (data.type === 'CLEAR_TRADES') {
+                clearTradeHistory();
+                // Send sync to everyone to clear on frontend
+                clients.forEach(c => c.send(JSON.stringify({ type: 'SYNC_TRADES', payload: [] })));
             }
         } catch (e) {
             console.error('[WS] Error processing message:', e);

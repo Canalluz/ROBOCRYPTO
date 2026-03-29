@@ -108,6 +108,10 @@ export class BotService {
     syncBalance(balance: number) {
         this.send({ type: 'SYNC_BALANCE', payload: { balance } });
     }
+
+    clearTradeHistory() {
+        this.send({ type: 'CLEAR_TRADES' });
+    }
 }
 
 export const botService = new BotService();
